@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Database } from '../apps/server/src/db.js';
@@ -12,7 +13,7 @@ afterEach(async () => {
   for (const db of databases.splice(0)) await db.close();
 });
 async function fixture() {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   databases.push(db);
   const a = (await newUser(db, `${randomUUID()}@example.invalid`, 'Fictional owner password')).id,
     b = (await newUser(db, `${randomUUID()}@example.invalid`, 'Fictional peer password')).id;

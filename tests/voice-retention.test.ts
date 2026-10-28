@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { expect, test, vi } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
@@ -9,7 +10,7 @@ test('voice expiry removes content but an old first-turn retry cannot create a s
     throw new Error('No external network is permitted');
   });
   vi.stubGlobal('fetch', network);
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   const service = await createApp({
     db,
     worker: false,

@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { Database } from '../apps/server/src/db.js';
@@ -7,7 +8,7 @@ import { LiveSessionStore } from '../apps/server/src/live-session-store.js';
 describe('durable owner-bound Live reservation metadata', () => {
   let db: Database;
   beforeAll(async () => {
-    db = await new Database({ dataDir: 'memory://' }).open();
+    db = await openTestDatabase({ dataDir: 'memory://' });
   });
   afterAll(async () => {
     await db.close();

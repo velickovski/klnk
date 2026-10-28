@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
@@ -6,7 +7,7 @@ import { Database } from '../apps/server/src/db.js';
 import { LiveSessionStore } from '../apps/server/src/live-session-store.js';
 
 it('does not delete an owner with unresolved paid-start control metadata or block another owner', async () => {
-  const db = await new Database({ dataDir: 'memory://' }).open(),
+  const db = await openTestDatabase({ dataDir: 'memory://' }),
     store = new LiveSessionStore(db);
   const service = await createApp({
     db,
@@ -77,7 +78,7 @@ it('does not delete an owner with unresolved paid-start control metadata or bloc
 });
 
 it('revokes logout credentials while keeping uncertain cleanup durable and truthful', async () => {
-  const db = await new Database({ dataDir: 'memory://' }).open(),
+  const db = await openTestDatabase({ dataDir: 'memory://' }),
     store = new LiveSessionStore(db);
   const service = await createApp({
     db,

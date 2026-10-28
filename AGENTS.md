@@ -4,6 +4,8 @@ klnk is an iPhone-first personal voice agent built with React Native and Expo. K
 
 ## Start here
 
+Current production hardening follows [the 28 October improvement brief](docs/review/2026-10-28/00-sol-improvement-prompt.md) and [its status board](docs/review/2026-10-28/STATUS.md). This takes precedence over earlier orchestrator prompts. Read the five review reports and verify their historical citations against current source before editing.
+
 Read [README.md](README.md), [the documentation map](docs/README.md), and [the current design brief](docs/design/00-current-brief.md). The user-selected one-button live demo takes precedence over earlier full-workspace concepts. For further UI work, follow [the implementation plan](docs/design/06-implementation-plan.md). The ready-to-use implementation prompt is [here](docs/design/07-sol-build-prompt.md).
 
 ## Working rules

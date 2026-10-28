@@ -1,3 +1,4 @@
+import { guardedPostgresFixture } from '../tests/support/postgres-fixture.js';
 import { readFile } from 'node:fs/promises';
 import { Database } from '../apps/server/src/db.js';
 import { LiveSessionStore } from '../apps/server/src/live-session-store.js';
@@ -50,15 +51,7 @@ try {
   const path = process.env.KLNK_POSTGRES_TEST_CONNECTION_FILE;
   if (!path) throw new Error('missing_fixture');
   const connection = JSON.parse(await readFile(path, 'utf8')) as { url: string; key: string };
-  const url = new URL(connection.url);
-  if (
-    url.protocol !== 'postgresql:' ||
-    url.hostname !== '127.0.0.1' ||
-    url.port !== '55432' ||
-    url.pathname !== '/klnk_qa' ||
-    !/^[a-f0-9]{64}$/i.test(connection.key)
-  )
-    throw new Error('unsafe_fixture');
+  const { url } = guardedPostgresFixture(connection);
   url.searchParams.set('options', `-c search_path=${options.schema}`);
   url.searchParams.set('application_name', `child_${options.schema}`);
   db = await new Database({ url: url.toString(), key: connection.key, production: true }).open();

@@ -1,8 +1,8 @@
 import { Database } from './db.js';
 import { getConfig } from './config.js';
-import { Engine } from './engine.js';
-import { NetworkCoordinator } from './network/coordination.js';
-import { InternalCalendar } from './network/calendar.js';
+import { createRuntime } from './composition-root.js';
+import { workerLogger } from './worker-logging.js';
+import { logger } from './logging.js';
 const config = getConfig();
 if (!config.databaseUrl)
   throw new Error(
@@ -13,11 +13,10 @@ const db = await new Database({
   key: config.key,
   production: config.production,
 }).open();
-const engine = new Engine(db, config);
+const { engine, network } = createRuntime(db, config);
 engine.start();
-const network = new NetworkCoordinator(db, new InternalCalendar(db));
 network.start();
-console.log('Durable worker running.');
+logger.info({ event: 'worker_started' });
 // Keep standalone process alive (the embedded interval intentionally unrefs).
 const keepAlive = setInterval(() => {}, 60000);
 for (const signal of ['SIGINT', 'SIGTERM'] as const)
@@ -27,5 +26,10 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const)
       .then(() => {
         clearInterval(keepAlive);
         process.exit(0);
+      })
+      .catch(() => {
+        workerLogger.error({ event: 'worker_shutdown_failed', reasonCode: 'operation_failed' });
+        clearInterval(keepAlive);
+        process.exit(1);
       });
   });

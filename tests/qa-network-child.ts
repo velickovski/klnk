@@ -1,3 +1,4 @@
+import { guardedPostgresFixture } from './support/postgres-fixture.js';
 import './network-egress-guard.js';
 import { readFile } from 'node:fs/promises';
 import { Database } from '../apps/server/src/db.js';
@@ -29,15 +30,7 @@ try {
     url: string;
     key: string;
   };
-  const url = new URL(privateConnection.url);
-  if (
-    url.protocol !== 'postgresql:' ||
-    url.hostname !== '127.0.0.1' ||
-    url.port !== '55432' ||
-    url.pathname !== '/klnk_qa' ||
-    !/^[a-f0-9]{64}$/i.test(privateConnection.key)
-  )
-    throw new Error('unsafe_fixture');
+  const { url } = guardedPostgresFixture(privateConnection);
   url.searchParams.set('options', `-c search_path=${input.schema}`);
   url.searchParams.set('application_name', `network_child_${input.schema}`);
   db = await new Database({

@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it, vi } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
@@ -41,7 +42,7 @@ const credentials = {
 
 describe('independent DATA-01 / VOICE-04 account-runtime adversaries', () => {
   it('rechecks a no-ID Live receipt inserted after deletion preflight before tombstoning', async () => {
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     const store = new LiveSessionStore(db);
     const service = await createApp({
       db,
@@ -102,7 +103,7 @@ describe('independent DATA-01 / VOICE-04 account-runtime adversaries', () => {
   });
 
   it('recovers the same unknown 5xx start after logout, reauthentication and broker reconstruction without another dispatch', async () => {
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     const fetcher = vi
       .fn<typeof fetch>()
       .mockResolvedValue(new Response('fictional-private-provider-body', { status: 503 }));

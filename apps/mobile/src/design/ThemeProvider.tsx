@@ -30,12 +30,18 @@ export function ThemeProvider({
     [highContrast, setHighContrast] = useState(false);
   useEffect(() => {
     let alive = true;
-    AccessibilityInfo.isReduceMotionEnabled().then((v) => {
-      if (alive) setReducedMotion(v);
-    });
-    AccessibilityInfo.isReduceTransparencyEnabled?.().then((v) => {
-      if (alive) setReducedTransparency(v);
-    });
+    AccessibilityInfo.isReduceMotionEnabled().then(
+      (v) => {
+        if (alive) setReducedMotion(v);
+      },
+      () => {},
+    );
+    AccessibilityInfo.isReduceTransparencyEnabled?.().then(
+      (v) => {
+        if (alive) setReducedTransparency(v);
+      },
+      () => {},
+    );
     const motion = AccessibilityInfo.addEventListener('reduceMotionChanged', setReducedMotion),
       transparency = AccessibilityInfo.addEventListener(
         'reduceTransparencyChanged',

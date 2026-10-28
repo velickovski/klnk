@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -79,7 +80,7 @@ afterEach(async () => {
   }
 });
 async function fixture() {
-  const db = await new Database({ dataDir: 'memory://' }).open(),
+  const db = await openTestDatabase({ dataDir: 'memory://' }),
     bodies: any[] = [],
     sockets: Socket[] = [];
   const service = await createApp({

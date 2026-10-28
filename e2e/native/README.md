@@ -20,14 +20,14 @@ Automate one opening action, workspace recovery, typed request/authorization/res
 
 Run every row with VoiceOver, Voice Control (both Show Names and Show Numbers), Switch Control and Full Keyboard Access. Record pass/fail/blocked per cell and artifact rather than one blanket accessibility claim.
 
-| Common task | Required observable result | Current result |
-| --- | --- | --- |
-| Opening and capture denial | Call klnk is the sole opening action; no incidental capture; readable recovery reaches the typed workspace | Blocked on exact native artifact/device |
-| Typed delegation and review | Whole request completes without hearing/speech; recipient, policy, authorization, simulation and evidence remain distinguishable | Blocked |
-| People and Memory | CRUD, validation, search, private disclosure/provenance, save failure and Save/Discard/Stay remain operable | Blocked |
-| Settings and identity | Retained drafts, origin/session changes, export and deletion state remain understandable | Blocked |
-| Modal navigation | Escape/dismissal on every exit path restores trigger or logical focus; background is unavailable while modal | Blocked |
-| Playback and live controls | Stop playback, finish capture, end Live and cancel outbound request have distinct meanings and accurate announcements | Blocked |
+| Common task                 | Required observable result                                                                                                       | Current result                          |
+| --------------------------- | -------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| Opening and capture denial  | Call klnk is the sole opening action; no incidental capture; readable recovery reaches the typed workspace                       | Blocked on exact native artifact/device |
+| Typed delegation and review | Whole request completes without hearing/speech; recipient, policy, authorization, simulation and evidence remain distinguishable | Blocked                                 |
+| People and Memory           | CRUD, validation, search, private disclosure/provenance, save failure and Save/Discard/Stay remain operable                      | Blocked                                 |
+| Settings and identity       | Retained drafts, origin/session changes, export and deletion state remain understandable                                         | Blocked                                 |
+| Modal navigation            | Escape/dismissal on every exit path restores trigger or logical focus; background is unavailable while modal                     | Blocked                                 |
+| Playback and live controls  | Stop playback, finish capture, end Live and cancel outbound request have distinct meanings and accurate announcements            | Blocked                                 |
 
 Repeat at every accessibility text-size category, Bold Text, Increase Contrast, Reduce Motion, Reduce Transparency, portrait safe areas, software keyboard and supported hardware keyboard. Verify at least 44×44 pt effective targets, disjoint hit regions and no clipped authorization or primary action. Simulator can inspect UI/permissions; physical hardware must establish actual input and accessibility behavior.
 

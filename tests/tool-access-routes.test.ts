@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
 import { Database } from '../apps/server/src/db.js';
@@ -10,7 +11,7 @@ afterEach(async () => {
   }
 });
 async function fixture(prepare?: (app: Awaited<ReturnType<typeof createApp>>['app']) => void) {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   const s = await createApp({
     db,
     worker: false,

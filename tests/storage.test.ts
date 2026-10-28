@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -99,8 +100,8 @@ describe('durable PostgreSQL development storage', () => {
   );
   it('restores encrypted state without reviving sessions, deleted-owner data or stale controller authority', async () => {
     const key = 'a1'.repeat(32);
-    const source = await new Database({ dataDir: 'memory://', key }).open();
-    const target = await new Database({ dataDir: 'memory://', key }).open();
+    const source = await openTestDatabase({ dataDir: 'memory://', key });
+    const target = await openTestDatabase({ dataDir: 'memory://', key });
     try {
       const a = await newUser(source, 'restore-a@example.invalid', 'A fictional restore password');
       const b = await newUser(source, 'restore-b@example.invalid', 'A fictional restore password');
@@ -154,8 +155,8 @@ describe('durable PostgreSQL development storage', () => {
     }
   });
   it('rejects a restore with another key before any application state is written', async () => {
-    const source = await new Database({ dataDir: 'memory://', key: 'b2'.repeat(32) }).open();
-    const target = await new Database({ dataDir: 'memory://', key: 'c3'.repeat(32) }).open();
+    const source = await openTestDatabase({ dataDir: 'memory://', key: 'b2'.repeat(32) });
+    const target = await openTestDatabase({ dataDir: 'memory://', key: 'c3'.repeat(32) });
     try {
       const backup = await source.createBackup();
       await expect(target.restoreBackup(backup, { deletedOwnerIds: [] })).rejects.toThrow(

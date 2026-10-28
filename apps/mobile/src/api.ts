@@ -135,7 +135,7 @@ export type LiveReadiness = {
 };
 export type Health = {
   status: string;
-  mode: string;
+  mode?: string;
   storage?: string;
   liveCallsEnabled?: boolean;
   liveReadiness?: LiveReadiness;
@@ -266,6 +266,7 @@ export async function api<T = any>(path: string, method = 'GET', body?: unknown)
   try {
     const response = await fetch(`${address}${path}`, {
       method,
+      credentials: 'include',
       signal: controller.signal,
       headers: {
         'Content-Type': 'application/json',

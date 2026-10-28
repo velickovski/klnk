@@ -54,11 +54,27 @@ export const AttemptStatusSchema = z.enum([
 
 export const ProfileSchema = z.object({
   id: z.string(),
-  name: z.string().min(1),
+  name: z
+    .string()
+    .trim()
+    .min(1)
+    .max(80)
+    .regex(
+      /^[\p{L}\p{M}\p{N} .’'\-]+$/u,
+      'Use letters, numbers, spaces, apostrophes, periods or hyphens.',
+    ),
   language: z.string().default('en'),
   timezone: z.string().default('America/New_York'),
-  tone: z.string().default('Warm, clear, and concise'),
-  pronunciation: z.string().default(''),
+  tone: z
+    .string()
+    .max(240)
+    .regex(/^[^\p{Cc}\p{Cf}<>`{}]*$/u, 'Remove control characters or markup.')
+    .default('Warm, clear, and concise'),
+  pronunciation: z
+    .string()
+    .max(120)
+    .regex(/^[^\p{Cc}\p{Cf}<>`{}]*$/u, 'Remove control characters or markup.')
+    .default(''),
   onboardingComplete: z.boolean().default(false),
 });
 export type Profile = z.infer<typeof ProfileSchema>;

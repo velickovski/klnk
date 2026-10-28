@@ -42,7 +42,7 @@ export const ReadinessSchema = z.object({
 });
 export const HealthSchema = z.object({
   status: z.literal('ok'),
-  mode: z.enum(['simulator', 'elevenlabs']),
+  mode: z.enum(['simulator', 'elevenlabs']).optional(),
   storage: z.string().optional(),
   liveCallsEnabled: z.boolean().optional(),
   liveReadiness: ReadinessSchema.optional(),
@@ -295,7 +295,7 @@ export function validateApiPayload(path: string, method: string, payload: unknow
       z.object({
         accepted: z.literal(true),
         applied: z.boolean(),
-        mode: text,
+        mode: text.optional(),
         message: z.string(),
       }),
     ]);

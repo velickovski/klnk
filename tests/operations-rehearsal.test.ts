@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomBytes, randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Database } from '../apps/server/src/db.js';
@@ -47,7 +48,7 @@ describe('operator restore boundaries', () => {
     expect(() => guardedLocalConnection(null)).toThrow();
   });
   it('exports only account tombstones since the authenticated backup time without email, resources or credentials', async () => {
-    db = await new Database({ dataDir: 'memory://' }).open();
+    db = await openTestDatabase({ dataDir: 'memory://' });
     const active = randomUUID(),
       before = randomUUID(),
       after = randomUUID();

@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -47,7 +48,7 @@ async function until(check: () => Promise<boolean> | boolean) {
   }
 }
 async function fixture() {
-  const db = await new Database({ dataDir: 'memory://' }).open(),
+  const db = await openTestDatabase({ dataDir: 'memory://' }),
     bodies: any[] = [],
     sockets: Socket[] = [];
   const s = await createApp({

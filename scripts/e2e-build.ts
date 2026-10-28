@@ -11,6 +11,7 @@ const child = spawn(
       ...process.env,
       EXPO_PUBLIC_API_URL: 'http://127.0.0.1:4102',
       EXPO_PUBLIC_ALLOW_LOCAL_HTTP: 'true',
+      EXPO_PUBLIC_LEGACY_ENABLED: 'true',
     },
   },
 );

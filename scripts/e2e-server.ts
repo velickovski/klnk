@@ -1,4 +1,9 @@
-import { createServer, type IncomingHttpHeaders } from 'node:http';
+import {
+  createServer,
+  type IncomingHttpHeaders,
+  type IncomingMessage,
+  type ServerResponse,
+} from 'node:http';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve, sep, extname } from 'node:path';
@@ -17,6 +22,7 @@ const service = await createApp({
     ...getConfig(),
     production: false,
     demoEnabled: true,
+    legacyEnabled: true,
     port: 4102,
     host: '127.0.0.1',
     provider: 'simulator',
@@ -40,10 +46,11 @@ const service = await createApp({
   },
 });
 await service.app.ready();
-const api = createServer(async (req, res) => {
+const api = createAsyncServer(async (req, res) => {
   // Test-only proxy splits abuse-limit buckets by scenario. Production handlers
   // and their rate limits are unchanged; Live routes retain the loopback guard.
   res.setHeader('Access-Control-Allow-Origin', 'http://127.0.0.1:8083');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   if (req.method === 'OPTIONS') {
     res.writeHead(204, {
       'Access-Control-Allow-Methods': 'GET,POST,PUT,PATCH,DELETE,OPTIONS',
@@ -86,7 +93,7 @@ const mime: Record<string, string> = {
   '.ttf': 'font/ttf',
   '.ico': 'image/x-icon',
 };
-const web = createServer(async (req, res) => {
+const web = createAsyncServer(async (req, res) => {
   if (req.url === '/__e2e/ready') {
     res.writeHead(200);
     res.end('isolated-simulator-fixture');
@@ -129,3 +136,14 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const)
   process.once(signal, () => {
     void close().finally(() => process.exit(0));
   });
+
+function createAsyncServer(
+  handler: (request: IncomingMessage, response: ServerResponse) => Promise<void>,
+) {
+  return createServer((request, response) => {
+    void handler(request, response).catch(() => {
+      if (!response.headersSent) response.writeHead(500);
+      response.end();
+    });
+  });
+}

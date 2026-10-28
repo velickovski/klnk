@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { LiveSessionStore } from '../apps/server/src/live-session-store.js';
 import { EventEmitter } from 'node:events';
@@ -64,7 +65,7 @@ function harness(options: { response?: Response; key?: string } = {}) {
 describe('OpenAI Live session contract and authority', () => {
   const instances: OpenAILive[] = [];
   beforeAll(async () => {
-    brokerDb = await new Database({ dataDir: 'memory://' }).open();
+    brokerDb = await openTestDatabase({ dataDir: 'memory://' });
     await brokerDb.query(
       "INSERT INTO users(id,email,password_hash) VALUES('alice','alice@example.invalid','fictional'),('bob','bob@example.invalid','fictional')",
     );
@@ -387,14 +388,12 @@ describe('OpenAI Live session contract and authority', () => {
     });
   });
   it('enforces daily and concurrent owner quotas before provider access', async () => {
-    const fetcher = vi
-      .fn<typeof fetch>()
-      .mockImplementation(
-        async () =>
-          new Response(JSON.stringify({ ...answer, session: { id: randomUUID() } }), {
-            status: 201,
-          }),
-      );
+    const fetcher = vi.fn<typeof fetch>().mockImplementation(
+      async () =>
+        new Response(JSON.stringify({ ...answer, session: { id: randomUUID() } }), {
+          status: 201,
+        }),
+    );
     const sockets: FakeSocket[] = [],
       live = new OpenAILive(config(), {
         store: new LiveSessionStore(brokerDb, {
@@ -521,7 +520,7 @@ describe('local voice demo HTTP boundary', () => {
   const fetcher = vi.fn<typeof fetch>();
   const localHeaders = { host: 'localhost:4000', origin: 'http://localhost:4000' };
   beforeAll(async () => {
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     service = await createApp({
       db,
       config: { ...config(), openaiKey: undefined },
@@ -705,7 +704,7 @@ describe('local voice demo HTTP boundary', () => {
       });
     });
     const sockets: FakeSocket[] = [];
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     const local = await createApp({
       db,
       config: config(),

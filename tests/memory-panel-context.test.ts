@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import type { Memory } from '@personal-agent/domain';
 import { createApp } from '../apps/server/src/app.js';
@@ -10,7 +11,7 @@ describe('MEMORY-01 actual API context and authorization fixtures', () => {
   let contactIds: string[];
   const headers = (token: string) => ({ authorization: `Bearer ${token}` });
   beforeAll(async () => {
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     service = await createApp({
       db,
       worker: false,

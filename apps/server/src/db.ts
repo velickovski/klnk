@@ -73,6 +73,9 @@ const backupColumns = {
     'payload',
     'created_at',
     'updated_at',
+    'failure_attempts',
+    'next_attempt_at',
+    'dead_lettered_at',
   ],
 } as const;
 export class Database implements SQL {
@@ -81,7 +84,13 @@ export class Database implements SQL {
   private key!: Buffer;
   private queue = Promise.resolve();
   constructor(
-    private options: { url?: string; dataDir?: string; key?: string; production?: boolean } = {},
+    private options: {
+      url?: string;
+      dataDir?: string;
+      key?: string;
+      production?: boolean;
+      embeddedTemplate?: Blob;
+    } = {},
   ) {}
   async open() {
     const dir = this.options.dataDir ?? resolve('.data');
@@ -109,7 +118,13 @@ export class Database implements SQL {
       );
     if (!this.options.url && dir !== 'memory://') await mkdir(dir, { recursive: true });
     if (this.options.url) this.pool = new pg.Pool({ connectionString: this.options.url, max: 8 });
-    else this.embedded = new PGlite(dir === 'memory://' ? undefined : resolve(dir, 'postgres'));
+    else {
+      if (this.options.embeddedTemplate && dir !== 'memory://')
+        throw new Error('Embedded templates require an isolated memory database.');
+      this.embedded = this.options.embeddedTemplate
+        ? new PGlite({ loadDataDir: this.options.embeddedTemplate })
+        : new PGlite(dir === 'memory://' ? undefined : resolve(dir, 'postgres'));
+    }
     try {
       await this.migrate();
     } catch (error) {
@@ -117,6 +132,12 @@ export class Database implements SQL {
       throw error;
     }
     return this;
+  }
+  /** Explicit test fixture snapshot; never exports server-Postgres or on-disk user data. */
+  async dumpEmbeddedTemplate() {
+    if (!this.embedded || this.options.dataDir !== 'memory://')
+      throw new Error('Only isolated in-memory databases can be used as templates.');
+    return this.embedded.dumpDataDir();
   }
   private async migrate() {
     const migrationDir = new URL('../migrations/', import.meta.url);
@@ -240,10 +261,14 @@ export class Database implements SQL {
   }
   /** Domain-separated internal identifiers; never expose the encryption key. */
   keyedDigest(
-    purpose: 'recipient-suppression' | 'tool-arguments' | 'mission-submission',
+    purpose: 'recipient-suppression' | 'tool-arguments' | 'mission-submission' | 'rate-limit',
     value: string,
   ): string {
-    if (!['recipient-suppression', 'tool-arguments', 'mission-submission'].includes(purpose))
+    if (
+      !['recipient-suppression', 'tool-arguments', 'mission-submission', 'rate-limit'].includes(
+        purpose,
+      )
+    )
       throw new Error('Unknown keyed identifier purpose.');
     return createHmac('sha256', this.key).update(`${purpose}\0${value}`).digest('hex');
   }

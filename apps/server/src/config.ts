@@ -1,43 +1,169 @@
 import 'dotenv/config';
-export type Config = Omit<
-  ReturnType<typeof getConfig>,
-  'googleClientId' | 'googleClientSecret' | 'googleRedirectUri'
-> & { googleClientId?: string; googleClientSecret?: string; googleRedirectUri?: string };
-export function getConfig() {
-  const production = process.env.NODE_ENV === 'production';
+import { z } from 'zod';
+import { isIP } from 'node:net';
+const optional = z
+  .string()
+  .trim()
+  .transform((value) => value || undefined)
+  .optional();
+const boolean = (fallback: 'true' | 'false') =>
+  z
+    .enum(['true', 'false'])
+    .default(fallback)
+    .transform((value) => value === 'true');
+const environment = z.object({
+  NODE_ENV: z.enum(['production', 'development', 'test']).default('production'),
+  PORT: z.coerce.number().int().min(1).max(65535).default(4000),
+  HOST: z.string().min(1).default('127.0.0.1'),
+  DATABASE_URL: optional,
+  DATA_DIR: z.string().min(1).default('.data'),
+  DATA_ENCRYPTION_KEY: optional,
+  DEMO_ENABLED: boolean('true'),
+  LEGACY_ENABLED: boolean('false'),
+  OPENAI_API_KEY: optional,
+  CALL_PROVIDER: z.enum(['simulator', 'elevenlabs']).default('simulator'),
+  LIVE_CALLS_ENABLED: boolean('false'),
+  LIVE_OWNER_ID: optional,
+  PUBLIC_API_URL: optional,
+  LIVE_TEST_RECIPIENTS: z.string().default(''),
+  APP_ORIGINS: z.string().default('http://localhost:8081,http://localhost:8082'),
+  EMBEDDED_WORKER: boolean('true'),
+  ELEVENLABS_API_KEY: optional,
+  ELEVENLABS_AGENT_ID: optional,
+  ELEVENLABS_PHONE_NUMBER_ID: optional,
+  ELEVENLABS_WEBHOOK_SECRET: optional,
+  TWILIO_ACCOUNT_SID: optional,
+  TWILIO_AUTH_TOKEN: optional,
+  ELEVENLABS_STANDARD_VOICE_ID: optional,
+  PROVIDER_RETENTION_VERIFIED: boolean('false'),
+  ELEVENLABS_LLM_PROVIDER: optional,
+  PROVIDER_RETENTION_DISCLOSURE: optional,
+  ELEVENLABS_OWNER_AGENT_ID: optional,
+  GOOGLE_CLIENT_ID: optional,
+  GOOGLE_CLIENT_SECRET: optional,
+  GOOGLE_REDIRECT_URI: optional,
+  TRUST_PROXY: z.string().default('false'),
+  OPERATOR_TOKEN: optional,
+});
+function proxy(value: string): false | string[] {
+  if (value === 'false') return false;
+  const ranges = value.split(',').map((part) => part.trim());
+  if (
+    !ranges.length ||
+    ranges.some((part) => {
+      const [address, prefix, ...extra] = part.split('/');
+      const version = isIP(address);
+      return (
+        !version ||
+        extra.length > 0 ||
+        (prefix !== undefined &&
+          (!/^\d+$/.test(prefix) || Number(prefix) > (version === 4 ? 32 : 128)))
+      );
+    })
+  )
+    throw new Error('TRUST_PROXY must be false or explicit trusted proxy IP/CIDR addresses.');
+  return ranges;
+}
+/** Missing NODE_ENV deliberately means production. Never print environment values. */
+export function getConfig(raw: NodeJS.ProcessEnv = process.env) {
+  const parsed = environment.safeParse(raw);
+  if (!parsed.success)
+    throw new Error(
+      `Invalid configuration fields: ${parsed.error.issues.map((issue) => issue.path.join('.')).join(', ')}`,
+    );
+  const e = parsed.data,
+    production = e.NODE_ENV === 'production';
+  if (!isIP(e.HOST) && !/^(?=.{1,253}$)[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?$/.test(e.HOST))
+    throw new Error('HOST must be an IP address or hostname.');
+  for (const [field, value, originOnly] of [
+    ['PUBLIC_API_URL', e.PUBLIC_API_URL, true],
+    ['GOOGLE_REDIRECT_URI', e.GOOGLE_REDIRECT_URI, false],
+  ] as const) {
+    if (!value) continue;
+    let url: URL;
+    try {
+      url = new URL(value);
+    } catch {
+      throw new Error(`${field} must be a valid URL.`);
+    }
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.username ||
+      url.password ||
+      url.hash ||
+      (production && url.protocol !== 'https:') ||
+      (originOnly && (url.pathname !== '/' || url.search))
+    )
+      throw new Error(`${field} must be a valid HTTP URL and use HTTPS in production.`);
+  }
+  if (production && (!e.DATABASE_URL || !/^[a-f0-9]{64}$/i.test(e.DATA_ENCRYPTION_KEY ?? '')))
+    throw new Error('Production requires DATABASE_URL and a valid DATA_ENCRYPTION_KEY.');
+  if (e.DATABASE_URL && !/^postgres(?:ql)?:\/\//.test(e.DATABASE_URL))
+    throw new Error('DATABASE_URL must use PostgreSQL.');
+  if (e.DATA_ENCRYPTION_KEY && !/^[a-f0-9]{64}$/i.test(e.DATA_ENCRYPTION_KEY))
+    throw new Error('DATA_ENCRYPTION_KEY must be 32 bytes in hex.');
+  const origins = e.APP_ORIGINS.split(',')
+    .map((value) => value.trim())
+    .filter(Boolean);
+  for (const origin of origins) {
+    let url: URL;
+    try {
+      url = new URL(origin);
+    } catch {
+      throw new Error('APP_ORIGINS must contain valid origins.');
+    }
+    if (
+      !['http:', 'https:'].includes(url.protocol) ||
+      url.origin !== origin ||
+      (production && url.protocol !== 'https:')
+    )
+      throw new Error('APP_ORIGINS must contain exact HTTPS origins in production.');
+  }
+  if (production && e.OPERATOR_TOKEN && e.OPERATOR_TOKEN.length < 32)
+    throw new Error('OPERATOR_TOKEN must contain at least 32 characters.');
   return {
     production,
-    port: Number(process.env.PORT ?? 4000),
-    host: process.env.HOST ?? '127.0.0.1',
-    databaseUrl: process.env.DATABASE_URL,
-    dataDir: process.env.DATA_DIR ?? '.data',
-    key: process.env.DATA_ENCRYPTION_KEY,
-    demoEnabled: !production && process.env.DEMO_ENABLED !== 'false',
-    openaiKey: process.env.OPENAI_API_KEY,
-    provider:
-      process.env.CALL_PROVIDER === 'elevenlabs' ? ('elevenlabs' as const) : ('simulator' as const),
-    liveEnabled: process.env.LIVE_CALLS_ENABLED === 'true',
-    liveOwnerId: process.env.LIVE_OWNER_ID,
-    publicBaseUrl: process.env.PUBLIC_API_URL,
-    recipients: (process.env.LIVE_TEST_RECIPIENTS ?? '')
-      .split(',')
-      .map((x) => x.trim())
+    port: e.PORT,
+    host: e.HOST,
+    databaseUrl: e.DATABASE_URL,
+    dataDir: e.DATA_DIR,
+    key: e.DATA_ENCRYPTION_KEY,
+    demoEnabled: !production && e.DEMO_ENABLED,
+    legacyEnabled: e.LEGACY_ENABLED,
+    trustProxy: proxy(e.TRUST_PROXY),
+    operatorToken: e.OPERATOR_TOKEN,
+    openaiKey: e.OPENAI_API_KEY,
+    provider: e.CALL_PROVIDER,
+    liveEnabled: e.LIVE_CALLS_ENABLED,
+    liveOwnerId: e.LIVE_OWNER_ID,
+    publicBaseUrl: e.PUBLIC_API_URL,
+    recipients: e.LIVE_TEST_RECIPIENTS.split(',')
+      .map((value) => value.trim())
       .filter(Boolean),
-    origins: (process.env.APP_ORIGINS ?? 'http://localhost:8081,http://localhost:8082').split(','),
-    embeddedWorker: process.env.EMBEDDED_WORKER !== 'false',
-    elevenKey: process.env.ELEVENLABS_API_KEY,
-    agentId: process.env.ELEVENLABS_AGENT_ID,
-    phoneId: process.env.ELEVENLABS_PHONE_NUMBER_ID,
-    webhookSecret: process.env.ELEVENLABS_WEBHOOK_SECRET,
-    twilioSid: process.env.TWILIO_ACCOUNT_SID,
-    twilioToken: process.env.TWILIO_AUTH_TOKEN,
-    standardVoice: process.env.ELEVENLABS_STANDARD_VOICE_ID,
-    retentionVerified: process.env.PROVIDER_RETENTION_VERIFIED === 'true',
-    llmProvider: process.env.ELEVENLABS_LLM_PROVIDER,
-    retentionDisclosure: process.env.PROVIDER_RETENTION_DISCLOSURE,
-    ownerAgentId: process.env.ELEVENLABS_OWNER_AGENT_ID,
-    googleClientId: process.env.GOOGLE_CLIENT_ID,
-    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    googleRedirectUri: process.env.GOOGLE_REDIRECT_URI,
+    origins,
+    embeddedWorker: e.EMBEDDED_WORKER,
+    elevenKey: e.ELEVENLABS_API_KEY,
+    agentId: e.ELEVENLABS_AGENT_ID,
+    phoneId: e.ELEVENLABS_PHONE_NUMBER_ID,
+    webhookSecret: e.ELEVENLABS_WEBHOOK_SECRET,
+    twilioSid: e.TWILIO_ACCOUNT_SID,
+    twilioToken: e.TWILIO_AUTH_TOKEN,
+    standardVoice: e.ELEVENLABS_STANDARD_VOICE_ID,
+    retentionVerified: e.PROVIDER_RETENTION_VERIFIED,
+    llmProvider: e.ELEVENLABS_LLM_PROVIDER,
+    retentionDisclosure: e.PROVIDER_RETENTION_DISCLOSURE,
+    ownerAgentId: e.ELEVENLABS_OWNER_AGENT_ID,
+    googleClientId: e.GOOGLE_CLIENT_ID,
+    googleClientSecret: e.GOOGLE_CLIENT_SECRET,
+    googleRedirectUri: e.GOOGLE_REDIRECT_URI,
   };
 }
+type OptionalConfig =
+  | 'googleClientId'
+  | 'googleClientSecret'
+  | 'googleRedirectUri'
+  | 'trustProxy'
+  | 'operatorToken'
+  | 'legacyEnabled';
+export type Config = Omit<ReturnType<typeof getConfig>, OptionalConfig> &
+  Partial<Pick<ReturnType<typeof getConfig>, OptionalConfig>>;

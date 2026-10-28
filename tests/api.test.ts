@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { createHmac, randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
@@ -14,7 +15,7 @@ describe('authenticated owner API and signed provider-event boundary', () => {
   const headers = (token: string) => ({ authorization: `Bearer ${token}` });
 
   beforeAll(async () => {
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     service = await createApp({
       db,
       config: {

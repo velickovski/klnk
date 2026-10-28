@@ -94,18 +94,26 @@ test('AUTH-01 late owner A unauthorized response cannot sign owner B out', async
   const firstRequest = new Promise<void>((resolve) => {
     intercepted = resolve;
   });
+  let finished!: () => void;
+  const deliveryFinished = new Promise<void>((resolve) => {
+    finished = resolve;
+  });
   let held = false;
   await page.route(apiPath('/integrations'), async (route) => {
     if (held) return route.continue();
     held = true;
     intercepted();
     await delayed;
-    await route
-      .fulfill({
+    try {
+      await route.fulfill({
         status: 401,
         json: { error: 'unauthorized', message: 'Fictional old-owner expiry.' },
-      })
-      .catch(() => {});
+      });
+    } catch {
+      // An epoch change may have cancelled the old owner's request already.
+    } finally {
+      finished();
+    }
   });
   try {
     await enterSimulation(page);
@@ -114,14 +122,8 @@ test('AUTH-01 late owner A unauthorized response cannot sign owner B out', async
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
     await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
     await expect(page.getByRole('tab', { name: 'Home', exact: true })).toBeVisible();
-    const completed = page
-      .waitForResponse(
-        (response) => response.url() === apiPath('/integrations') && response.status() === 401,
-      )
-      .catch(() => null);
     release();
-    // A repaired epoch cancels the old fetch; the still-rendered tab is the authority.
-    await Promise.race([completed, page.waitForTimeout(300)]);
+    await deliveryFinished;
     await expect(page.getByRole('tab', { name: 'Home', exact: true })).toBeVisible();
     await page.getByRole('tab', { name: 'People', exact: true }).click();
     await expect(page.getByRole('button', { name: 'Add a person', exact: true })).toBeVisible();

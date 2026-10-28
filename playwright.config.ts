@@ -10,6 +10,9 @@ export default defineConfig({
   outputDir: '.data/e2e-results',
   reporter: [['list'], ['json', { outputFile: '.data/e2e-results/results.json' }]],
   use: {
+    ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE
+      ? { launchOptions: { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE } }
+      : {}),
     baseURL: 'http://127.0.0.1:8083',
     viewport: { width: 390, height: 844 },
     trace: 'off',

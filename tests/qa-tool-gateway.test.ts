@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Database } from '../apps/server/src/db.js';
@@ -44,7 +45,7 @@ afterEach(async () => {
   await Promise.all(databases.splice(0).map((db) => db.close()));
 });
 async function fixture(tools: ApplicationToolName[]) {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   databases.push(db);
   const user = await newUser(db, `${randomUUID()}@example.invalid`, 'Fictional QA tool password');
   const token = await createSession(db, user.id);

@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
 import { Database } from '../apps/server/src/db.js';
@@ -54,7 +55,7 @@ describe('DATA-01 delayed authenticated writers cannot resurrect deleted account
   it.each(['profile', 'contact'] as const)(
     'rejects a delayed %s save after account deletion',
     async (kind) => {
-      const db = await new Database({ dataDir: 'memory://' }).open();
+      const db = await openTestDatabase({ dataDir: 'memory://' });
       const service = await createApp({ db, config, worker: false });
       services.push(service);
       const entered = deferred(),
@@ -123,7 +124,7 @@ describe('DATA-01 delayed authenticated writers cannot resurrect deleted account
     },
   );
   it('Repository.put rejects tombstoned owners both standalone and inside an existing transaction', async () => {
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     const service = await createApp({ db, config, worker: false });
     services.push(service);
     const user = await newUser(

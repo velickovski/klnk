@@ -1,6 +1,11 @@
-import Fastify, { type FastifyRequest } from 'fastify';
+import Fastify, { type FastifyRequest, type FastifyBaseLogger } from 'fastify';
 import cors from '@fastify/cors';
-import rateLimit from '@fastify/rate-limit';
+import type {} from '@fastify/rate-limit';
+import { timingSafeEqual } from 'node:crypto';
+import { createRuntime } from './composition-root.js';
+import { logger } from './logging.js';
+import { consumeLimit, windowMilliseconds } from './request-limits.js';
+import { oauthCookie, readOAuthCookie } from './oauth-cookie.js';
 import { randomUUID } from 'node:crypto';
 import { z, ZodError } from 'zod';
 import {
@@ -80,34 +85,28 @@ export async function createApp(
       key: config.key,
       production: config.production,
     }).open());
-  const repo = new Repository(db),
-    engine = new Engine(db, config),
-    voice = new VoiceService(engine);
-  const google = new GoogleCalendarConnections(
-    db,
-    {
-      clientId: config.googleClientId,
-      clientSecret: config.googleClientSecret,
-      redirectUri: config.googleRedirectUri,
-      production: config.production,
-    },
-    options.googleDependencies,
-  );
-  const suppression = new RecipientSuppression(db);
-  engine.googleRevoke = (token) => google.cleanupToken(token);
-  engine.googleCalendarAccess = async (o, id) => {
-    const access = await google.access(o);
-    if (access.integrationId !== id)
-      throw new HttpError(
-        409,
-        'integration_mismatch',
-        'This action belongs to a different Calendar connection.',
-      );
-    return access;
-  };
-  const app = Fastify({ logger: false, bodyLimit: 256 * 1024, requestTimeout: 30000 });
-  const internalCalendar = new InternalCalendar(db),
-    network = new NetworkCoordinator(db, internalCalendar);
+  const {
+    repo,
+    engine,
+    voice,
+    google,
+    suppression,
+    liveSessions,
+    gateway,
+    internalCalendar,
+    network,
+  } = createRuntime(db, config, {
+    googleDependencies: options.googleDependencies,
+    liveSessions: options.openaiLiveDependencies?.store,
+    logger,
+  });
+  const app = Fastify({
+    loggerInstance: logger as FastifyBaseLogger,
+    disableRequestLogging: true,
+    trustProxy: config.trustProxy ?? false,
+    bodyLimit: 256 * 1024,
+    requestTimeout: 30000,
+  });
   const ownerIntents = new OwnerIntentService(db, network, {
     apiKey: config.openaiKey,
     ...options.networkIntentDependencies,
@@ -116,12 +115,20 @@ export async function createApp(
     origin: (origin, cb) => cb(null, !origin || config.origins.includes(origin)),
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
   });
-  await app.register(rateLimit, {
-    max: 100,
-    timeWindow: '1 minute',
-    keyGenerator: options.rateLimitKey ?? ((r) => r.ownerId ?? r.ip),
+  app.addHook('onRequest', async (req) => {
+    if (req.method === 'OPTIONS' || ['/health', '/livez', '/ready'].includes(req.url.split('?')[0]))
+      return;
+    const identity = options.rateLimitKey?.(req) ?? req.ip;
+    await consumeLimit(
+      db,
+      (req.headers.authorization ? 'pre-auth:' : 'anonymous:') + identity,
+      req.headers.authorization ? 1000 : 100,
+      60000,
+    );
   });
+
   app.removeContentTypeParser('application/json');
   app.addContentTypeParser('application/json', { parseAs: 'string' }, (req, body, done) => {
     req.rawJson = body as string;
@@ -138,6 +145,15 @@ export async function createApp(
   });
   app.addHook('preHandler', async (req) => {
     if (
+      config.legacyEnabled === false &&
+      !/^\/voice\/live(?:\/|$)/.test(req.url.split('?')[0]) &&
+      req.url.split('?')[0] !== '/demo/status' &&
+      /^\/(?:missions|contacts|memories|voices|voice|calendar|webhooks|demo|integrations\/google-calendar)(?:\/|$)/.test(
+        req.url.split('?')[0],
+      )
+    )
+      throw new HttpError(404, 'not_found', 'This legacy feature is disabled.');
+    if (
       req.method === 'OPTIONS' ||
       ['/health', '/livez', '/ready', '/integrations/google-calendar/callback'].includes(
         req.url.split('?')[0],
@@ -148,17 +164,65 @@ export async function createApp(
     )
       return;
     req.ownerId = await ownerFromToken(db, req.headers.authorization);
-    if (!req.ownerId) throw new HttpError(401, 'unauthorized', 'Sign in to continue.');
+    if (!req.ownerId) {
+      if (req.headers.authorization)
+        await consumeLimit(
+          db,
+          'invalid-auth:' + (options.rateLimitKey?.(req) ?? req.ip),
+          100,
+          60000,
+        );
+      throw new HttpError(401, 'unauthorized', 'Sign in to continue.');
+    }
+  });
+  app.addHook('preHandler', async (req) => {
+    const path = req.url.split('?')[0];
+    if (req.method === 'OPTIONS' || ['/health', '/livez', '/ready'].includes(path)) return;
+    const identity =
+      options.rateLimitKey?.(req) ?? (req.ownerId ? 'owner:' + req.ownerId : 'ip:' + req.ip);
+    await consumeLimit(db, 'global:' + identity, 100, 60000);
+    const limit = req.routeOptions.config.rateLimit;
+    if (limit && typeof limit === 'object' && typeof limit.max === 'number')
+      await consumeLimit(
+        db,
+        'route:' + req.routeOptions.url + ':' + identity,
+        limit.max,
+        windowMilliseconds(
+          typeof limit.timeWindow === 'number' || typeof limit.timeWindow === 'string'
+            ? limit.timeWindow
+            : undefined,
+        ),
+      );
+    if (
+      path === '/auth/login' &&
+      req.body &&
+      typeof req.body === 'object' &&
+      'email' in req.body &&
+      typeof req.body.email === 'string'
+    )
+      await consumeLimit(
+        db,
+        'login:' + req.body.email.trim().toLowerCase(),
+        10,
+        15 * 60000,
+        30 * 60000,
+      );
+  });
+  app.addHook('onResponse', async (req, reply) => {
+    app.log.info({
+      event: 'request_complete',
+      requestId: req.id,
+      route: req.routeOptions.url,
+      statusCode: reply.statusCode,
+    });
   });
   app.setErrorHandler((error, req, reply) => {
     if (error instanceof ZodError)
-      return reply
-        .status(400)
-        .send({
-          error: 'invalid_input',
-          message: 'Please check your entries.',
-          fields: error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
-        });
+      return reply.status(400).send({
+        error: 'invalid_input',
+        message: 'Please check your entries.',
+        fields: error.issues.map((i) => ({ path: i.path.join('.'), message: i.message })),
+      });
     if (error instanceof PolicyError)
       return reply.status(409).send({ error: error.code, message: error.message });
     if (error instanceof HttpError)
@@ -166,23 +230,17 @@ export async function createApp(
     if ((error as any).code === '23505')
       return reply.status(409).send({ error: 'conflict', message: 'That record already exists.' });
     const code = (error as any).statusCode;
-    return reply
-      .status(code && code >= 400 && code < 500 ? code : 500)
-      .send({
-        error: 'request_failed',
-        message:
-          code === 429
-            ? 'Too many requests. Please try again shortly.'
-            : 'The request could not be completed. No success has been assumed.',
-      });
+    if (!code || code >= 500)
+      req.log.error({ event: 'request_failed', requestId: req.id, reasonCode: 'operation_failed' });
+    return reply.status(code && code >= 400 && code < 500 ? code : 500).send({
+      error: 'request_failed',
+      message:
+        code === 429
+          ? 'Too many requests. Please try again shortly.'
+          : 'The request could not be completed. No success has been assumed.',
+    });
   });
-  app.get('/health', async () => ({
-    status: 'ok',
-    mode: config.provider,
-    storage: config.databaseUrl ? 'postgresql' : 'pglite',
-    liveCallsEnabled: config.liveEnabled,
-    liveReadiness: localReadiness(config),
-  }));
+  app.get('/health', async () => ({ status: 'ok' }));
   app.get('/livez', async () => ({ status: 'ok' }));
   registerNetworkRoutes(app, network, internalCalendar, db, ownerIntents);
   app.get('/ready', async (_request, reply) => {
@@ -190,14 +248,15 @@ export async function createApp(
     return reply
       .code(readiness.ready ? 200 : 503)
       .header('Cache-Control', 'no-store')
-      .send(readiness);
+      .send(
+        operatorAuthorized(_request.headers.authorization, config.operatorToken)
+          ? readiness
+          : { ready: readiness.ready },
+      );
   });
-  const liveSessions = options.openaiLiveDependencies?.store ?? new LiveSessionStore(db);
-  const gateway = new ApplicationToolGateway(engine, liveSessions, {
-    externalEffectsEnabled: false,
-  });
+
   const networkVoiceTools = new NetworkVoiceTools(db, liveSessions, network, gateway);
-  engine.toolMaintenance = (now) => gateway.sweepRetention(now);
+
   // Local in-app delivery passed the protocol and independent gateway checks.
   // Public/native delivery and external effects remain separately gated.
   const toolRuntimeAvailable = () =>
@@ -272,7 +331,7 @@ export async function createApp(
     '/auth/register',
     { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } },
     async (req, reply) => {
-      const c = credentials.extend({ name: z.string().trim().min(1).max(80) }).parse(req.body);
+      const c = credentials.extend({ name: ProfileSchema.shape.name }).parse(req.body);
       const user = await newUser(db, c.email, c.password);
       await seedOwner(repo, user.id, c.name, false);
       return reply.status(201).send({ token: await createSession(db, user.id), user });
@@ -300,7 +359,8 @@ export async function createApp(
     '/auth/demo',
     { config: { rateLimit: { max: 8, timeWindow: '1 minute' } } },
     async (req, reply) => {
-      if (!config.demoEnabled) throw new HttpError(404, 'not_found', 'Demo accounts are disabled.');
+      if (config.production || !config.demoEnabled)
+        throw new HttpError(404, 'not_found', 'Demo accounts are disabled.');
       const user = await newUser(
         db,
         `demo-${randomUUID()}@example.invalid`,
@@ -368,16 +428,14 @@ export async function createApp(
     updatedAt: new Date().toISOString(),
   });
   app.get('/tools/access', async (req, reply) =>
-    reply
-      .header('Cache-Control', 'no-store')
-      .send({
-        grant: ToolAccessSchema.parse(
-          (await repo.get(owner(req), 'tool_access', `tool-access:${owner(req)}`)) ??
-            defaultToolAccess(owner(req)),
-        ),
-        runtimeAvailable: toolRuntimeAvailable(),
-        externalEffectsEnabled: false,
-      }),
+    reply.header('Cache-Control', 'no-store').send({
+      grant: ToolAccessSchema.parse(
+        (await repo.get(owner(req), 'tool_access', `tool-access:${owner(req)}`)) ??
+          defaultToolAccess(owner(req)),
+      ),
+      runtimeAvailable: toolRuntimeAvailable(),
+      externalEffectsEnabled: false,
+    }),
   );
   app.put('/tools/access', async (req, reply) => {
     const o = owner(req),
@@ -852,22 +910,28 @@ export async function createApp(
       'Verified customer-owned voice enrollment requires an approved provider account arrangement. Continue using the standard assistant.',
     );
   });
-  app.post('/integrations/google-calendar/connect', async (req, reply) =>
-    reply
+  app.post('/integrations/google-calendar/connect', async (req, reply) => {
+    const { browserBinding, ...publicResult } = await google.begin(
+      owner(req),
+      req.headers.authorization,
+    );
+    return reply
       .header('Cache-Control', 'no-store')
-      .send(await google.begin(owner(req), req.headers.authorization)),
-  );
+      .header('Set-Cookie', oauthCookie(browserBinding, config.production))
+      .send(publicResult);
+  });
   app.delete('/integrations/google-calendar/connect', async (req, reply) =>
     reply
       .header('Cache-Control', 'no-store')
       .send({ ok: true, connection: await google.cancel(owner(req)) }),
   );
-  app.get('/integrations/google-calendar/callback', async (req, reply) =>
+  app.get('/integrations/google-calendar/callback', async (req, reply) => {
     reply
       .header('Cache-Control', 'no-store')
       .header('Referrer-Policy', 'no-referrer')
-      .send(await google.callback(req.query)),
-  );
+      .header('Set-Cookie', oauthCookie('', config.production, true));
+    return reply.send(await google.callback(req.query, readOAuthCookie(req.headers.cookie)));
+  });
   app.get('/integrations/google-calendar', async (req, reply) =>
     reply.header('Cache-Control', 'no-store').send(await google.status(owner(req))),
   );
@@ -1068,4 +1132,11 @@ export async function createApp(
     network.start();
   }
   return { app, db, repo, engine, config, voice, openaiLive, gateway, network, internalCalendar };
+}
+
+function operatorAuthorized(header: string | undefined, token: string | undefined) {
+  if (!token || !header?.startsWith('Bearer ')) return false;
+  const a = Buffer.from(header.slice(7)),
+    b = Buffer.from(token);
+  return a.length === b.length && timingSafeEqual(a, b);
 }

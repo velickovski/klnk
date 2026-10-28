@@ -1,4 +1,4 @@
-import { createHash, randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID, timingSafeEqual } from 'node:crypto';
 import { z } from 'zod';
 import { Database, Repository, type SQL } from '../db.js';
 import { hashToken } from '../auth.js';
@@ -30,6 +30,7 @@ type State = {
   status: 'pending' | 'exchanging' | 'consumed' | 'denied' | 'cancelled' | 'failed';
   expiresAt: number;
   sessionHash?: string;
+  browserBindingHash?: string;
   verifier?: string;
   nonce?: string;
   reasonCode?: string;
@@ -103,8 +104,9 @@ const unavailable = (code = 'google_provider_unavailable') =>
 const stateId = (state: string) =>
   `google-oauth:${createHash('sha256').update(state).digest('hex')}`;
 
-/** Per-owner server authorization. Public methods never return credentials except
- * access(), which is restricted to the server adapter/authorized worker boundary. */
+/** Per-owner server authorization. access() is server-only. begin() also returns
+ * a browser binding solely for the trusted route to set as an HttpOnly cookie;
+ * that binding must be removed from the public authorization response. */
 export class GoogleCalendarConnections {
   private repo: Repository;
   private fetcher: typeof fetch;
@@ -173,7 +175,7 @@ export class GoogleCalendarConnections {
   async begin(
     owner: string,
     authorization?: string,
-  ): Promise<{ authorizationUrl: string; expiresAt: number }> {
+  ): Promise<{ authorizationUrl: string; expiresAt: number; browserBinding: string }> {
     if (!this.configured()) throw missing();
     if (!authorization?.startsWith('Bearer '))
       throw new HttpError(401, 'unauthorized', 'Sign in to continue.');
@@ -181,6 +183,9 @@ export class GoogleCalendarConnections {
       verifier = randomBytes(32).toString('base64url'),
       nonce = randomBytes(32).toString('base64url');
     const expiresAt = Date.now() + 10 * 60000;
+    // This nonce is returned only to the trusted route, which sets an HttpOnly
+    // cookie and removes it from the public JSON. It never enters the Google URL.
+    const browserBinding = randomBytes(32).toString('base64url');
     await this.db.transaction(async (sql) => {
       await this.owner(sql, owner);
       await this.session(sql, owner, hashToken(authorization.slice(7)));
@@ -230,6 +235,7 @@ export class GoogleCalendarConnections {
         status: 'pending',
         expiresAt,
         sessionHash: hashToken(authorization.slice(7)),
+        browserBindingHash: hashToken(browserBinding),
         verifier,
         nonce,
       } satisfies State);
@@ -247,7 +253,7 @@ export class GoogleCalendarConnections {
       code_challenge_method: 'S256',
       code_challenge: createHash('sha256').update(verifier).digest('base64url'),
     }).toString();
-    return { authorizationUrl: url.toString(), expiresAt };
+    return { authorizationUrl: url.toString(), expiresAt, browserBinding };
   }
   async cancel(owner: string) {
     await this.db.transaction(async (sql) => {
@@ -362,7 +368,7 @@ export class GoogleCalendarConnections {
         'Google did not return a verified owner-calendar response. No connected state was assumed.',
       );
   }
-  async callback(raw: unknown): Promise<GoogleCalendarConnectionStatus> {
+  async callback(raw: unknown, browserBinding?: string): Promise<GoogleCalendarConnectionStatus> {
     if (!this.configured()) throw missing();
     const query = z
       .object({
@@ -411,6 +417,24 @@ export class GoogleCalendarConnections {
           'This authorization request is invalid or expired.',
         );
       await this.session(sql, current.ownerId, current.sessionHash);
+      // Check while the state is still pending. A forwarded consent URL must not
+      // attach the victim's Google account to the initiator's klnk account, and a
+      // failed check must not consume the legitimate initiator's pending flow.
+      if (
+        !browserBinding ||
+        !/^[A-Za-z0-9_-]{43}$/.test(browserBinding) ||
+        !current.browserBindingHash ||
+        !/^[a-f0-9]{64}$/.test(current.browserBindingHash) ||
+        !timingSafeEqual(
+          Buffer.from(hashToken(browserBinding), 'hex'),
+          Buffer.from(current.browserBindingHash, 'hex'),
+        )
+      )
+        throw new HttpError(
+          400,
+          'oauth_browser_mismatch',
+          'Complete Calendar authorization in the browser that started it. Start again if needed.',
+        );
       await repo.put(current.ownerId, 'integration', {
         ...current,
         status: query.error ? 'denied' : 'exchanging',
@@ -882,9 +906,7 @@ export class GoogleCalendarConnections {
       throw unavailable();
     }
   }
-  async access(
-    owner: string,
-  ): Promise<{
+  async access(owner: string): Promise<{
     accessToken: string;
     calendarId: 'primary';
     integrationId: string;

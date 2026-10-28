@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { createHmac, randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
@@ -29,7 +30,7 @@ async function fixture(enabled = true) {
     throw new Error('Network forbidden in a live-adapter test');
   });
   vi.stubGlobal('fetch', unexpectedNetwork);
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   const config = {
     ...getConfig(),
     production: false,

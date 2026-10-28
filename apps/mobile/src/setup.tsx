@@ -192,13 +192,12 @@ export function ConnectionPanel({ compact = false }: { compact?: boolean }) {
           {health ? (
             <>
               <Text style={styles.small}>
-                Backend: {health.mode === 'simulator' ? 'simulator' : 'ElevenLabs'} ·{' '}
-                {health.storage ?? 'storage available'}
+                Backend connected · {health.storage ?? 'storage available'}
               </Text>
               <CallingReadiness
                 readiness={health.liveReadiness}
                 liveCallsEnabled={health.liveCallsEnabled}
-                mode={health.mode}
+                mode={health.mode ?? 'unavailable'}
               />
             </>
           ) : null}

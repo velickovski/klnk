@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { Database } from '../apps/server/src/db.js';
@@ -8,7 +9,7 @@ import { LiveSessionStore } from '../apps/server/src/live-session-store.js';
 import { ApplicationToolGateway } from '../apps/server/src/integrations/gateway.js';
 
 it('TOOL-02 hostile contact text and model tenant arguments cannot change tool authority or trace content', async () => {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   try {
     const owner = await newUser(
       db,

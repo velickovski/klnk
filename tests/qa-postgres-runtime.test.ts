@@ -1,3 +1,4 @@
+import { guardedPostgresFixture } from './support/postgres-fixture.js';
 import { fork, type ChildProcess } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -71,15 +72,7 @@ describe.skipIf(!connectionFile)('opt-in isolated PostgreSQL multiprocess QA', (
     children = new Set<ChildProcess>();
   beforeAll(async () => {
     privateConnection = JSON.parse(await readFile(resolve(connectionFile!), 'utf8'));
-    const url = new URL(privateConnection.url);
-    if (
-      url.protocol !== 'postgresql:' ||
-      url.hostname !== '127.0.0.1' ||
-      url.port !== '55432' ||
-      url.pathname !== '/klnk_qa' ||
-      !/^[a-f0-9]{64}$/i.test(privateConnection.key)
-    )
-      throw new Error('PostgreSQL QA requires the guarded local disposable fixture.');
+    guardedPostgresFixture(privateConnection);
     admin = new pg.Pool({ connectionString: privateConnection.url, max: 4 });
   });
   afterAll(async () => {
@@ -126,7 +119,7 @@ describe.skipIf(!connectionFile)('opt-in isolated PostgreSQL multiprocess QA', (
       NODE_ENV: 'test',
       KLNK_POSTGRES_TEST_CONNECTION_FILE: resolve(connectionFile!),
     };
-    for (const key of ['PATH', 'SystemRoot', 'TEMP', 'TMP'])
+    for (const key of ['PATH', 'SystemRoot', 'TEMP', 'TMP', 'KLNK_TEST_POSTGRES_URL'])
       if (process.env[key]) env[key] = process.env[key]!;
     const child = fork(
       fileURLToPath(new URL('../scripts/qa-postgres-child.ts', import.meta.url)),
@@ -362,12 +355,10 @@ describe.skipIf(!connectionFile)('opt-in isolated PostgreSQL multiprocess QA', (
         await sql.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [account.user.id]);
         entered.resolve();
         await resume.promise;
-        return service.repo
-          .in(sql)
-          .put(account.user.id, 'memory', {
-            id: randomUUID(),
-            text: 'Fictional concurrent private write',
-          });
+        return service.repo.in(sql).put(account.user.id, 'memory', {
+          id: randomUUID(),
+          text: 'Fictional concurrent private write',
+        });
       });
       await entered.promise;
       const deleting = service.app

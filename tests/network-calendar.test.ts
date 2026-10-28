@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -30,7 +31,7 @@ describe('internal calendar authority and durable effects', () => {
     connection: NetworkConnection,
     conversation: NetworkConversation;
   beforeEach(async () => {
-    db = await new Database({ dataDir: 'memory://' }).open();
+    db = await openTestDatabase({ dataDir: 'memory://' });
     calendar = new InternalCalendar(db);
     store = new NetworkStore(db);
     [a, b, stranger] = [randomUUID(), randomUUID(), randomUUID()];

@@ -26,6 +26,7 @@ import {
   networkReceiptId,
 } from './policy.js';
 import { publishNetworkNotification, sweepNetworkRetention } from './preferences.js';
+import { workerLogger, type WorkerLogger } from '../worker-logging.js';
 
 type Task = {
   id: string;
@@ -75,12 +76,16 @@ export class NetworkCoordinator {
   private timer?: ReturnType<typeof setInterval>;
   private activeTicks = new Set<Promise<void>>();
   private stopping = false;
+  private running = false;
   private lastSweep = 0;
+  private readonly logger: WorkerLogger;
   constructor(
     private db: Database,
     private calendar: InternalCalendar,
+    runtime: { logger?: WorkerLogger } = {},
   ) {
     this.store = new NetworkStore(db);
+    this.logger = runtime.logger ?? workerLogger;
   }
   async identity(owner: string) {
     return this.db.transaction(async (sql) => {
@@ -666,27 +671,41 @@ export class NetworkCoordinator {
     });
   }
   async tick() {
-    if (this.stopping) return;
+    if (this.stopping || this.running) return;
+    this.running = true;
     const run = this.runTick();
     this.activeTicks.add(run);
     try {
       await run;
     } finally {
       this.activeTicks.delete(run);
+      this.running = false;
     }
   }
   private async runTick() {
     if (Date.now() - this.lastSweep > 3600000) {
       this.lastSweep = Date.now();
-      await sweepNetworkRetention(this.db);
+      try {
+        await sweepNetworkRetention(this.db);
+      } catch {
+        this.logger.error({
+          event: 'network_retention_sweep_failed',
+          reasonCode: 'operation_failed',
+        });
+      }
     }
     const tasks = await this.db.query(
-      "SELECT id,owner_a,owner_b FROM network_records WHERE kind='task' AND status IN ('queued','waiting') ORDER BY CASE WHEN status='queued' THEN 0 ELSE 1 END,updated_at,id LIMIT 20",
+      "SELECT id,owner_a,owner_b,failure_attempts FROM network_records WHERE kind='task' AND status IN ('queued','waiting') AND (next_attempt_at IS NULL OR next_attempt_at<=clock_timestamp()) ORDER BY CASE WHEN status='queued' THEN 0 ELSE 1 END,updated_at,id LIMIT 20",
     );
     for (const task of tasks) {
       try {
         await this.db.transaction(async (sql) => {
           await lockNetworkOwners(sql, [task.owner_a, task.owner_b]);
+          const [ready] = await sql.query(
+            "SELECT id FROM network_records WHERE id=$1 AND kind='task' AND status IN ('queued','waiting') AND (next_attempt_at IS NULL OR next_attempt_at<=clock_timestamp())",
+            [task.id],
+          );
+          if (!ready) return;
           const store = this.store.in(sql),
             current = await store.get<Task>('task', task.id);
           if (!current || !['queued', 'waiting'].includes(current.status)) return;
@@ -696,7 +715,9 @@ export class NetworkCoordinator {
               await this.authority(store, c);
               if (c.proposal && Date.parse(c.proposal.expiresAt) <= Date.now())
                 conflict('network_expired', 'This proposal has expired.');
-              await store.put({ ...current, status: 'waiting' });
+              // Waiting for an owner is not new work. Preserve the row and its
+              // timestamp until authority, expiry, or an owner decision changes.
+              if (current.status !== 'waiting') await store.put({ ...current, status: 'waiting' });
             } catch (error) {
               if (!(error instanceof HttpError)) throw error;
               this.finish(
@@ -744,8 +765,27 @@ export class NetworkCoordinator {
           );
         });
       } catch (error) {
-        if (!(error instanceof HttpError && error.code === 'member_unavailable'))
-          throw error; /* Deleted participants can never regain authority; account cleanup owns these records. */
+        // This update needs no payload decoding, so a corrupt encrypted task can
+        // be retried and quarantined without blocking later owners' requests.
+        const unavailable = error instanceof HttpError && error.code === 'member_unavailable';
+        const [failure] = await this.db.query(
+          `UPDATE network_records SET
+            failure_attempts=failure_attempts+1,
+            status=CASE WHEN $3::boolean THEN 'done' WHEN failure_attempts+1>=5 THEN 'dead_letter' ELSE status END,
+            next_attempt_at=CASE WHEN $3::boolean OR failure_attempts+1>=5 THEN NULL ELSE clock_timestamp()+LEAST(60000,1000*power(2,failure_attempts))::int*interval '1 millisecond' END,
+            dead_lettered_at=CASE WHEN NOT $3::boolean AND failure_attempts+1>=5 THEN clock_timestamp() ELSE dead_lettered_at END,
+            updated_at=clock_timestamp()
+          WHERE id=$1 AND kind='task' AND status IN ('queued','waiting') AND failure_attempts=$2 RETURNING status`,
+          [task.id, task.failure_attempts, unavailable],
+        );
+        if (failure)
+          this.logger.error({
+            event:
+              failure.status === 'dead_letter'
+                ? 'network_task_dead_lettered'
+                : 'network_task_retry_scheduled',
+            reasonCode: unavailable ? 'member_unavailable' : 'operation_failed',
+          });
       }
     }
   }
@@ -951,7 +991,10 @@ export class NetworkCoordinator {
     if (!this.timer) {
       this.timer = setInterval(() => {
         void this.tick().catch(() => {
-          /* Durable queued work retries without claiming success. */
+          this.logger.error({
+            event: 'network_worker_tick_failed',
+            reasonCode: 'operation_failed',
+          });
         });
       }, 1000);
       this.timer.unref();

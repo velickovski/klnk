@@ -10,7 +10,7 @@ import type { Config } from '../apps/server/src/config.js';
 import { LiveSessionStore } from '../apps/server/src/live-session-store.js';
 import { ApplicationToolGateway } from '../apps/server/src/integrations/gateway.js';
 import { GoogleCalendarConnections } from '../apps/server/src/integrations/google-calendar.js';
-import { guardedLocalConnection } from '../scripts/operations-rehearsal.js';
+import { guardedPostgresFixture } from './support/postgres-fixture.js';
 
 const connectionFile = process.env.KLNK_POSTGRES_TEST_CONNECTION_FILE;
 const config: Config = {
@@ -45,10 +45,10 @@ const config: Config = {
 describe.skipIf(!connectionFile)(
   'real PostgreSQL current credential expiry after owner-lock waits',
   () => {
-    let admin: pg.Pool, connection: ReturnType<typeof guardedLocalConnection>;
+    let admin: pg.Pool, connection: ReturnType<typeof guardedPostgresFixture>;
     const fixtures: { schema: string; db: Database; pool: pg.Pool }[] = [];
     beforeAll(async () => {
-      connection = guardedLocalConnection(
+      connection = guardedPostgresFixture(
         JSON.parse(await readFile(resolve(connectionFile!), 'utf8')),
       );
       admin = new pg.Pool({ connectionString: connection.url.toString(), max: 2 });
@@ -57,7 +57,9 @@ describe.skipIf(!connectionFile)(
           'SELECT host(inet_server_addr()) AS host,inet_server_port() AS port,current_database() AS database',
         )
       ).rows[0];
-      expect(server).toMatchObject({ host: '127.0.0.1', port: 55432, database: 'klnk_qa' });
+      expect(server.database).toBe('klnk_qa');
+      expect(['127.0.0.1', '::1']).toContain(server.host);
+      expect(Number(server.port)).toBe(Number(connection.url.port || 5432));
     });
     afterAll(async () => {
       for (const { db, pool } of fixtures) {

@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it } from 'vitest';
 import { Database } from '../apps/server/src/db.js';
@@ -51,7 +52,7 @@ function deferred() {
 async function fixture(
   payload = { conversationId: 'fictional-conversation' } as Record<string, string>,
 ) {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   databases.push(db);
   const owner = randomUUID();
   await db.query('INSERT INTO users(id,email,password_hash) VALUES($1,$2,$3)', [
@@ -81,7 +82,18 @@ describe('OPS-02 renewable worker ownership', () => {
     second.eleven = engine.eleven;
     const running = engine.tick(true);
     await started.promise;
-    await new Promise((resolve) => setTimeout(resolve, 320));
+    const [initial] = await db.query('SELECT lease_until FROM jobs WHERE id=$1', [job]);
+    // Wait until the original lease would have expired. This exercises actual
+    // renewal rather than hoping that a fixed delay crosses the right clock.
+    await expect
+      .poll(
+        async () => {
+          const [clock] = await db.query('SELECT clock_timestamp() AS observed_at');
+          return new Date(clock.observed_at).getTime() > new Date(initial.lease_until).getTime();
+        },
+        { timeout: 3000, interval: 20 },
+      )
+      .toBe(true);
     expect(await second.tick(true)).toBe(false);
     const [active] = await db.query(
       'SELECT status,heartbeat_at,lease_until,lease_token FROM jobs WHERE id=$1',

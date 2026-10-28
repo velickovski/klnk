@@ -24,6 +24,7 @@ import type { Config } from './config.js';
 import { HttpError, requireValue } from './errors.js';
 import { inspectProviders, isPublicHttps } from './readiness.js';
 import { RecipientSuppression } from './integrations/recipient-suppression.js';
+import { workerLogger, type WorkerLogger } from './worker-logging.js';
 
 export const SIM_CAPABILITIES = {
   ...LIVE_CAPABILITIES,
@@ -89,6 +90,7 @@ export class Engine {
   private readonly workerId = randomUUID();
   private readonly leaseMs: number;
   private readonly heartbeatMs: number;
+  private readonly logger: WorkerLogger;
   eleven?: ElevenLabsAdapter;
   twilio?: TwilioAdapter;
   verifyLiveSetup: () => Promise<void>;
@@ -101,8 +103,9 @@ export class Engine {
   constructor(
     public db: Database,
     public config: Config,
-    runtime: { leaseMs?: number; heartbeatMs?: number } = {},
+    runtime: { leaseMs?: number; heartbeatMs?: number; logger?: WorkerLogger } = {},
   ) {
+    this.logger = runtime.logger ?? workerLogger;
     this.leaseMs = runtime.leaseMs ?? 60000;
     this.heartbeatMs = runtime.heartbeatMs ?? 15000;
     if (
@@ -141,15 +144,17 @@ export class Engine {
       : { ...LIVE_CAPABILITIES, terminate: !!this.twilio };
   }
   start() {
+    if (this.timer) return;
     this.timer = setInterval(() => {
       void this.tick().catch(() => {
-        /* errors are persisted without conversation content */
+        this.logger.error({ event: 'legacy_worker_tick_failed', reasonCode: 'operation_failed' });
       });
     }, 750);
     this.timer.unref();
   }
   async stop() {
     if (this.timer) clearInterval(this.timer);
+    this.timer = undefined;
     while (this.running) await new Promise((r) => setTimeout(r, 20));
   }
   async mission(owner: string, id: string) {
@@ -385,8 +390,17 @@ export class Engine {
     let job: Row | undefined, heartbeat: ReturnType<typeof setInterval> | undefined;
     try {
       if (Date.now() - this.lastRetentionSweep >= 3_600_000) {
-        await this.sweepRetention();
+        // A broken maintenance row must not prevent queue work, or cause a
+        // failing full sweep on every timer tick.
         this.lastRetentionSweep = Date.now();
+        try {
+          await this.sweepRetention();
+        } catch {
+          this.logger.error({
+            event: 'legacy_retention_sweep_failed',
+            reasonCode: 'operation_failed',
+          });
+        }
       }
       const abandoned = await this.db.query(
         "UPDATE jobs SET status='failed',last_error='lease_expired_retry_exhausted',lease_until=NULL,lease_token=NULL,worker_id=NULL WHERE status='running' AND lease_until<now() AND attempts>=5 RETURNING owner_id,mission_id,kind",
@@ -414,10 +428,14 @@ export class Engine {
           lease_token: leaseToken,
           worker_id: this.workerId,
           attempts: row.attempts + 1,
-          payload: this.db.decrypt(row.payload),
+          payload: row.payload,
         };
       });
       if (!job) return false;
+      // Claim first so even unreadable ciphertext consumes bounded attempts.
+      // Decrypting inside the claim transaction would roll the claim back and
+      // leave the same poison row at the head of the queue indefinitely.
+      job.payload = this.db.decrypt(job.payload);
       const claimed = job;
       let renewing = false;
       heartbeat = setInterval(() => {
@@ -454,6 +472,10 @@ export class Engine {
           ],
         );
         if (!changed.length) return false;
+        this.logger.error({
+          event: exhausted ? 'legacy_job_dead_lettered' : 'legacy_job_retry_scheduled',
+          reasonCode: error instanceof HttpError ? error.code : 'operation_failed',
+        });
         if (exhausted && job.mission_id && job.kind === 'start')
           await this.markUncertain(
             job.owner_id,
@@ -1169,14 +1191,18 @@ export class Engine {
       [voiceCutoff],
     );
     for (const row of expiredVoice) {
-      const receipt = this.db.decrypt<any>(row.payload);
-      if (!['expired', 'deleted'].includes(receipt.status))
-        await this.repo.put(row.owner_id, 'voice_turn', {
-          id: row.id,
-          sessionId: receipt.sessionId,
-          missionId: receipt.missionId ?? receipt.response?.missionId,
-          status: 'expired',
-        });
+      try {
+        const receipt = this.db.decrypt<any>(row.payload);
+        if (!['expired', 'deleted'].includes(receipt.status))
+          await this.repo.put(row.owner_id, 'voice_turn', {
+            id: row.id,
+            sessionId: receipt.sessionId,
+            missionId: receipt.missionId ?? receipt.response?.missionId,
+            status: 'expired',
+          });
+      } catch {
+        this.logger.error({ event: 'voice_retention_row_failed', reasonCode: 'operation_failed' });
+      }
     }
     const rows = await this.db.query(
       "SELECT owner_id,id,parent_id FROM resources WHERE kind='attempt'",
@@ -1185,43 +1211,50 @@ export class Engine {
       const owner = row.owner_id,
         id = row.parent_id;
       if (!id) continue;
-      await this.db.transaction(async (sql) => {
-        await sql.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [owner]);
-        await sql.query('SELECT id FROM resources WHERE owner_id=$1 AND id=$2 FOR UPDATE', [
-          owner,
-          id,
-        ]);
-        const repo = this.repo.in(sql),
-          m = await repo.get<Mission>(owner, 'mission', id),
-          a = await repo.get<Attempt & { transcriptExpired?: boolean }>(owner, 'attempt', row.id);
-        if (!m || !a?.endedAt || a.transcriptExpired) return;
-        const expired =
-          !m.retention.transcript ||
-          Date.parse(a.endedAt) + m.retention.days * 86_400_000 <= now.getTime();
-        if (!expired) return;
-        await repo.put(
-          owner,
-          'attempt',
-          {
-            ...a,
-            transcript: [],
-            ownerGuidance: [],
-            transcriptExpired: true,
-            transcriptExpiredAt: now.toISOString(),
-          },
-          id,
-        );
-        if (a.providerConversationId)
-          await repo.enqueue(
+      await this.db
+        .transaction(async (sql) => {
+          await sql.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [owner]);
+          await sql.query('SELECT id FROM resources WHERE owner_id=$1 AND id=$2 FOR UPDATE', [
             owner,
             id,
-            'provider_delete',
-            { conversationId: a.providerConversationId },
-            0,
-            `${a.id}:retention-delete`,
+          ]);
+          const repo = this.repo.in(sql),
+            m = await repo.get<Mission>(owner, 'mission', id),
+            a = await repo.get<Attempt & { transcriptExpired?: boolean }>(owner, 'attempt', row.id);
+          if (!m || !a?.endedAt || a.transcriptExpired) return;
+          const expired =
+            !m.retention.transcript ||
+            Date.parse(a.endedAt) + m.retention.days * 86_400_000 <= now.getTime();
+          if (!expired) return;
+          await repo.put(
+            owner,
+            'attempt',
+            {
+              ...a,
+              transcript: [],
+              ownerGuidance: [],
+              transcriptExpired: true,
+              transcriptExpiredAt: now.toISOString(),
+            },
+            id,
           );
-        await repo.audit(owner, a.id, 'transcript_retention_expired');
-      });
+          if (a.providerConversationId)
+            await repo.enqueue(
+              owner,
+              id,
+              'provider_delete',
+              { conversationId: a.providerConversationId },
+              0,
+              `${a.id}:retention-delete`,
+            );
+          await repo.audit(owner, a.id, 'transcript_retention_expired');
+        })
+        .catch(() => {
+          this.logger.error({
+            event: 'attempt_retention_row_failed',
+            reasonCode: 'operation_failed',
+          });
+        });
     }
     await this.toolMaintenance?.(now);
   }

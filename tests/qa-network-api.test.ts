@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
@@ -31,7 +32,7 @@ describe('independent authenticated internal-network adversaries', () => {
       ...(payload !== undefined ? { payload: payload as any } : {}),
     });
   beforeAll(async () => {
-    const db = await new Database({ dataDir: 'memory://', key: 'c'.repeat(64) }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://', key: 'c'.repeat(64) });
     service = await createApp({
       db,
       worker: false,
@@ -594,7 +595,7 @@ describe('independent authenticated internal-network adversaries', () => {
     const backup = await service.db.createBackup();
     expect(JSON.stringify(backup)).not.toContain('BACKUP_OWNER_INTENT_SENTINEL');
     expect((await call(f.jordan, '/account', 'DELETE')).statusCode).toBe(200);
-    const restored = await new Database({ dataDir: 'memory://', key: 'c'.repeat(64) }).open();
+    const restored = await openTestDatabase({ dataDir: 'memory://', key: 'c'.repeat(64) });
     let restoredService: Awaited<ReturnType<typeof createApp>> | undefined;
     try {
       await restored.restoreBackup(backup, { deletedOwnerIds: [f.jordan.user.id] });

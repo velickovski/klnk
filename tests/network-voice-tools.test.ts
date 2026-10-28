@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -27,7 +28,7 @@ afterEach(async () => {
   await Promise.all(databases.splice(0).map((db) => db.close()));
 });
 async function fixture() {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   databases.push(db);
   const repo = new Repository(db),
     owner = (await newUser(db, `${randomUUID()}@example.invalid`, 'Fictional owner password 123'))
@@ -106,11 +107,17 @@ async function fixture() {
     };
   const input = {
     connectionId: connection.id,
-    kind: 'inform' as const,
+    kind: 'meeting' as const,
     purpose: 'Deliver a fictional project update',
     topic: 'project planning',
     message: 'Fictional exact owner-approved words',
-    candidateSlots: [],
+    candidateSlots: [
+      {
+        startAt: new Date(Date.now() + 86400000).toISOString(),
+        endAt: new Date(Date.now() + 88200000).toISOString(),
+        timezone: 'UTC',
+      },
+    ],
     location: '',
     expiresAt: new Date(Date.now() + 86400000).toISOString(),
   };
@@ -138,6 +145,61 @@ async function fixture() {
 }
 
 describe('strict internal owner voice tools', () => {
+  it.each(['inform', 'ask'] as const)(
+    'requires independent owner readback approval for a voice %s instead of trusting model text',
+    async (kind) => {
+      const f = await fixture();
+      const proposed = {
+        ...f.input,
+        kind,
+        candidateSlots: [],
+        message: 'Model-added private conversation material',
+      };
+      const result = await f.invoke('network_request_submit', proposed);
+      expect(result).toMatchObject({
+        status: 'blocked',
+        reasonCode: 'review_required',
+        data: {
+          needsOwnerReview: true,
+          proposedRequest: { connectionId: f.connection.id, kind, message: proposed.message },
+          spokenDeliveryConfirmed: false,
+        },
+      });
+      expect(await f.records()).toHaveLength(0);
+      expect(
+        await f.invoke(
+          'network_request_submit',
+          { ...proposed, ownerConfirmed: true },
+          { callId: 'pretend-owner-confirmation' },
+        ),
+      ).toMatchObject({ status: 'blocked', reasonCode: 'invalid_arguments' });
+      const traces = await f.repo.list<{ event: string }>(f.owner, 'tool_trace');
+      expect(traces.map((trace) => trace.event)).toContain('tool_blocked');
+      expect(traces.map((trace) => trace.event)).not.toContain('tool_succeeded');
+      expect(JSON.stringify(traces)).not.toContain(proposed.message);
+    },
+  );
+  it('does not resolve a substring name and requires an exact full name or immutable member identifier', async () => {
+    const f = await fixture();
+    expect(
+      await f.invoke('network_connections_lookup', { query: 'Fictional', limit: 10 }),
+    ).toMatchObject({
+      status: 'succeeded',
+      data: { connections: [], needsRecipientClarification: true },
+    });
+    expect(
+      await f.invoke(
+        'network_connections_lookup',
+        { query: f.peer, limit: 10 },
+        { callId: 'exact-member-id' },
+      ),
+    ).toMatchObject({
+      data: {
+        connections: [{ memberId: f.peer, connectionId: f.connection.id }],
+        needsRecipientClarification: false,
+      },
+    });
+  });
   it('has strict required argument schemas, no model-supplied owner/grant/nonce, and explicit meeting intervals', () => {
     const definitions = applicationToolDefinitions(NETWORK_VOICE_TOOLS);
     expect(definitions.map((value) => value.name)).toEqual([...NETWORK_VOICE_TOOLS]);
@@ -188,7 +250,10 @@ describe('strict internal owner voice tools', () => {
     const legacyArgs = '{"query":"fictional","limit":1}';
     await f.gateway.invoke(f.context, 'contacts_lookup', legacyArgs);
     expect(f.legacy.invoke).toHaveBeenCalledWith(f.context, 'contacts_lookup', legacyArgs);
-    const lookup = await f.invoke('network_connections_lookup', { query: 'Fictional', limit: 10 });
+    const lookup = await f.invoke('network_connections_lookup', {
+      query: 'Fictional Member',
+      limit: 10,
+    });
     expect(lookup).toMatchObject({
       status: 'succeeded',
       data: {

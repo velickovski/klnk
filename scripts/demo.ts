@@ -8,7 +8,15 @@ const db = await new Database({ dataDir: 'memory://' }).open();
 const { app, engine } = await createApp({
   db,
   worker: false,
-  config: { ...getConfig(), provider: 'simulator', demoEnabled: true },
+  config: {
+    ...getConfig({
+      NODE_ENV: 'test',
+      LEGACY_ENABLED: 'true',
+      APP_ORIGINS: 'http://localhost:8081',
+    }),
+    provider: 'simulator',
+    demoEnabled: true,
+  },
 });
 try {
   const auth = await app.inject({ method: 'POST', url: '/auth/demo', payload: {} });

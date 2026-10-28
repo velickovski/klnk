@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
 import { Database } from '../apps/server/src/db.js';
@@ -6,7 +7,7 @@ import { validateApiPayload } from '../apps/mobile/src/api-contracts.js';
 describe('NET-01 actual local server response contracts', () => {
   let service: Awaited<ReturnType<typeof createApp>>;
   beforeAll(async () => {
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     service = await createApp({
       db,
       worker: false,

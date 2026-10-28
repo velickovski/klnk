@@ -1,5 +1,7 @@
 # klnk
 
+The [28 October improvement status](docs/review/2026-10-28/STATUS.md) tracks the current production hardening work, independent verification and remaining release gates. Earlier handoffs and evidence describe historical candidates.
+
 ## Your agent talks to their agent
 
 The current product is an **internal network of registered klnk members**. After the one-button **Call klnk** opening, the workspace has an agent Inbox, internal Calendar, account connections, private Memory and scoped autonomy Settings. Voice and typed owner instructions share the internal request domain. Accepted connections and explicit rules govern delivery; a connection alone never grants meeting authority.
@@ -54,11 +56,32 @@ The API runs at `http://localhost:4000`. PGlite runs PostgreSQL locally in `.dat
 
 ```powershell
 npm run typecheck
+npm run typecheck:e2e
+npm run lint
+npm run format:check
 npm test
 npm run demo
 npm run setup:check
 npm exec --workspace @personal-agent/mobile -- expo export --platform web
 ```
+
+Use Node 24 (`.nvmrc`). `npm run format` applies the shared Prettier configuration. ESLint enforces handled promises; explicit `any` is currently a warning while existing types are tightened.
+
+Browser journeys run against a separate disposable fixture, with no provider credentials:
+
+```powershell
+npx playwright install chromium
+npm run e2e:build
+npm run e2e
+```
+
+Run `e2e:build` again after mobile changes. If using a separately provisioned compatible Chromium executable, set `PLAYWRIGHT_CHROMIUM_EXECUTABLE` to its absolute path; `KLNK_E2E_CHANNEL=chrome` selects installed Chrome instead. A desktop browser result does not establish native iPhone behavior.
+
+`npm run test:pg` requires a dedicated disposable PostgreSQL database named `klnk_qa` on loopback. Set `KLNK_TEST_POSTGRES_URL` privately to its connection URL, or use `KLNK_POSTGRES_TEST_CONNECTION_FILE` pointing to a private JSON file with `url` and a test-only 64-character hex `key`. The runner never reads `DATABASE_URL`; it creates and drops only random `qa_*` test schemas, and fails if no fixture was supplied. CI provisions its own PostgreSQL service and runs these suites on every push.
+
+Production startup requires an explicit PostgreSQL URL, protected encryption key and HTTPS application origins. Missing `NODE_ENV` means production; use the example's explicit `NODE_ENV=development` for local PGlite. `TRUST_PROXY` defaults to `false`; set only explicit trusted proxy IP/CIDR ranges. Public `/health` and `/ready` expose status only. A separately protected `OPERATOR_TOKEN` bearer reveals detailed `/ready` diagnostics; never put it in the mobile app. Structured HTTP/worker logs omit bodies, tokens, email addresses and transcripts.
+
+Legacy telephone endpoints require `LEGACY_ENABLED=true`; the client additionally requires `EXPO_PUBLIC_LEGACY_ENABLED=true` to expose the earlier workspace. Both default off in normal runtime/build configuration. This flag grants no calling authorization. Deterministic legacy regression fixtures explicitly enable it; cleanup hooks remain available for already persisted records.
 
 The demonstration exercises all eight mission kinds and a confirmed appointment followed by an integration failure. It asserts that only the pending calendar action retries and the existing event changes once. Tests cover policies, isolation, authorization, adverse outcomes, retries, cancellation, provider signatures and calendar idempotence. See [acceptance evidence](docs/ACCEPTANCE.md) for precise coverage and remaining gaps.
 

@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { randomUUID } from 'node:crypto';
 import { afterEach, test, expect } from 'vitest';
 import { MissionSchema, type Mission, type Attempt } from '../packages/domain/src/index.js';
@@ -11,7 +12,7 @@ afterEach(async () => {
   await Promise.all(databases.splice(0).map((db) => db.close()));
 });
 async function fixture(kind = 'appointment', scenario = 'normal', patch: Record<string, any> = {}) {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   databases.push(db);
   const engine = new Engine(db, { ...getConfig(), provider: 'simulator', embeddedWorker: false });
   const owner = randomUUID();

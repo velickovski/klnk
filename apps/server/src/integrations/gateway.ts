@@ -221,14 +221,12 @@ export class ApplicationToolGateway implements OwnerToolGateway {
     outcome: ToolOutcome,
     started: number,
   ) {
-    await this.repo
-      .in(sql)
-      .put(context.ownerId, 'tool_receipt', {
-        ...receipt,
-        status: outcome.status,
-        outcome: this.metadata(outcome),
-        updatedAt: new Date().toISOString(),
-      });
+    await this.repo.in(sql).put(context.ownerId, 'tool_receipt', {
+      ...receipt,
+      status: outcome.status,
+      outcome: this.metadata(outcome),
+      updatedAt: new Date().toISOString(),
+    });
     const count = Array.isArray(outcome.data?.contacts)
       ? outcome.data.contacts.length
       : Array.isArray(outcome.data?.memories)

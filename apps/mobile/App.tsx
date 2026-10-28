@@ -66,6 +66,7 @@ import { VoiceConversation } from './src/voice-conversation';
 import { voiceRequestId } from './src/features/voice/controller';
 import { NetworkWorkspace } from './src/features/network/Workspace';
 
+const legacyEnabled = process.env.EXPO_PUBLIC_LEGACY_ENABLED === 'true';
 type Tab = 'Home' | 'People' | 'Memory' | 'Settings';
 type Route =
   | { kind: 'compose'; template?: MissionTemplate; missionId?: string }
@@ -217,6 +218,7 @@ function AgentApp({
   const [tab, setTab] = useState<Tab>('Home');
   const [legacy, setLegacy] = useState(
     () =>
+      legacyEnabled &&
       Platform.OS === 'web' &&
       typeof window !== 'undefined' &&
       new URLSearchParams(window.location.search).get('legacy') === '1',
@@ -351,7 +353,9 @@ function AgentApp({
       }
     };
     void update();
-    const timer = setInterval(update, 2000);
+    const timer = setInterval(() => {
+      void update();
+    }, 2000);
     return () => {
       cancelled = true;
       clearInterval(timer);
@@ -420,10 +424,14 @@ function AgentApp({
         key={data.profile.id}
         ownerId={data.profile.id}
         onVoiceHome={onVoiceHome}
-        onLegacy={() => {
-          setLegacy(true);
-          setTab('Settings');
-        }}
+        onLegacy={
+          legacyEnabled
+            ? () => {
+                setLegacy(true);
+                setTab('Settings');
+              }
+            : undefined
+        }
         onSignOut={() => void signOut()}
       />
     );

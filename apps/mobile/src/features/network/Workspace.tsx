@@ -21,7 +21,7 @@ export function NetworkWorkspace({
 }: {
   ownerId: string;
   onVoiceHome: () => void;
-  onLegacy: () => void;
+  onLegacy?: () => void;
   onSignOut: () => void;
 }) {
   const { colors, styles } = useUI(),
@@ -101,11 +101,13 @@ export function NetworkWorkspace({
                     Only the klnk calendar is checked. In-app reminders are available when you
                     return; phone notifications are not enabled.
                   </Text>
-                  <Button
-                    label="Account settings & earlier requests"
-                    secondary
-                    onPress={onLegacy}
-                  />
+                  {onLegacy ? (
+                    <Button
+                      label="Account settings & earlier requests"
+                      secondary
+                      onPress={onLegacy}
+                    />
+                  ) : null}
                   <Text style={styles.small}>
                     Earlier telephone simulations, manual contacts and external adapter settings
                     remain separate. They do not deliver requests in your agent network.

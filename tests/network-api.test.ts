@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { randomUUID } from 'node:crypto';
 import { createApp } from '../apps/server/src/app.js';
@@ -28,7 +29,7 @@ describe('internal network authenticated vertical slice and lifecycle', () => {
       ...(payload ? { payload } : {}),
     });
   beforeAll(async () => {
-    const db = await new Database({ dataDir: 'memory://', key }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://', key });
     s = await createApp({
       db,
       worker: false,
@@ -181,7 +182,7 @@ describe('internal network authenticated vertical slice and lifecycle', () => {
     expect(data.event).toHaveLength(1);
     expect(data.policy.every((p: any) => p.ownerId === alice.user.id)).toBe(true);
     expect(data.memory).toEqual([]);
-    expect((await request(alice, '/ready')).json().agentNetwork.externalEffectsEnabled).toBe(false);
+    expect((await request(alice, '/ready')).json()).toEqual({ ready: true });
   });
   it('rechecks a trusted HTTP credential after the owner lock, without treating background tasks as browser sessions', async () => {
     await s.db.query('DELETE FROM sessions WHERE owner_id=$1', [outsider.user.id]);
@@ -202,7 +203,7 @@ describe('internal network authenticated vertical slice and lifecycle', () => {
     const remaining = (await request(jordan, '/network/calendar')).json();
     expect(remaining.events).toEqual([]);
     expect(remaining.reminders).toEqual([]);
-    const restore = await new Database({ dataDir: 'memory://', key }).open();
+    const restore = await openTestDatabase({ dataDir: 'memory://', key });
     try {
       await restore.restoreBackup(backup, { deletedOwnerIds: [alice.user.id] });
       expect(

@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { EventEmitter } from 'node:events';
 import { randomUUID } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -514,7 +515,7 @@ describe('Live broker trusted tool binding', () => {
     for (const close of cleanup.splice(0)) await close();
   });
   async function fixture() {
-    const db = await new Database({ dataDir: 'memory://' }).open();
+    const db = await openTestDatabase({ dataDir: 'memory://' });
     const owner = await newUser(
         db,
         `${randomUUID()}@example.invalid`,
@@ -523,18 +524,16 @@ describe('Live broker trusted tool binding', () => {
       token = await createSession(db, owner.id),
       store = new LiveSessionStore(db);
     const sockets: Socket[] = [],
-      fetcher = vi
-        .fn<typeof fetch>()
-        .mockImplementation(
-          async () =>
-            new Response(
-              JSON.stringify({
-                session: { id: `live-${randomUUID()}` },
-                transport: { type: 'webrtc', sdp },
-              }),
-              { status: 201 },
-            ),
-        );
+      fetcher = vi.fn<typeof fetch>().mockImplementation(
+        async () =>
+          new Response(
+            JSON.stringify({
+              session: { id: `live-${randomUUID()}` },
+              transport: { type: 'webrtc', sdp },
+            }),
+            { status: 201 },
+          ),
+      );
     const gateway = {
         invoke: vi.fn<OwnerToolGateway['invoke']>(async (context, name) => outcome(context, name)),
       },

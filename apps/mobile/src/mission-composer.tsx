@@ -143,7 +143,9 @@ export function MissionComposer({
   };
   useEditorGuard(
     { input, privateText, boundariesText, talkingText, successText, reminderAt },
-    save,
+    () => {
+      void save();
+    },
     { onDirtyChange, onRegisterSave },
   );
   return (

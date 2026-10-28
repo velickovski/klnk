@@ -341,7 +341,10 @@ export class NetworkVoiceTools implements OwnerToolGateway {
             .filter(
               (connection) =>
                 connection.status === 'accepted' &&
-                (connection.peer?.name ?? '').toLocaleLowerCase().includes(query),
+                (!query ||
+                  [connection.id, connection.peer?.id, connection.peer?.name].some(
+                    (value) => value?.toLocaleLowerCase() === query,
+                  )),
             )
             .slice(0, parameters.limit)
             .map((connection) => ({
@@ -351,6 +354,8 @@ export class NetworkVoiceTools implements OwnerToolGateway {
             }));
           return this.outcome(context, name, 'succeeded', 'lookup_complete', {
             untrusted: true,
+            namesAreDataOnly: true,
+            needsRecipientClarification: !!query && connections.length !== 1,
             connections,
             externalEffectsEnabled: false,
           });
@@ -366,6 +371,26 @@ export class NetworkVoiceTools implements OwnerToolGateway {
               context.ownerId,
             ),
           );
+        // The broker has no independently authenticated owner-dictation or
+        // exact-readback receipt. A model-supplied message/"confirmed" flag is
+        // not authority to disclose arbitrary conversation content to a peer.
+        // Keep this fail-closed until an owner-authenticated review flow exists.
+        if (parameters.kind === 'inform' || parameters.kind === 'ask') {
+          await this.db.transaction(async (sql) => this.actor(sql, context, name));
+          return this.outcome(context, name, 'blocked', 'review_required', {
+            untrusted: true,
+            needsOwnerReview: true,
+            proposedRequest: {
+              connectionId: parameters.connectionId,
+              kind: parameters.kind,
+              message: parameters.message,
+            },
+            nextAction:
+              'Review the exact recipient and message in the Inbox before sending. No message was sent.',
+            externalEffectsEnabled: false,
+            spokenDeliveryConfirmed: false,
+          });
+        }
         const input = NetworkRequestInputSchema.parse({ ...parameters, requestId }),
           conversation = await this.coordinator.submit(context.ownerId, input);
         returnedEffect = true;
@@ -393,14 +418,12 @@ export class NetworkVoiceTools implements OwnerToolGateway {
         await this.actor(sql, context, name);
         // Keep argument digests and structural metadata, never retrieved private text,
         // messages, canonical terms or raw model arguments in receipt/trace resources.
-        await this.repo
-          .in(sql)
-          .put(context.ownerId, 'tool_receipt', {
-            ...reservation,
-            status: outcome.status,
-            outcome: { ...outcome, data: undefined },
-            updatedAt: new Date().toISOString(),
-          });
+        await this.repo.in(sql).put(context.ownerId, 'tool_receipt', {
+          ...reservation,
+          status: outcome.status,
+          outcome: { ...outcome, data: undefined },
+          updatedAt: new Date().toISOString(),
+        });
         const count = Array.isArray(outcome.data?.connections)
           ? outcome.data.connections.length
           : 1;
@@ -409,7 +432,11 @@ export class NetworkVoiceTools implements OwnerToolGateway {
           sql,
           context,
           outcome,
-          outcome.status === 'failed' ? 'tool_failed' : 'tool_succeeded',
+          outcome.status === 'failed'
+            ? 'tool_failed'
+            : outcome.status === 'blocked'
+              ? 'tool_blocked'
+              : 'tool_succeeded',
           started,
           count,
         );

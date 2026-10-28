@@ -118,9 +118,13 @@ export async function runtimeReadiness(db: Database) {
     );
     const migrations = await db.query('SELECT name FROM schema_migrations ORDER BY name');
     const [network] = await db.query(
-      "SELECT count(*) FILTER(WHERE status='queued')::int AS queued,count(*) FILTER(WHERE status='running')::int AS running,count(*) FILTER(WHERE status='paused')::int AS paused,count(*) FILTER(WHERE status='waiting')::int AS waiting FROM network_records WHERE kind='task'",
+      "SELECT count(*) FILTER(WHERE status='queued')::int AS queued,count(*) FILTER(WHERE status='running')::int AS running,count(*) FILTER(WHERE status='paused')::int AS paused,count(*) FILTER(WHERE status='waiting')::int AS waiting,count(*) FILTER(WHERE status='dead_letter')::int AS dead_letters FROM network_records WHERE kind='task'",
     );
-    const degraded = jobs.failed > 0 || jobs.expired_leases > 0 || live.unconfirmed > 0;
+    const degraded =
+      jobs.failed > 0 ||
+      jobs.expired_leases > 0 ||
+      live.unconfirmed > 0 ||
+      network.dead_letters > 0;
     return {
       ready: true,
       status: degraded ? ('degraded' as const) : ('ready' as const),
@@ -148,6 +152,7 @@ export async function runtimeReadiness(db: Database) {
         running: network.running,
         paused: network.paused,
         waitingForOwner: network.waiting,
+        deadLetters: network.dead_letters,
         externalEffectsEnabled: false as const,
       },
       checkedAt: new Date().toISOString(),

@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { createHash, generateKeyPairSync, randomUUID, sign } from 'node:crypto';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { Database, Repository } from '../apps/server/src/db.js';
@@ -56,7 +57,7 @@ function deferred<T>() {
   return { promise, resolve };
 }
 async function fixture() {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   databases.push(db);
   const owner = await newUser(
     db,
@@ -66,6 +67,7 @@ async function fixture() {
   const session = await createSession(db, owner.id);
   const state = {
     nonce: '',
+    browserBinding: '',
     challenge: '',
     tokenCalls: 0,
     refreshCalls: 0,
@@ -135,11 +137,12 @@ async function fixture() {
     const url = new URL(result.authorizationUrl);
     state.nonce = url.searchParams.get('nonce')!;
     state.challenge = url.searchParams.get('code_challenge')!;
+    state.browserBinding = result.browserBinding;
     return { result, url, state: url.searchParams.get('state')! };
   }
   async function connected() {
     const flow = await begin();
-    await service.callback({ state: flow.state, code: 'fictional-code' });
+    await service.callback({ state: flow.state, code: 'fictional-code' }, state.browserBinding);
     return flow;
   }
   async function expire() {
@@ -151,6 +154,29 @@ async function fixture() {
 }
 
 describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
+  it('rejects a forwarded consent URL without the initiating browser cookie before any token exchange', async () => {
+    const f = await fixture();
+    const flow = await f.begin();
+    expect(flow.url.toString()).not.toContain(flow.result.browserBinding);
+    const states = await new Repository(f.db).list<{ browserBindingHash: string }>(
+      f.owner,
+      'integration',
+    );
+    expect(states[0].browserBindingHash).toBe(hashToken(flow.result.browserBinding));
+
+    for (const binding of [undefined, 'x'.repeat(43), '', `${flow.result.browserBinding};extra`]) {
+      await expect(
+        f.service.callback({ state: flow.state, code: 'victim-google-consent' }, binding),
+      ).rejects.toMatchObject({ code: 'oauth_browser_mismatch' });
+      expect(f.state.tokenCalls).toBe(0);
+      expect((await f.service.status(f.owner)).status).toBe('connecting');
+    }
+    // Invalid browsers cannot consume the real browser's pending flow.
+    await expect(
+      f.service.callback({ state: flow.state, code: 'fictional-code' }, flow.result.browserBinding),
+    ).resolves.toMatchObject({ status: 'connected' });
+    expect(f.state.tokenCalls).toBe(1);
+  });
   it('keeps missing or unsafe OAuth configuration unavailable without a provider request', async () => {
     const f = await fixture();
     const service = new GoogleCalendarConnections(f.db, {}, { fetch: f.fetcher as typeof fetch });
@@ -181,7 +207,10 @@ describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
       status: 'connecting',
       available: false,
     });
-    const result = await f.service.callback({ state: flow.state, code: 'fictional-code' });
+    const result = await f.service.callback(
+      { state: flow.state, code: 'fictional-code' },
+      f.state.browserBinding,
+    );
     expect(result).toMatchObject({ status: 'connected', available: true });
     const visible = JSON.stringify(await f.service.list(f.owner));
     for (const secret of [
@@ -203,7 +232,7 @@ describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
       calendarId: 'primary',
     });
     await expect(
-      f.service.callback({ state: flow.state, code: 'fictional-code' }),
+      f.service.callback({ state: flow.state, code: 'fictional-code' }, f.state.browserBinding),
     ).rejects.toMatchObject({ code: 'oauth_state_invalid' });
     expect(f.state.tokenCalls).toBe(1);
   });
@@ -212,7 +241,7 @@ describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
     const flow = await f.begin();
     await f.db.query('DELETE FROM sessions WHERE token_hash=$1', [hashToken(f.session)]);
     await expect(
-      f.service.callback({ state: flow.state, code: 'fictional-code' }),
+      f.service.callback({ state: flow.state, code: 'fictional-code' }, f.state.browserBinding),
     ).rejects.toMatchObject({ code: 'oauth_session_expired' });
     expect(f.state.tokenCalls).toBe(0);
   });
@@ -238,21 +267,26 @@ describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
     const saved = states.find((value) => value.kind === 'google_calendar_oauth_state');
     await repo.put(f.owner, 'integration', { ...saved, expiresAt: Date.now() - 1 });
     await expect(
-      f.service.callback({ state: flow.state, code: 'fictional-code' }),
+      f.service.callback({ state: flow.state, code: 'fictional-code' }, f.state.browserBinding),
     ).rejects.toMatchObject({ code: 'oauth_state_invalid' });
     expect(f.state.tokenCalls).toBe(0);
   });
   it('consumes denial or cancellation without a token request', async () => {
     const f = await fixture();
     let flow = await f.begin();
-    expect(await f.service.callback({ state: flow.state, error: 'access_denied' })).toMatchObject({
+    expect(
+      await f.service.callback(
+        { state: flow.state, error: 'access_denied' },
+        f.state.browserBinding,
+      ),
+    ).toMatchObject({
       available: false,
       reasonCode: 'oauth_denied',
     });
     flow = await f.begin();
     await f.service.cancel(f.owner);
     await expect(
-      f.service.callback({ state: flow.state, code: 'fictional-code' }),
+      f.service.callback({ state: flow.state, code: 'fictional-code' }, f.state.browserBinding),
     ).rejects.toMatchObject({ code: 'oauth_state_invalid' });
     expect(f.state.tokenCalls).toBe(0);
   });
@@ -267,7 +301,7 @@ describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
     f.state.claims = claims;
     const flow = await f.begin();
     await expect(
-      f.service.callback({ state: flow.state, code: 'fictional-code' }),
+      f.service.callback({ state: flow.state, code: 'fictional-code' }, f.state.browserBinding),
     ).rejects.toMatchObject({ code: 'google_identity_invalid' });
     expect((await f.service.status(f.owner)).available).toBe(false);
   });
@@ -276,7 +310,7 @@ describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
     f.state.scopes = 'openid';
     const flow = await f.begin();
     await expect(
-      f.service.callback({ state: flow.state, code: 'fictional-code' }),
+      f.service.callback({ state: flow.state, code: 'fictional-code' }, f.state.browserBinding),
     ).rejects.toMatchObject({ code: 'google_scope_missing' });
     expect(await f.service.status(f.owner)).toMatchObject({
       status: 'insufficient_scope',
@@ -461,7 +495,10 @@ describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
     const flow = await f.begin(),
       pending = deferred<Response>();
     f.state.exchange = async () => pending.promise;
-    const callback = f.service.callback({ state: flow.state, code: 'fictional-code' });
+    const callback = f.service.callback(
+      { state: flow.state, code: 'fictional-code' },
+      f.state.browserBinding,
+    );
     const rejected = expect(callback).rejects.toMatchObject({ code: 'oauth_session_expired' });
     while (!f.state.tokenCalls) await new Promise((resolve) => setTimeout(resolve, 5));
     await f.db.query('DELETE FROM sessions WHERE token_hash=$1', [hashToken(f.session)]);
@@ -485,7 +522,10 @@ describe('CAL-01 owner-bound Google OAuth lifecycle', () => {
       pending = deferred<Response>();
     f.state.exchange = async () => pending.promise;
     f.state.revokeStatus = 503;
-    const callback = f.service.callback({ state: flow.state, code: 'fictional-code' });
+    const callback = f.service.callback(
+      { state: flow.state, code: 'fictional-code' },
+      f.state.browserBinding,
+    );
     const rejected = expect(callback).rejects.toMatchObject({ code: 'oauth_session_expired' });
     while (!f.state.tokenCalls) await new Promise((resolve) => setTimeout(resolve, 5));
     await f.db.query('DELETE FROM sessions WHERE token_hash=$1', [hashToken(f.session)]);

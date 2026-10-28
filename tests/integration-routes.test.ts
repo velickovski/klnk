@@ -1,3 +1,4 @@
+import { openTestDatabase } from './support/test-database.js';
 import { afterEach, describe, expect, it } from 'vitest';
 import { createApp } from '../apps/server/src/app.js';
 import { Database } from '../apps/server/src/db.js';
@@ -10,13 +11,14 @@ afterEach(async () => {
   }
 });
 async function fixture(configured = false) {
-  const db = await new Database({ dataDir: 'memory://' }).open();
+  const db = await openTestDatabase({ dataDir: 'memory://' });
   let requests = 0;
   const s = await createApp({
     db,
     worker: false,
     config: {
       ...getConfig(),
+      legacyEnabled: true,
       provider: 'simulator',
       liveEnabled: false,
       openaiKey: undefined,
@@ -101,6 +103,7 @@ describe('sanitized authenticated Google routes', () => {
     ).toBe(400);
     const declined = await f.app.inject({
       url: `/integrations/google-calendar/callback?state=${state}&error=access_denied`,
+      headers: { cookie: String(started.headers['set-cookie']).split(';')[0] },
     });
     expect(declined.statusCode).toBe(200);
     expect(declined.json().reasonCode).toBe('oauth_denied');

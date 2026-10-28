@@ -73,12 +73,10 @@ export class ElevenOwnerPlanner {
       ownerLanguage: input.language,
       timezone: input.timezone,
       now: input.now,
-      history: (input.history ?? [])
-        .slice(-6)
-        .map((h) => ({
-          role: h.role === 'owner' ? 'owner' : 'assistant',
-          text: h.text.slice(0, 2000),
-        })),
+      history: (input.history ?? []).slice(-6).map((h) => ({
+        role: h.role === 'owner' ? 'owner' : 'assistant',
+        text: h.text.slice(0, 2000),
+      })),
     });
     if (Buffer.byteLength(payload, 'utf8') > MAX_BYTES)
       throw new Error('Selected owner context is too large.');
