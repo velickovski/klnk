@@ -40,17 +40,28 @@ export async function installNoCaptureProbe(page: Page) {
 }
 
 export async function expectNoCapture(page: Page) {
-  expect(await page.evaluate(() => (window as unknown as { __klnkQaMedia: { attempts: number } }).__klnkQaMedia.attempts)).toBe(0);
+  expect(
+    await page.evaluate(
+      () => (window as unknown as { __klnkQaMedia: { attempts: number } }).__klnkQaMedia.attempts,
+    ),
+  ).toBe(0);
 }
 
 /** Override resolved px text, since changing root rem does not enlarge RN Web text. */
 export async function enlargeTextAndSpacing(page: Page, paragraphs: string[] = []) {
   await page.evaluate((paragraphs) => {
-    const targets = Array.from(document.querySelectorAll<HTMLElement>('*')).filter(element =>
-      !element.closest('[aria-hidden="true"]') && (element.matches('input,textarea,select') ||
-      Array.from(element.childNodes).some(child => child.nodeType === Node.TEXT_NODE && child.textContent?.trim())));
+    const targets = Array.from(document.querySelectorAll<HTMLElement>('*')).filter(
+      (element) =>
+        !element.closest('[aria-hidden="true"]') &&
+        (element.matches('input,textarea,select') ||
+          Array.from(element.childNodes).some(
+            (child) => child.nodeType === Node.TEXT_NODE && child.textContent?.trim(),
+          )),
+    );
     // Capture all natural sizes first to avoid compounding inherited sizes.
-    const sizes = targets.map(element => Number(element.dataset.klnkQaBaseFont ?? parseFloat(getComputedStyle(element).fontSize)));
+    const sizes = targets.map((element) =>
+      Number(element.dataset.klnkQaBaseFont ?? parseFloat(getComputedStyle(element).fontSize)),
+    );
     targets.forEach((element, index) => {
       element.dataset.klnkQaBaseFont = String(sizes[index]);
       element.style.fontSize = `${sizes[index] * 2}px`;
@@ -58,8 +69,8 @@ export async function enlargeTextAndSpacing(page: Page, paragraphs: string[] = [
       element.style.letterSpacing = '.12em';
       element.style.wordSpacing = '.16em';
       // Button/tab labels and decorative icon glyphs are not paragraphs.
-      if(paragraphs.includes(element.textContent?.trim()??''))element.style.marginBottom = '2em';
+      if (paragraphs.includes(element.textContent?.trim() ?? ''))
+        element.style.marginBottom = '2em';
     });
   }, paragraphs);
 }
-

@@ -1,7 +1,13 @@
 {
   "cli": { "version": ">= 24.12.1" },
   "build": {
-    "development": { "developmentClient": true, "distribution": "internal", "environment": "development", "ios": { "simulator": false }, "env": { "IOS_ALLOW_LOCAL_NETWORK": "true", "EXPO_PUBLIC_ALLOW_LOCAL_HTTP": "true" } },
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "environment": "development",
+      "ios": { "simulator": false },
+      "env": { "IOS_ALLOW_LOCAL_NETWORK": "true", "EXPO_PUBLIC_ALLOW_LOCAL_HTTP": "true" }
+    },
     "preview": { "distribution": "internal", "environment": "preview" },
     "production": { "autoIncrement": true, "environment": "production" }
   }

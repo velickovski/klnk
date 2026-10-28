@@ -6,11 +6,18 @@ export type EditorGuard = {
 };
 
 /** Keep dismissal decisions with the shell, and validation with the editor. */
-export function useEditorGuard(value: unknown, save: () => void, { onDirtyChange, onRegisterSave }: EditorGuard) {
+export function useEditorGuard(
+  value: unknown,
+  save: () => void,
+  { onDirtyChange, onRegisterSave }: EditorGuard,
+) {
   const serialized = JSON.stringify(value);
   const initial = useRef(serialized);
-  const saveRef = useRef(save); saveRef.current = save;
-  useEffect(() => { onDirtyChange?.(serialized !== initial.current); }, [serialized, onDirtyChange]);
+  const saveRef = useRef(save);
+  saveRef.current = save;
+  useEffect(() => {
+    onDirtyChange?.(serialized !== initial.current);
+  }, [serialized, onDirtyChange]);
   useEffect(() => {
     onRegisterSave?.(() => saveRef.current());
     return () => onRegisterSave?.(null);

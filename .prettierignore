@@ -1,0 +1,11 @@
+node_modules/
+.data/
+.git/
+.idea/
+**/.expo/
+**/dist*/
+**/coverage/
+**/playwright-report/
+**/test-results/
+package-lock.json
+docs/**

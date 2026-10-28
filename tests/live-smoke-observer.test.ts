@@ -26,8 +26,21 @@ describe('live provider evidence redaction and truthfulness', () => {
   });
   it('observes nested completed tool calls, deduplicates delivery, and drops arguments/results', () => {
     const { summary, observe } = createLiveSmokeObserver();
-    const event = { type: 'response.event', delegation_id: 'private-id', event: { type: 'response.output_item.done', item: { type: 'function_call', name: 'calendar_lookup', call_id: 'call-1', arguments: '{"token":"secret"}' } } };
-    observe(event); observe(event);
+    const event = {
+      type: 'response.event',
+      delegation_id: 'private-id',
+      event: {
+        type: 'response.output_item.done',
+        item: {
+          type: 'function_call',
+          name: 'calendar_lookup',
+          call_id: 'call-1',
+          arguments: '{"token":"secret"}',
+        },
+      },
+    };
+    observe(event);
+    observe(event);
     observe({ type: 'session.delegation.created' });
     expect(summary.toolCalls).toEqual(['function_call:calendar_lookup']);
     expect(summary.delegations).toBe(1);
@@ -35,7 +48,11 @@ describe('live provider evidence redaction and truthfulness', () => {
   });
   it('does not mistake reasoning messages or tool results for new execution', () => {
     const { summary, observe } = createLiveSmokeObserver();
-    for (const type of ['reasoning', 'message', 'function_call_output']) observe({ type: 'response.event', event: { type: 'response.output_item.done', item: { type, output: 'sensitive' } } });
+    for (const type of ['reasoning', 'message', 'function_call_output'])
+      observe({
+        type: 'response.event',
+        event: { type: 'response.output_item.done', item: { type, output: 'sensitive' } },
+      });
     expect(summary.toolCalls).toEqual([]);
   });
   it('captures attempted tool calls even when no completion arrives', () => {
@@ -47,7 +64,8 @@ describe('live provider evidence redaction and truthfulness', () => {
   });
   it('bounds event labels and rejects reflected arbitrary error strings', () => {
     const { summary, observe } = createLiveSmokeObserver();
-    observe(null); observe('not-json');
+    observe(null);
+    observe('not-json');
     observe({ type: 'a'.repeat(1000) });
     observe({ type: 'error', error: { code: 'Bearer secret token' } });
     expect(summary.eventCounts.unrecognized).toBe(1);
@@ -68,8 +86,20 @@ describe('live provider evidence redaction and truthfulness', () => {
     const secret = 'sk-proj-FictionalSecret123';
     observe({ type: secret });
     observe({ type: 'error', error: { code: secret } });
-    observe({ type: 'response.event', event: { type: 'response.output_item.added', item: { type: 'function_call', name: secret, call_id: `${secret}-first` } } });
-    observe({ type: 'response.event', event: { type: 'response.output_item.done', item: { type: `${secret}_call`, name: secret, id: `${secret}-second` } } });
+    observe({
+      type: 'response.event',
+      event: {
+        type: 'response.output_item.added',
+        item: { type: 'function_call', name: secret, call_id: `${secret}-first` },
+      },
+    });
+    observe({
+      type: 'response.event',
+      event: {
+        type: 'response.output_item.done',
+        item: { type: `${secret}_call`, name: secret, id: `${secret}-second` },
+      },
+    });
     expect(summary.eventCounts.unrecognized).toBe(1);
     expect(summary.providerErrorCodes).toEqual(['unrecognized']);
     expect(summary.toolCalls).toEqual(['function_call:unrecognized', 'unrecognized:unrecognized']);
@@ -77,10 +107,19 @@ describe('live provider evidence redaction and truthfulness', () => {
   });
   it('does not export arbitrary identifier labels or inherited object-property names', () => {
     const { summary, observe } = createLiveSmokeObserver();
-    for (const type of ['constructor', '__proto__', 'toString', 'future_private_event']) observe({ type });
-    observe({ type: 'response.event', event: { type: 'response.output_item.done', item: { type: 'web_search_call', id: 'private-call' } } });
+    for (const type of ['constructor', '__proto__', 'toString', 'future_private_event'])
+      observe({ type });
+    observe({
+      type: 'response.event',
+      event: {
+        type: 'response.output_item.done',
+        item: { type: 'web_search_call', id: 'private-call' },
+      },
+    });
     expect(summary.eventCounts.unrecognized).toBe(4);
     expect(summary.toolCalls).toEqual(['web_search_call:web_search_call']);
-    expect(JSON.stringify(summary)).not.toMatch(/constructor|__proto__|toString|future_private_event|private-call/);
+    expect(JSON.stringify(summary)).not.toMatch(
+      /constructor|__proto__|toString|future_private_event|private-call/,
+    );
   });
 });

@@ -37,10 +37,10 @@ describe('foreground level-based voice turn completion', () => {
   });
 
   it('manual send disables both silence deadlines but keeps the thirty-second capture bound', () => {
-    const speech=advanceTurnMeter({startedAtMs:0},1000,-25,true).state;
-    expect(advanceTurnMeter(speech,4000,-90,true).action).toBe('listen');
-    expect(advanceTurnMeter({startedAtMs:0},9000,-90,true).action).toBe('listen');
-    expect(advanceTurnMeter(speech,TURN_LIMITS.maximumMs,-25,true).action).toBe('hold');
-    expect(advanceTurnMeter(speech,TURN_LIMITS.maximumMs,-25).action).toBe('hold');
+    const speech = advanceTurnMeter({ startedAtMs: 0 }, 1000, -25, true).state;
+    expect(advanceTurnMeter(speech, 4000, -90, true).action).toBe('listen');
+    expect(advanceTurnMeter({ startedAtMs: 0 }, 9000, -90, true).action).toBe('listen');
+    expect(advanceTurnMeter(speech, TURN_LIMITS.maximumMs, -25, true).action).toBe('hold');
+    expect(advanceTurnMeter(speech, TURN_LIMITS.maximumMs, -25).action).toBe('hold');
   });
 });

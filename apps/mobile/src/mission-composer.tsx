@@ -6,22 +6,73 @@ import { Bootstrap, LANGUAGES } from './models';
 import { Avatar, Badge, Button, Card, Choice, Field, Icon, Notice, useUI, a11yState } from './ui';
 import { CallingReadiness } from './setup';
 import { selectContext } from '@personal-agent/domain';
-import { requestChoices, requestLimitError, reviewIdentity } from './features/missions/request-state';
+import {
+  requestChoices,
+  requestLimitError,
+  reviewIdentity,
+} from './features/missions/request-state';
 
 function freshMission(data: Bootstrap): MissionInput {
   return {
-    contactId: data.contacts[0]?.id ?? '', title: '', kind: 'custom', goal: '', successCriteria: [], background: '', sourceMaterial: [], neededMemoryIds: [], requiredTalkingPoints: [],
-    tone: data.profile.tone, pronunciation: data.profile.pronunciation, ownerLanguage: data.profile.language, recipientLanguage: 'en', voiceId: 'standard', mode: 'delegated',
-    boundaries: { nonNegotiable: [], preferences: [], allowedAlternatives: [], currency: 'USD', privateFacts: [], disclosableFacts: [], interventionTriggers: [], fallback: 'collect_options' },
-    followUpActions: [], schedule: { timezone: data.profile.timezone, retryLimit: 0, maxDurationSeconds: requestChoices(data.limits).defaultDuration },
-    voicemail: { allowed: false, content: '' }, callbackHandling: 'unsupported', retention: { transcript: true, audio: false, days: 30 },
+    contactId: data.contacts[0]?.id ?? '',
+    title: '',
+    kind: 'custom',
+    goal: '',
+    successCriteria: [],
+    background: '',
+    sourceMaterial: [],
+    neededMemoryIds: [],
+    requiredTalkingPoints: [],
+    tone: data.profile.tone,
+    pronunciation: data.profile.pronunciation,
+    ownerLanguage: data.profile.language,
+    recipientLanguage: 'en',
+    voiceId: 'standard',
+    mode: 'delegated',
+    boundaries: {
+      nonNegotiable: [],
+      preferences: [],
+      allowedAlternatives: [],
+      currency: 'USD',
+      privateFacts: [],
+      disclosableFacts: [],
+      interventionTriggers: [],
+      fallback: 'collect_options',
+    },
+    followUpActions: [],
+    schedule: {
+      timezone: data.profile.timezone,
+      retryLimit: 0,
+      maxDurationSeconds: requestChoices(data.limits).defaultDuration,
+    },
+    voicemail: { allowed: false, content: '' },
+    callbackHandling: 'unsupported',
+    retention: { transcript: true, audio: false, days: 30 },
   };
 }
-const lines = (value: string) => value.split('\n').map(text => text.trim()).filter(Boolean);
+const lines = (value: string) =>
+  value
+    .split('\n')
+    .map((text) => text.trim())
+    .filter(Boolean);
 
-export function MissionComposer({ data, template, working, onSave, onDirtyChange, onRegisterSave }: EditorGuard & { data: Bootstrap; template?: MissionTemplate; working: boolean; onSave: (input: MissionInput) => void | boolean | Promise<boolean | void> }) {
+export function MissionComposer({
+  data,
+  template,
+  working,
+  onSave,
+  onDirtyChange,
+  onRegisterSave,
+}: EditorGuard & {
+  data: Bootstrap;
+  template?: MissionTemplate;
+  working: boolean;
+  onSave: (input: MissionInput) => void | boolean | Promise<boolean | void>;
+}) {
   const { colors, styles } = useUI();
-  const [input, setInput] = useState<MissionInput>(() => JSON.parse(JSON.stringify(template?.input ?? freshMission(data))));
+  const [input, setInput] = useState<MissionInput>(() =>
+    JSON.parse(JSON.stringify(template?.input ?? freshMission(data))),
+  );
   const [advanced, setAdvanced] = useState(false);
   const [error, setError] = useState('');
   const [privateText, setPrivateText] = useState(input.boundaries.privateFacts.join('\n'));
@@ -29,97 +80,840 @@ export function MissionComposer({ data, template, working, onSave, onDirtyChange
   const [talkingText, setTalkingText] = useState(input.requiredTalkingPoints.join('\n'));
   const [successText, setSuccessText] = useState(input.successCriteria.join('\n'));
   const [reminderAt, setReminderAt] = useState('');
-  const recipient = data.contacts.find(contact => contact.id === input.contactId);
-  const choices = requestChoices(data.limits,input.schedule.maxDurationSeconds), limitError = requestLimitError(input.schedule,data.limits);
-  const selectableMemories = selectContext(data.profile.id,'','',data.memories,undefined,data.memories.filter(memory=>memory.scope==='owner').map(memory=>memory.id));
-  const update = <K extends keyof MissionInput>(key: K, value: MissionInput[K]) => setInput(previous => ({ ...previous, [key]: value }));
+  const recipient = data.contacts.find((contact) => contact.id === input.contactId);
+  const choices = requestChoices(data.limits, input.schedule.maxDurationSeconds),
+    limitError = requestLimitError(input.schedule, data.limits);
+  const selectableMemories = selectContext(
+    data.profile.id,
+    '',
+    '',
+    data.memories,
+    undefined,
+    data.memories.filter((memory) => memory.scope === 'owner').map((memory) => memory.id),
+  );
+  const update = <K extends keyof MissionInput>(key: K, value: MissionInput[K]) =>
+    setInput((previous) => ({ ...previous, [key]: value }));
   const save = async () => {
     if (working) return;
-    if (limitError) { setError(limitError); setAdvanced(true); return; }
-    if (!input.contactId || !recipient) { setError('Choose a recipient before continuing.'); return; }
-    if (!input.title.trim() || input.goal.trim().length < 8) { setError('Add a title and a clear conversation goal (at least eight characters).'); return; }
-    if (!talkingText.trim()) { setError('Add the statements or questions the agent is allowed to say. The private brief is not a script.'); return; }
-    if (input.kind === 'appointment' && !input.schedule.explicitTargetAt) { setError('Add an explicit replacement date with its UTC offset and timezone.'); setAdvanced(true); return; }
+    if (limitError) {
+      setError(limitError);
+      setAdvanced(true);
+      return;
+    }
+    if (!input.contactId || !recipient) {
+      setError('Choose a recipient before continuing.');
+      return;
+    }
+    if (!input.title.trim() || input.goal.trim().length < 8) {
+      setError('Add a title and a clear conversation goal (at least eight characters).');
+      return;
+    }
+    if (!talkingText.trim()) {
+      setError(
+        'Add the statements or questions the agent is allowed to say. The private brief is not a script.',
+      );
+      return;
+    }
+    if (input.kind === 'appointment' && !input.schedule.explicitTargetAt) {
+      setError('Add an explicit replacement date with its UTC offset and timezone.');
+      setAdvanced(true);
+      return;
+    }
     setError('');
-    try { const saved=await onSave({ ...input, requiredTalkingPoints: lines(talkingText), successCriteria: lines(successText), boundaries: { ...input.boundaries, nonNegotiable: lines(boundariesText), privateFacts: lines(privateText) } });if(saved===false)setError('The request could not be saved. Your instructions are still here. Reconnect and review the error before trying again.'); }
-    catch { setError('The request could not be saved. Your instructions are still here. Reconnect before trying again.'); }
+    try {
+      const saved = await onSave({
+        ...input,
+        requiredTalkingPoints: lines(talkingText),
+        successCriteria: lines(successText),
+        boundaries: {
+          ...input.boundaries,
+          nonNegotiable: lines(boundariesText),
+          privateFacts: lines(privateText),
+        },
+      });
+      if (saved === false)
+        setError(
+          'The request could not be saved. Your instructions are still here. Reconnect and review the error before trying again.',
+        );
+    } catch {
+      setError(
+        'The request could not be saved. Your instructions are still here. Reconnect before trying again.',
+      );
+    }
   };
-  useEditorGuard({input,privateText,boundariesText,talkingText,successText,reminderAt},save,{onDirtyChange,onRegisterSave});
-  return <>
-    <View style={{ gap: 10 }}><Badge text={template ? template.title : 'Your own conversation'} /><Text accessibilityRole="header" style={styles.title}>Tell me what matters.</Text><Text style={styles.subtitle}>A clear goal and a few boundaries go a long way. You will review everything before authorizing.</Text></View>
-    {!data.contacts.length ? <Notice tone="warning">Add a person in People before creating a request. Contacts are owner-entered; the app does not read your phone address book.</Notice> : null}
-    <View style={{ gap: 10 }}><Text style={styles.h3}>Who is this for?</Text>{data.contacts.map(contact => <Pressable key={contact.id} accessibilityRole="radio" {...a11yState({ checked: input.contactId === contact.id })} accessibilityLabel={`${contact.name}, ${contact.relationship}, ${contact.phone}`} onPress={() => setInput(previous => ({ ...previous, contactId: contact.id, recipientLanguage: contact.language }))} style={{ borderColor: input.contactId === contact.id ? colors.green : colors.line, borderWidth: input.contactId === contact.id ? 2 : 1, padding: 14, borderRadius: 16, backgroundColor: colors.white, flexDirection: 'row', gap: 12, alignItems: 'center' }}><Avatar name={contact.name} /><View style={{ flex: 1, gap: 3 }}><Text style={styles.h3}>{contact.name}</Text><Text style={styles.small}>{contact.relationship} · {contact.phone}</Text>{!contact.verified ? <Text style={{ color: colors.amber, fontSize: 12 }}>Recipient needs verification in People</Text> : null}{contact.optedOut ? <Text style={{ color: colors.red, fontSize: 12 }}>Requested no further calls</Text> : null}</View><Icon name={input.contactId === contact.id ? 'checkmark-circle' : 'ellipse-outline'} color={input.contactId === contact.id ? colors.green : colors.muted} /></Pressable>)}</View>
-    <Field label="Conversation title" value={input.title} onChangeText={value => update('title', value)} placeholder="A short name for this conversation" maxLength={120} />
-    <Field label="What would you like to achieve?" multiline value={input.goal} onChangeText={value => update('goal', value)} placeholder="Describe the outcome you want, in your own words." />
-    <Field label="Approved statements & questions" multiline value={talkingText} onChangeText={setTalkingText} placeholder="What may the agent actually say or ask? One point per line." hint="Only put shareable content here. Private context belongs below." />
-    <Field label="Your non-negotiables" multiline value={boundariesText} onChangeText={setBoundariesText} placeholder="For example: do not accept a charge; do not make a booking." hint="One boundary per line. Preferences do not grant new authority." />
-    <Choice label="How would you like this handled?" value={input.mode} onChange={value => update('mode', value)} options={[{ label: 'Delegate & come back', value: 'delegated' }, { label: 'Follow along', value: 'assisted' }]} />
-    <Pressable accessibilityRole="button" {...a11yState({ expanded: advanced })} onPress={() => setAdvanced(!advanced)} style={[styles.spread, { paddingVertical: 10, minHeight: 48 }]}><View style={styles.row}><Icon name="options-outline" /><Text style={styles.h3}>Context & finer details</Text></View><Icon name={advanced ? 'chevron-up' : 'chevron-down'} /></Pressable>
-    {advanced ? <>
-      <Field label="Success criteria" multiline value={successText} onChangeText={setSuccessText} placeholder="How will you know the goal is achieved? One criterion per line." />
-      <Field label="Background for the agent" multiline value={input.background} onChangeText={value => update('background', value)} placeholder="Useful background. Separately specify what may be disclosed." />
-      <Card><Text style={styles.h3}>Relevant owner memories</Text><Text style={styles.small}>Choose only the confirmed owner context needed for this request. Confirmed shareable context for this relationship is selected separately by the server.</Text>{selectableMemories.map(memory => <Pressable key={memory.id} accessibilityRole="checkbox" {...a11yState({ checked: input.neededMemoryIds.includes(memory.id) })} onPress={() => update('neededMemoryIds', input.neededMemoryIds.includes(memory.id) ? input.neededMemoryIds.filter(id => id !== memory.id) : [...input.neededMemoryIds, memory.id])} style={[styles.row, { minHeight: 48 }]}><Icon name={input.neededMemoryIds.includes(memory.id) ? 'checkbox' : 'square-outline'} /><Text style={[styles.text, { flex: 1 }]}>{memory.text}</Text></Pressable>)}</Card>
-      <Field label="Keep these facts private" multiline value={privateText} onChangeText={setPrivateText} placeholder="Private reasons or details that must stay out of this conversation." />
-      <Field label="Additional facts permitted to disclose" multiline value={input.boundaries.disclosableFacts.join('\n')} onChangeText={value => update('boundaries', { ...input.boundaries, disclosableFacts: lines(value) })} />
-      <Field label="Allowed alternatives & concessions" multiline value={input.boundaries.allowedAlternatives.join('\n')} onChangeText={value => update('boundaries', { ...input.boundaries, allowedAlternatives: lines(value) })} hint="Only these alternatives are authorized. New commitments require review." />
-      <Field label="Maximum authorized amount" value={input.boundaries.maxAmount === undefined ? '' : String(input.boundaries.maxAmount)} keyboardType="decimal-pad" onChangeText={value => update('boundaries', { ...input.boundaries, maxAmount: value === '' ? undefined : Number(value) })} hint={`${input.boundaries.currency}. Leave empty to authorize no new spending.`} />
-      <Field label="Tone & communication style" value={input.tone} onChangeText={value => update('tone', value)} />
-      <Field label="Pronunciation notes" value={input.pronunciation} onChangeText={value => update('pronunciation', value)} placeholder="Names or terms to take care with" />
-      <Choice label="Your language (brief & results)" value={input.ownerLanguage} onChange={value => update('ownerLanguage', value)} options={LANGUAGES} />
-      <Choice label="Recipient language" value={input.recipientLanguage} onChange={value => update('recipientLanguage', value)} options={LANGUAGES} />
-      <Notice>Names, dialects, and translations may need confirmation. The simulator includes an English / Spanish example; other language pairs are not fabricated.</Notice>
-      <Field label="Calling timezone" value={input.schedule.timezone} onChangeText={value => update('schedule', { ...input.schedule, timezone: value })} autoCapitalize="none" placeholder="America/New_York" />
-      {input.kind === 'appointment' ? <Field label="Explicit replacement time" value={input.schedule.explicitTargetAt ?? ''} onChangeText={value => update('schedule', { ...input.schedule, explicitTargetAt: value || undefined })} hint="ISO timestamp with offset, e.g. 2026-10-27T13:00:00-04:00. Review this exact date before authorizing." autoCapitalize="none" /> : null}
-      <Field label="Deadline (optional)" value={input.schedule.deadlineAt ?? ''} onChangeText={value => update('schedule', { ...input.schedule, deadlineAt: value || undefined })} placeholder="2026-10-28T17:00:00-04:00" autoCapitalize="none" />
-      <Field label="Calling window starts (optional)" value={input.schedule.callingWindowStart ?? ''} onChangeText={value => update('schedule', { ...input.schedule, callingWindowStart: value || undefined })} placeholder="ISO timestamp with UTC offset" autoCapitalize="none" />
-      <Field label="Calling window ends (optional)" value={input.schedule.callingWindowEnd ?? ''} onChangeText={value => update('schedule', { ...input.schedule, callingWindowEnd: value || undefined })} placeholder="ISO timestamp with UTC offset" autoCapitalize="none" />
-      {limitError?<Notice tone="warning">{limitError} Current draft: {input.schedule.maxDurationSeconds} seconds and {input.schedule.retryLimit} retries.</Notice>:null}
-      <Choice label="Retry limit for busy / no answer" value={String(input.schedule.retryLimit)} options={choices.retries} onChange={value => update('schedule', { ...input.schedule, retryLimit: Number(value) })} />
-      <Choice label="Maximum call duration" value={String(input.schedule.maxDurationSeconds)} options={choices.durations} onChange={value => update('schedule', { ...input.schedule, maxDurationSeconds: Number(value) })} />
-      <Choice label="If you cannot respond" value={input.boundaries.fallback} onChange={value => update('boundaries', { ...input.boundaries, fallback: value })} options={[{ label: 'Collect options only', value: 'collect_options' }, { label: 'End without agreement', value: 'end_without_agreement' }]} />
-      <Field label="When should the agent ask you?" multiline value={input.boundaries.interventionTriggers.join('\n')} onChangeText={value => update('boundaries', { ...input.boundaries, interventionTriggers: lines(value) })} placeholder="New fees, unexpected alternatives, identity checks…" />
-      <Card><View style={styles.spread}><View style={{ flex: 1, gap: 5 }}><Text style={styles.h3}>Allow voicemail</Text><Text style={styles.small}>Only the exact text you approve below.</Text></View><Switch accessibilityLabel="Allow an approved voicemail" value={input.voicemail.allowed} onValueChange={allowed => update('voicemail', { ...input.voicemail, allowed })} trackColor={{ true: colors.green }} /></View>{input.voicemail.allowed ? <Field label="Approved voicemail text" multiline value={input.voicemail.content} onChangeText={content => update('voicemail', { ...input.voicemail, content })} /> : null}</Card>
-      <Card><Text style={styles.h3}>After the conversation</Text><Text style={styles.small}>Actions run only when authorized and their prerequisites are confirmed.</Text>{input.followUpActions.map((action, index) => <View key={action.id} style={styles.spread}><View style={{ flex: 1 }}><Text style={styles.text}>{action.description}</Text><Text style={styles.small}>{action.kind.replace(/_/g, ' ')}</Text></View><Switch accessibilityLabel={`Authorize ${action.description}`} value={action.authorized} onValueChange={authorized => update('followUpActions', input.followUpActions.map((current, i) => i === index ? { ...current, authorized } : current))} trackColor={{ true: colors.green }} /></View>)}
-        <Field label="Reminder deadline (optional)" value={reminderAt} onChangeText={setReminderAt} placeholder="2026-10-30T17:00:00-04:00" autoCapitalize="none" />
-        <Button label="Add authorized follow-up reminder" secondary compact disabled={!reminderAt} onPress={() => { update('followUpActions', [...input.followUpActions, { id: `reminder-${Date.now()}`, kind: 'reminder', status: 'proposed', authorized: true, description: `Follow up on ${input.title || 'this conversation'}`, payload: { dueAt: reminderAt }, prerequisiteEvidenceIds: [] }]); setReminderAt(''); }} />
-        <Text style={styles.small}>Calendar updates use the existing event ID. External message sending is unavailable until a communication integration is configured.</Text>
-      </Card>
-      <Card><Text style={styles.h3}>Transcript & retention</Text><View style={styles.spread}><Text style={[styles.text, { flex: 1 }]}>Keep a transcript</Text><Switch accessibilityLabel="Keep transcript" value={input.retention.transcript} onValueChange={transcript => update('retention', { ...input.retention, transcript })} trackColor={{ true: colors.green }} /></View><Choice label="Retain for" value={String(input.retention.days)} options={[{ label: '7 days', value: '7' }, { label: '30 days', value: '30' }, { label: '90 days', value: '90' }]} onChange={value => update('retention', { ...input.retention, days: Number(value) })} /><Text style={styles.small}>Audio recording is off. Provider-side retention must also be configured. Deleting app records may not override provider retention requirements.</Text></Card>
-    </> : null}
-    {error ? <Notice tone="error">{error}</Notice> : null}
-    <Notice>The caller will introduce itself as your AI assistant. No voice clone is needed.</Notice>
-    <Button label="Review this conversation" icon="arrow-forward" onPress={save} loading={working} />
-  </>;
+  useEditorGuard(
+    { input, privateText, boundariesText, talkingText, successText, reminderAt },
+    save,
+    { onDirtyChange, onRegisterSave },
+  );
+  return (
+    <>
+      <View style={{ gap: 10 }}>
+        <Badge text={template ? template.title : 'Your own conversation'} />
+        <Text accessibilityRole="header" style={styles.title}>
+          Tell me what matters.
+        </Text>
+        <Text style={styles.subtitle}>
+          A clear goal and a few boundaries go a long way. You will review everything before
+          authorizing.
+        </Text>
+      </View>
+      {!data.contacts.length ? (
+        <Notice tone="warning">
+          Add a person in People before creating a request. Contacts are owner-entered; the app does
+          not read your phone address book.
+        </Notice>
+      ) : null}
+      <View style={{ gap: 10 }}>
+        <Text style={styles.h3}>Who is this for?</Text>
+        {data.contacts.map((contact) => (
+          <Pressable
+            key={contact.id}
+            accessibilityRole="radio"
+            {...a11yState({ checked: input.contactId === contact.id })}
+            accessibilityLabel={`${contact.name}, ${contact.relationship}, ${contact.phone}`}
+            onPress={() =>
+              setInput((previous) => ({
+                ...previous,
+                contactId: contact.id,
+                recipientLanguage: contact.language,
+              }))
+            }
+            style={{
+              borderColor: input.contactId === contact.id ? colors.green : colors.line,
+              borderWidth: input.contactId === contact.id ? 2 : 1,
+              padding: 14,
+              borderRadius: 16,
+              backgroundColor: colors.white,
+              flexDirection: 'row',
+              gap: 12,
+              alignItems: 'center',
+            }}
+          >
+            <Avatar name={contact.name} />
+            <View style={{ flex: 1, gap: 3 }}>
+              <Text style={styles.h3}>{contact.name}</Text>
+              <Text style={styles.small}>
+                {contact.relationship} · {contact.phone}
+              </Text>
+              {!contact.verified ? (
+                <Text style={{ color: colors.amber, fontSize: 12 }}>
+                  Recipient needs verification in People
+                </Text>
+              ) : null}
+              {contact.optedOut ? (
+                <Text style={{ color: colors.red, fontSize: 12 }}>Requested no further calls</Text>
+              ) : null}
+            </View>
+            <Icon
+              name={input.contactId === contact.id ? 'checkmark-circle' : 'ellipse-outline'}
+              color={input.contactId === contact.id ? colors.green : colors.muted}
+            />
+          </Pressable>
+        ))}
+      </View>
+      <Field
+        label="Conversation title"
+        value={input.title}
+        onChangeText={(value) => update('title', value)}
+        placeholder="A short name for this conversation"
+        maxLength={120}
+      />
+      <Field
+        label="What would you like to achieve?"
+        multiline
+        value={input.goal}
+        onChangeText={(value) => update('goal', value)}
+        placeholder="Describe the outcome you want, in your own words."
+      />
+      <Field
+        label="Approved statements & questions"
+        multiline
+        value={talkingText}
+        onChangeText={setTalkingText}
+        placeholder="What may the agent actually say or ask? One point per line."
+        hint="Only put shareable content here. Private context belongs below."
+      />
+      <Field
+        label="Your non-negotiables"
+        multiline
+        value={boundariesText}
+        onChangeText={setBoundariesText}
+        placeholder="For example: do not accept a charge; do not make a booking."
+        hint="One boundary per line. Preferences do not grant new authority."
+      />
+      <Choice
+        label="How would you like this handled?"
+        value={input.mode}
+        onChange={(value) => update('mode', value)}
+        options={[
+          { label: 'Delegate & come back', value: 'delegated' },
+          { label: 'Follow along', value: 'assisted' },
+        ]}
+      />
+      <Pressable
+        accessibilityRole="button"
+        {...a11yState({ expanded: advanced })}
+        onPress={() => setAdvanced(!advanced)}
+        style={[styles.spread, { paddingVertical: 10, minHeight: 48 }]}
+      >
+        <View style={styles.row}>
+          <Icon name="options-outline" />
+          <Text style={styles.h3}>Context & finer details</Text>
+        </View>
+        <Icon name={advanced ? 'chevron-up' : 'chevron-down'} />
+      </Pressable>
+      {advanced ? (
+        <>
+          <Field
+            label="Success criteria"
+            multiline
+            value={successText}
+            onChangeText={setSuccessText}
+            placeholder="How will you know the goal is achieved? One criterion per line."
+          />
+          <Field
+            label="Background for the agent"
+            multiline
+            value={input.background}
+            onChangeText={(value) => update('background', value)}
+            placeholder="Useful background. Separately specify what may be disclosed."
+          />
+          <Card>
+            <Text style={styles.h3}>Relevant owner memories</Text>
+            <Text style={styles.small}>
+              Choose only the confirmed owner context needed for this request. Confirmed shareable
+              context for this relationship is selected separately by the server.
+            </Text>
+            {selectableMemories.map((memory) => (
+              <Pressable
+                key={memory.id}
+                accessibilityRole="checkbox"
+                {...a11yState({ checked: input.neededMemoryIds.includes(memory.id) })}
+                onPress={() =>
+                  update(
+                    'neededMemoryIds',
+                    input.neededMemoryIds.includes(memory.id)
+                      ? input.neededMemoryIds.filter((id) => id !== memory.id)
+                      : [...input.neededMemoryIds, memory.id],
+                  )
+                }
+                style={[styles.row, { minHeight: 48 }]}
+              >
+                <Icon
+                  name={input.neededMemoryIds.includes(memory.id) ? 'checkbox' : 'square-outline'}
+                />
+                <Text style={[styles.text, { flex: 1 }]}>{memory.text}</Text>
+              </Pressable>
+            ))}
+          </Card>
+          <Field
+            label="Keep these facts private"
+            multiline
+            value={privateText}
+            onChangeText={setPrivateText}
+            placeholder="Private reasons or details that must stay out of this conversation."
+          />
+          <Field
+            label="Additional facts permitted to disclose"
+            multiline
+            value={input.boundaries.disclosableFacts.join('\n')}
+            onChangeText={(value) =>
+              update('boundaries', { ...input.boundaries, disclosableFacts: lines(value) })
+            }
+          />
+          <Field
+            label="Allowed alternatives & concessions"
+            multiline
+            value={input.boundaries.allowedAlternatives.join('\n')}
+            onChangeText={(value) =>
+              update('boundaries', { ...input.boundaries, allowedAlternatives: lines(value) })
+            }
+            hint="Only these alternatives are authorized. New commitments require review."
+          />
+          <Field
+            label="Maximum authorized amount"
+            value={
+              input.boundaries.maxAmount === undefined ? '' : String(input.boundaries.maxAmount)
+            }
+            keyboardType="decimal-pad"
+            onChangeText={(value) =>
+              update('boundaries', {
+                ...input.boundaries,
+                maxAmount: value === '' ? undefined : Number(value),
+              })
+            }
+            hint={`${input.boundaries.currency}. Leave empty to authorize no new spending.`}
+          />
+          <Field
+            label="Tone & communication style"
+            value={input.tone}
+            onChangeText={(value) => update('tone', value)}
+          />
+          <Field
+            label="Pronunciation notes"
+            value={input.pronunciation}
+            onChangeText={(value) => update('pronunciation', value)}
+            placeholder="Names or terms to take care with"
+          />
+          <Choice
+            label="Your language (brief & results)"
+            value={input.ownerLanguage}
+            onChange={(value) => update('ownerLanguage', value)}
+            options={LANGUAGES}
+          />
+          <Choice
+            label="Recipient language"
+            value={input.recipientLanguage}
+            onChange={(value) => update('recipientLanguage', value)}
+            options={LANGUAGES}
+          />
+          <Notice>
+            Names, dialects, and translations may need confirmation. The simulator includes an
+            English / Spanish example; other language pairs are not fabricated.
+          </Notice>
+          <Field
+            label="Calling timezone"
+            value={input.schedule.timezone}
+            onChangeText={(value) => update('schedule', { ...input.schedule, timezone: value })}
+            autoCapitalize="none"
+            placeholder="America/New_York"
+          />
+          {input.kind === 'appointment' ? (
+            <Field
+              label="Explicit replacement time"
+              value={input.schedule.explicitTargetAt ?? ''}
+              onChangeText={(value) =>
+                update('schedule', { ...input.schedule, explicitTargetAt: value || undefined })
+              }
+              hint="ISO timestamp with offset, e.g. 2026-10-27T13:00:00-04:00. Review this exact date before authorizing."
+              autoCapitalize="none"
+            />
+          ) : null}
+          <Field
+            label="Deadline (optional)"
+            value={input.schedule.deadlineAt ?? ''}
+            onChangeText={(value) =>
+              update('schedule', { ...input.schedule, deadlineAt: value || undefined })
+            }
+            placeholder="2026-10-28T17:00:00-04:00"
+            autoCapitalize="none"
+          />
+          <Field
+            label="Calling window starts (optional)"
+            value={input.schedule.callingWindowStart ?? ''}
+            onChangeText={(value) =>
+              update('schedule', { ...input.schedule, callingWindowStart: value || undefined })
+            }
+            placeholder="ISO timestamp with UTC offset"
+            autoCapitalize="none"
+          />
+          <Field
+            label="Calling window ends (optional)"
+            value={input.schedule.callingWindowEnd ?? ''}
+            onChangeText={(value) =>
+              update('schedule', { ...input.schedule, callingWindowEnd: value || undefined })
+            }
+            placeholder="ISO timestamp with UTC offset"
+            autoCapitalize="none"
+          />
+          {limitError ? (
+            <Notice tone="warning">
+              {limitError} Current draft: {input.schedule.maxDurationSeconds} seconds and{' '}
+              {input.schedule.retryLimit} retries.
+            </Notice>
+          ) : null}
+          <Choice
+            label="Retry limit for busy / no answer"
+            value={String(input.schedule.retryLimit)}
+            options={choices.retries}
+            onChange={(value) =>
+              update('schedule', { ...input.schedule, retryLimit: Number(value) })
+            }
+          />
+          <Choice
+            label="Maximum call duration"
+            value={String(input.schedule.maxDurationSeconds)}
+            options={choices.durations}
+            onChange={(value) =>
+              update('schedule', { ...input.schedule, maxDurationSeconds: Number(value) })
+            }
+          />
+          <Choice
+            label="If you cannot respond"
+            value={input.boundaries.fallback}
+            onChange={(value) => update('boundaries', { ...input.boundaries, fallback: value })}
+            options={[
+              { label: 'Collect options only', value: 'collect_options' },
+              { label: 'End without agreement', value: 'end_without_agreement' },
+            ]}
+          />
+          <Field
+            label="When should the agent ask you?"
+            multiline
+            value={input.boundaries.interventionTriggers.join('\n')}
+            onChangeText={(value) =>
+              update('boundaries', { ...input.boundaries, interventionTriggers: lines(value) })
+            }
+            placeholder="New fees, unexpected alternatives, identity checks…"
+          />
+          <Card>
+            <View style={styles.spread}>
+              <View style={{ flex: 1, gap: 5 }}>
+                <Text style={styles.h3}>Allow voicemail</Text>
+                <Text style={styles.small}>Only the exact text you approve below.</Text>
+              </View>
+              <Switch
+                accessibilityLabel="Allow an approved voicemail"
+                value={input.voicemail.allowed}
+                onValueChange={(allowed) => update('voicemail', { ...input.voicemail, allowed })}
+                trackColor={{ true: colors.green }}
+              />
+            </View>
+            {input.voicemail.allowed ? (
+              <Field
+                label="Approved voicemail text"
+                multiline
+                value={input.voicemail.content}
+                onChangeText={(content) => update('voicemail', { ...input.voicemail, content })}
+              />
+            ) : null}
+          </Card>
+          <Card>
+            <Text style={styles.h3}>After the conversation</Text>
+            <Text style={styles.small}>
+              Actions run only when authorized and their prerequisites are confirmed.
+            </Text>
+            {input.followUpActions.map((action, index) => (
+              <View key={action.id} style={styles.spread}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.text}>{action.description}</Text>
+                  <Text style={styles.small}>{action.kind.replace(/_/g, ' ')}</Text>
+                </View>
+                <Switch
+                  accessibilityLabel={`Authorize ${action.description}`}
+                  value={action.authorized}
+                  onValueChange={(authorized) =>
+                    update(
+                      'followUpActions',
+                      input.followUpActions.map((current, i) =>
+                        i === index ? { ...current, authorized } : current,
+                      ),
+                    )
+                  }
+                  trackColor={{ true: colors.green }}
+                />
+              </View>
+            ))}
+            <Field
+              label="Reminder deadline (optional)"
+              value={reminderAt}
+              onChangeText={setReminderAt}
+              placeholder="2026-10-30T17:00:00-04:00"
+              autoCapitalize="none"
+            />
+            <Button
+              label="Add authorized follow-up reminder"
+              secondary
+              compact
+              disabled={!reminderAt}
+              onPress={() => {
+                update('followUpActions', [
+                  ...input.followUpActions,
+                  {
+                    id: `reminder-${Date.now()}`,
+                    kind: 'reminder',
+                    status: 'proposed',
+                    authorized: true,
+                    description: `Follow up on ${input.title || 'this conversation'}`,
+                    payload: { dueAt: reminderAt },
+                    prerequisiteEvidenceIds: [],
+                  },
+                ]);
+                setReminderAt('');
+              }}
+            />
+            <Text style={styles.small}>
+              Calendar updates use the existing event ID. External message sending is unavailable
+              until a communication integration is configured.
+            </Text>
+          </Card>
+          <Card>
+            <Text style={styles.h3}>Transcript & retention</Text>
+            <View style={styles.spread}>
+              <Text style={[styles.text, { flex: 1 }]}>Keep a transcript</Text>
+              <Switch
+                accessibilityLabel="Keep transcript"
+                value={input.retention.transcript}
+                onValueChange={(transcript) =>
+                  update('retention', { ...input.retention, transcript })
+                }
+                trackColor={{ true: colors.green }}
+              />
+            </View>
+            <Choice
+              label="Retain for"
+              value={String(input.retention.days)}
+              options={[
+                { label: '7 days', value: '7' },
+                { label: '30 days', value: '30' },
+                { label: '90 days', value: '90' },
+              ]}
+              onChange={(value) => update('retention', { ...input.retention, days: Number(value) })}
+            />
+            <Text style={styles.small}>
+              Audio recording is off. Provider-side retention must also be configured. Deleting app
+              records may not override provider retention requirements.
+            </Text>
+          </Card>
+        </>
+      ) : null}
+      {error ? <Notice tone="error">{error}</Notice> : null}
+      <Notice>
+        The caller will introduce itself as your AI assistant. No voice clone is needed.
+      </Notice>
+      <Button
+        label="Review this conversation"
+        icon="arrow-forward"
+        onPress={save}
+        loading={working}
+      />
+    </>
+  );
 }
 
-export function MissionReview({ data, mission, working, onEdit, onAuthorize }: { data: Bootstrap; mission: Mission; working: boolean; onEdit: () => void; onAuthorize: (scenario: Scenario) => void }) {
+export function MissionReview({
+  data,
+  mission,
+  working,
+  onEdit,
+  onAuthorize,
+}: {
+  data: Bootstrap;
+  mission: Mission;
+  working: boolean;
+  onEdit: () => void;
+  onAuthorize: (scenario: Scenario) => void;
+}) {
   const { colors, styles } = useUI();
   const [scenario, setScenario] = useState<Scenario>('normal');
-  const [confirmedReview, setConfirmedReview] = useState<string|null>(null);
-  const contact = data.contacts.find(item => item.id === mission.contactId);
-  const context = selectContext(data.profile.id,mission.contactId,mission.id,data.memories,undefined,mission.neededMemoryIds);
-  const identity = reviewIdentity(mission,contact,data.limits,context), recipientConfirmed = confirmedReview===identity;
-  const limitError = requestLimitError(mission.schedule,data.limits);
+  const [confirmedReview, setConfirmedReview] = useState<string | null>(null);
+  const contact = data.contacts.find((item) => item.id === mission.contactId);
+  const context = selectContext(
+    data.profile.id,
+    mission.contactId,
+    mission.id,
+    data.memories,
+    undefined,
+    mission.neededMemoryIds,
+  );
+  const identity = reviewIdentity(mission, contact, data.limits, context),
+    recipientConfirmed = confirmedReview === identity;
+  const limitError = requestLimitError(mission.schedule, data.limits);
   const isDemo = data.mode !== 'live' && data.mode !== 'elevenlabs';
-  const liveBlocked = !isDemo && (data.liveCallsEnabled !== true || data.liveReadiness?.ready !== true);
+  const liveBlocked =
+    !isDemo && (data.liveCallsEnabled !== true || data.liveReadiness?.ready !== true);
   const options: { label: string; value: Scenario }[] = [
-    { label: 'Normal conversation', value: 'normal' }, { label: 'Counteroffer', value: 'counteroffer' }, { label: 'Private-info request', value: 'injection' }, { label: 'No answer', value: 'no_answer' }, { label: 'Busy', value: 'busy' }, { label: 'Voicemail', value: 'voicemail' }, { label: 'Wrong person', value: 'wrong_person' }, { label: 'AI refusal', value: 'refusal' }, { label: 'Call drops', value: 'dropped_uncertain' }, { label: 'Calendar write fails', value: 'calendar_failure' },
+    { label: 'Normal conversation', value: 'normal' },
+    { label: 'Counteroffer', value: 'counteroffer' },
+    { label: 'Private-info request', value: 'injection' },
+    { label: 'No answer', value: 'no_answer' },
+    { label: 'Busy', value: 'busy' },
+    { label: 'Voicemail', value: 'voicemail' },
+    { label: 'Wrong person', value: 'wrong_person' },
+    { label: 'AI refusal', value: 'refusal' },
+    { label: 'Call drops', value: 'dropped_uncertain' },
+    { label: 'Calendar write fails', value: 'calendar_failure' },
   ];
-  return <>
-    <View style={{ gap: 10 }}><Text style={styles.label}>YOUR AUTHORIZATION</Text><Text accessibilityRole="header" style={styles.title}>One last look.</Text><Text style={styles.subtitle}>This is the authority your agent will have. A different commitment needs a new decision.</Text></View>
-    <Card><View style={styles.row}><Avatar name={contact?.name ?? '?'} size={52} /><View style={{ flex: 1, gap: 4 }}><Text style={styles.h2}>{contact?.name ?? 'Recipient unavailable'}</Text><Text style={styles.subtitle}>{contact?.relationship}</Text><Text style={styles.text}>{contact?.phone}</Text></View></View><View style={styles.divider} /><Text style={styles.h3}>{mission.title}</Text><Text style={styles.text}>{mission.goal}</Text></Card>
-    <Card><Text style={styles.label}>WHAT THE AGENT MAY SAY</Text>{mission.requiredTalkingPoints.map((point, i) => <Text key={i} style={styles.text}>• {point}</Text>)}<View style={styles.divider} /><Text style={styles.label}>BOUNDARIES</Text>{mission.boundaries.nonNegotiable.length ? mission.boundaries.nonNegotiable.map((boundary, i) => <Text key={i} style={styles.text}>• {boundary}</Text>) : <Text style={styles.text}>No new commitments beyond the approved goal.</Text>}<Text style={styles.small}>Spending limit: {mission.boundaries.maxAmount === undefined ? 'No new spending authorized' : `${mission.boundaries.maxAmount} ${mission.boundaries.currency}`}</Text><Text style={styles.small}>If unavailable: {mission.boundaries.fallback === 'collect_options' ? 'collect options without agreeing' : 'end without agreement'}.</Text>{mission.boundaries.privateFacts.length ? <Badge text={`${mission.boundaries.privateFacts.length} private detail${mission.boundaries.privateFacts.length === 1 ? '' : 's'} withheld`} /> : null}</Card>
-    <Card><Text style={styles.label}>DISCLOSURE AND AUTHORITY</Text><Text style={styles.h3}>Facts permitted to disclose</Text>{mission.boundaries.disclosableFacts.length ? mission.boundaries.disclosableFacts.map((fact,i)=><Text key={i} style={styles.text}>• {fact}</Text>) : <Text style={styles.text}>Only the approved statements and selected shareable context.</Text>}<Text style={styles.h3}>Permitted alternatives</Text>{mission.boundaries.allowedAlternatives.length ? mission.boundaries.allowedAlternatives.map((alternative,i)=><Text key={i} style={styles.text}>• {alternative}</Text>) : <Text style={styles.text}>No additional alternatives authorized.</Text>}<Text style={styles.h3}>Ask you when</Text>{mission.boundaries.interventionTriggers.length ? mission.boundaries.interventionTriggers.map((trigger,i)=><Text key={i} style={styles.text}>• {trigger}</Text>) : <Text style={styles.text}>Any new commitment requires a revised authorization.</Text>}<Text style={styles.small}>Tone: {mission.tone}. {mission.pronunciation ? `Pronunciation: ${mission.pronunciation}` : ''}</Text><Text style={styles.h3}>Private context — do not disclose</Text>{mission.boundaries.privateFacts.length ? mission.boundaries.privateFacts.map((fact,i)=><Text key={i} style={styles.text}>• {fact}</Text>) : <Text style={styles.small}>No additional private facts supplied.</Text>}</Card>
-    <Card><Text style={styles.label}>PERMITTED FOLLOW-UP</Text>{mission.followUpActions.filter(action => action.authorized).length ? mission.followUpActions.filter(action => action.authorized).map(action => <Text key={action.id} style={styles.text}>• {action.description}</Text>) : <Text style={styles.text}>No external follow-up actions authorized.</Text>}<Text style={styles.small}>A tentative reply, voicemail, or disconnected call cannot confirm an agreement.</Text></Card>
-    {context.length ? <Card><Text style={styles.label}>SELECTED CONFIRMED CONTEXT</Text>{context.map(memory => <View key={memory.id} style={{ gap: 4 }}><Text style={styles.text}>{memory.text}</Text><Text style={styles.small}>{memory.source.type} · {memory.source.reference}</Text></View>)}<Text style={styles.small}>Private facts, unconfirmed claims, unrelated relationships, and inferred permissions are excluded.</Text></Card> : null}
-    <Card><Text style={styles.label}>DETAILS</Text><Text style={styles.text}>{mission.mode === 'assisted' ? 'Follow along' : 'Delegated'} · {mission.ownerLanguage.toUpperCase()} brief → {mission.recipientLanguage.toUpperCase()} recipient</Text><Text style={styles.small}>Standard assistant voice · {mission.schedule.maxDurationSeconds / 60} minute limit · {mission.schedule.retryLimit} retries</Text><Text style={styles.small}>Timezone: {mission.schedule.timezone}</Text>{mission.schedule.explicitTargetAt ? <Text style={styles.text}>Approved time: {mission.schedule.explicitTargetAt}</Text> : null}<Text style={styles.small}>{mission.voicemail.allowed ? `Approved voicemail: ${mission.voicemail.content}` : 'No voicemail authorized.'} Callbacks are not supported by this adapter.</Text><Text style={styles.small}>Transcript {mission.retention.transcript ? `retained up to ${mission.retention.days} days` : 'not retained'} · audio off</Text></Card>
-    <Card><Text style={styles.label}>EXACT TIMING AND FOLLOW-UP SCOPE</Text><Text style={styles.text}>Voice: {mission.voiceId === 'standard' ? 'Standard assistant voice' : mission.voiceId}</Text><Text style={styles.text}>Deadline: {mission.schedule.deadlineAt ?? 'No additional deadline'}</Text><Text style={styles.text}>Calling window: {mission.schedule.callingWindowStart ?? 'No separate start'} → {mission.schedule.callingWindowEnd ?? 'No separate end'}</Text>{mission.followUpActions.filter(action=>action.authorized).map(action=><View key={action.id} style={{gap:4}}><Text style={styles.h3}>{action.description}</Text><Text selectable style={styles.small}>{JSON.stringify(action.payload,null,2)}</Text></View>)}{mission.boundaries.preferences.length?<><Text style={styles.h3}>Preferences — no additional authority</Text>{mission.boundaries.preferences.map((preference,i)=><Text key={i} style={styles.text}>• {preference}</Text>)}</>:null}{mission.background?<><Text style={styles.h3}>Agent background</Text><Text style={styles.text}>{mission.background}</Text></>:null}{mission.sourceMaterial.map((source,i)=><View key={i} style={{gap:4}}><Text style={styles.h3}>{source.name}</Text><Badge text={source.allowedToDisclose?'Source may be disclosed':'Source for private context only'} tone="neutral"/><Text style={styles.text}>{source.content}</Text></View>)}</Card>
-    {isDemo ? <><Notice>This runs a deterministic simulation. No telephone call is placed, no real calendar is changed, and fictional outcomes are labeled as demo results.</Notice><Choice label="Demo scenario" value={scenario} options={options} onChange={setScenario} /></> : <Notice tone="warning">Live calling is limited to allowlisted test recipients. Voice behavior cannot be guaranteed by tool restrictions alone; use bounded requests.</Notice>}
-    {limitError?<Notice tone="error">{limitError} Edit the instructions before authorizing.</Notice>:null}
-    <Pressable accessibilityRole="checkbox" accessibilityLabel="I checked the intended person and number" {...a11yState({ checked: recipientConfirmed })} onPress={() => setConfirmedReview(recipientConfirmed?null:identity)} style={[styles.row, { minHeight: 52, paddingVertical: 10 }]}><Icon name={recipientConfirmed ? 'checkbox' : 'square-outline'} color={colors.green} /><Text style={[styles.text, { flex: 1 }]}>I checked the intended person and number.</Text></Pressable>
-    {!contact?.verified || contact?.optedOut ? <Notice tone="error">{contact?.optedOut ? 'This person requested no further calls. Authorization is blocked.' : 'Confirm this recipient in People before authorizing.'}</Notice> : null}
-    {!isDemo ? <CallingReadiness readiness={data.liveReadiness} liveCallsEnabled={data.liveCallsEnabled} mode={data.mode} /> : null}
-    <Button label={isDemo ? 'Authorize simulated conversation' : liveBlocked ? 'Real calling is disabled until setup is ready' : 'Authorize this call'} icon={isDemo ? 'flask-outline' : 'call-outline'} loading={working} disabled={liveBlocked || !!limitError || !recipientConfirmed || !contact?.verified || contact?.optedOut} onPress={() => {if(recipientConfirmed&&!limitError)onAuthorize(isDemo?scenario:'normal');}} />
-    <Button label="Edit the instructions" secondary onPress={onEdit} disabled={working} />
-  </>;
+  return (
+    <>
+      <View style={{ gap: 10 }}>
+        <Text style={styles.label}>YOUR AUTHORIZATION</Text>
+        <Text accessibilityRole="header" style={styles.title}>
+          One last look.
+        </Text>
+        <Text style={styles.subtitle}>
+          This is the authority your agent will have. A different commitment needs a new decision.
+        </Text>
+      </View>
+      <Card>
+        <View style={styles.row}>
+          <Avatar name={contact?.name ?? '?'} size={52} />
+          <View style={{ flex: 1, gap: 4 }}>
+            <Text style={styles.h2}>{contact?.name ?? 'Recipient unavailable'}</Text>
+            <Text style={styles.subtitle}>{contact?.relationship}</Text>
+            <Text style={styles.text}>{contact?.phone}</Text>
+          </View>
+        </View>
+        <View style={styles.divider} />
+        <Text style={styles.h3}>{mission.title}</Text>
+        <Text style={styles.text}>{mission.goal}</Text>
+      </Card>
+      <Card>
+        <Text style={styles.label}>WHAT THE AGENT MAY SAY</Text>
+        {mission.requiredTalkingPoints.map((point, i) => (
+          <Text key={i} style={styles.text}>
+            • {point}
+          </Text>
+        ))}
+        <View style={styles.divider} />
+        <Text style={styles.label}>BOUNDARIES</Text>
+        {mission.boundaries.nonNegotiable.length ? (
+          mission.boundaries.nonNegotiable.map((boundary, i) => (
+            <Text key={i} style={styles.text}>
+              • {boundary}
+            </Text>
+          ))
+        ) : (
+          <Text style={styles.text}>No new commitments beyond the approved goal.</Text>
+        )}
+        <Text style={styles.small}>
+          Spending limit:{' '}
+          {mission.boundaries.maxAmount === undefined
+            ? 'No new spending authorized'
+            : `${mission.boundaries.maxAmount} ${mission.boundaries.currency}`}
+        </Text>
+        <Text style={styles.small}>
+          If unavailable:{' '}
+          {mission.boundaries.fallback === 'collect_options'
+            ? 'collect options without agreeing'
+            : 'end without agreement'}
+          .
+        </Text>
+        {mission.boundaries.privateFacts.length ? (
+          <Badge
+            text={`${mission.boundaries.privateFacts.length} private detail${mission.boundaries.privateFacts.length === 1 ? '' : 's'} withheld`}
+          />
+        ) : null}
+      </Card>
+      <Card>
+        <Text style={styles.label}>DISCLOSURE AND AUTHORITY</Text>
+        <Text style={styles.h3}>Facts permitted to disclose</Text>
+        {mission.boundaries.disclosableFacts.length ? (
+          mission.boundaries.disclosableFacts.map((fact, i) => (
+            <Text key={i} style={styles.text}>
+              • {fact}
+            </Text>
+          ))
+        ) : (
+          <Text style={styles.text}>
+            Only the approved statements and selected shareable context.
+          </Text>
+        )}
+        <Text style={styles.h3}>Permitted alternatives</Text>
+        {mission.boundaries.allowedAlternatives.length ? (
+          mission.boundaries.allowedAlternatives.map((alternative, i) => (
+            <Text key={i} style={styles.text}>
+              • {alternative}
+            </Text>
+          ))
+        ) : (
+          <Text style={styles.text}>No additional alternatives authorized.</Text>
+        )}
+        <Text style={styles.h3}>Ask you when</Text>
+        {mission.boundaries.interventionTriggers.length ? (
+          mission.boundaries.interventionTriggers.map((trigger, i) => (
+            <Text key={i} style={styles.text}>
+              • {trigger}
+            </Text>
+          ))
+        ) : (
+          <Text style={styles.text}>Any new commitment requires a revised authorization.</Text>
+        )}
+        <Text style={styles.small}>
+          Tone: {mission.tone}.{' '}
+          {mission.pronunciation ? `Pronunciation: ${mission.pronunciation}` : ''}
+        </Text>
+        <Text style={styles.h3}>Private context — do not disclose</Text>
+        {mission.boundaries.privateFacts.length ? (
+          mission.boundaries.privateFacts.map((fact, i) => (
+            <Text key={i} style={styles.text}>
+              • {fact}
+            </Text>
+          ))
+        ) : (
+          <Text style={styles.small}>No additional private facts supplied.</Text>
+        )}
+      </Card>
+      <Card>
+        <Text style={styles.label}>PERMITTED FOLLOW-UP</Text>
+        {mission.followUpActions.filter((action) => action.authorized).length ? (
+          mission.followUpActions
+            .filter((action) => action.authorized)
+            .map((action) => (
+              <Text key={action.id} style={styles.text}>
+                • {action.description}
+              </Text>
+            ))
+        ) : (
+          <Text style={styles.text}>No external follow-up actions authorized.</Text>
+        )}
+        <Text style={styles.small}>
+          A tentative reply, voicemail, or disconnected call cannot confirm an agreement.
+        </Text>
+      </Card>
+      {context.length ? (
+        <Card>
+          <Text style={styles.label}>SELECTED CONFIRMED CONTEXT</Text>
+          {context.map((memory) => (
+            <View key={memory.id} style={{ gap: 4 }}>
+              <Text style={styles.text}>{memory.text}</Text>
+              <Text style={styles.small}>
+                {memory.source.type} · {memory.source.reference}
+              </Text>
+            </View>
+          ))}
+          <Text style={styles.small}>
+            Private facts, unconfirmed claims, unrelated relationships, and inferred permissions are
+            excluded.
+          </Text>
+        </Card>
+      ) : null}
+      <Card>
+        <Text style={styles.label}>DETAILS</Text>
+        <Text style={styles.text}>
+          {mission.mode === 'assisted' ? 'Follow along' : 'Delegated'} ·{' '}
+          {mission.ownerLanguage.toUpperCase()} brief → {mission.recipientLanguage.toUpperCase()}{' '}
+          recipient
+        </Text>
+        <Text style={styles.small}>
+          Standard assistant voice · {mission.schedule.maxDurationSeconds / 60} minute limit ·{' '}
+          {mission.schedule.retryLimit} retries
+        </Text>
+        <Text style={styles.small}>Timezone: {mission.schedule.timezone}</Text>
+        {mission.schedule.explicitTargetAt ? (
+          <Text style={styles.text}>Approved time: {mission.schedule.explicitTargetAt}</Text>
+        ) : null}
+        <Text style={styles.small}>
+          {mission.voicemail.allowed
+            ? `Approved voicemail: ${mission.voicemail.content}`
+            : 'No voicemail authorized.'}{' '}
+          Callbacks are not supported by this adapter.
+        </Text>
+        <Text style={styles.small}>
+          Transcript{' '}
+          {mission.retention.transcript
+            ? `retained up to ${mission.retention.days} days`
+            : 'not retained'}{' '}
+          · audio off
+        </Text>
+      </Card>
+      <Card>
+        <Text style={styles.label}>EXACT TIMING AND FOLLOW-UP SCOPE</Text>
+        <Text style={styles.text}>
+          Voice: {mission.voiceId === 'standard' ? 'Standard assistant voice' : mission.voiceId}
+        </Text>
+        <Text style={styles.text}>
+          Deadline: {mission.schedule.deadlineAt ?? 'No additional deadline'}
+        </Text>
+        <Text style={styles.text}>
+          Calling window: {mission.schedule.callingWindowStart ?? 'No separate start'} →{' '}
+          {mission.schedule.callingWindowEnd ?? 'No separate end'}
+        </Text>
+        {mission.followUpActions
+          .filter((action) => action.authorized)
+          .map((action) => (
+            <View key={action.id} style={{ gap: 4 }}>
+              <Text style={styles.h3}>{action.description}</Text>
+              <Text selectable style={styles.small}>
+                {JSON.stringify(action.payload, null, 2)}
+              </Text>
+            </View>
+          ))}
+        {mission.boundaries.preferences.length ? (
+          <>
+            <Text style={styles.h3}>Preferences — no additional authority</Text>
+            {mission.boundaries.preferences.map((preference, i) => (
+              <Text key={i} style={styles.text}>
+                • {preference}
+              </Text>
+            ))}
+          </>
+        ) : null}
+        {mission.background ? (
+          <>
+            <Text style={styles.h3}>Agent background</Text>
+            <Text style={styles.text}>{mission.background}</Text>
+          </>
+        ) : null}
+        {mission.sourceMaterial.map((source, i) => (
+          <View key={i} style={{ gap: 4 }}>
+            <Text style={styles.h3}>{source.name}</Text>
+            <Badge
+              text={
+                source.allowedToDisclose
+                  ? 'Source may be disclosed'
+                  : 'Source for private context only'
+              }
+              tone="neutral"
+            />
+            <Text style={styles.text}>{source.content}</Text>
+          </View>
+        ))}
+      </Card>
+      {isDemo ? (
+        <>
+          <Notice>
+            This runs a deterministic simulation. No telephone call is placed, no real calendar is
+            changed, and fictional outcomes are labeled as demo results.
+          </Notice>
+          <Choice label="Demo scenario" value={scenario} options={options} onChange={setScenario} />
+        </>
+      ) : (
+        <Notice tone="warning">
+          Live calling is limited to allowlisted test recipients. Voice behavior cannot be
+          guaranteed by tool restrictions alone; use bounded requests.
+        </Notice>
+      )}
+      {limitError ? (
+        <Notice tone="error">{limitError} Edit the instructions before authorizing.</Notice>
+      ) : null}
+      <Pressable
+        accessibilityRole="checkbox"
+        accessibilityLabel="I checked the intended person and number"
+        {...a11yState({ checked: recipientConfirmed })}
+        onPress={() => setConfirmedReview(recipientConfirmed ? null : identity)}
+        style={[styles.row, { minHeight: 52, paddingVertical: 10 }]}
+      >
+        <Icon name={recipientConfirmed ? 'checkbox' : 'square-outline'} color={colors.green} />
+        <Text style={[styles.text, { flex: 1 }]}>I checked the intended person and number.</Text>
+      </Pressable>
+      {!contact?.verified || contact?.optedOut ? (
+        <Notice tone="error">
+          {contact?.optedOut
+            ? 'This person requested no further calls. Authorization is blocked.'
+            : 'Confirm this recipient in People before authorizing.'}
+        </Notice>
+      ) : null}
+      {!isDemo ? (
+        <CallingReadiness
+          readiness={data.liveReadiness}
+          liveCallsEnabled={data.liveCallsEnabled}
+          mode={data.mode}
+        />
+      ) : null}
+      <Button
+        label={
+          isDemo
+            ? 'Authorize simulated conversation'
+            : liveBlocked
+              ? 'Real calling is disabled until setup is ready'
+              : 'Authorize this call'
+        }
+        icon={isDemo ? 'flask-outline' : 'call-outline'}
+        loading={working}
+        disabled={
+          liveBlocked ||
+          !!limitError ||
+          !recipientConfirmed ||
+          !contact?.verified ||
+          contact?.optedOut
+        }
+        onPress={() => {
+          if (recipientConfirmed && !limitError) onAuthorize(isDemo ? scenario : 'normal');
+        }}
+      />
+      <Button label="Edit the instructions" secondary onPress={onEdit} disabled={working} />
+    </>
+  );
 }

@@ -1,46 +1,208 @@
-import type {FastifyInstance,FastifyRequest} from 'fastify';
-import {z} from 'zod';
-import {NetworkPolicyInputSchema,NetworkMemoryInputSchema,NetworkRequestInputSchema,NetworkDecisionSchema} from '../../../../packages/domain/src/network.js';
-import {NetworkCoordinator} from './coordination.js';
-import {InternalCalendar} from './calendar.js';
-import {networkRequestActor} from './store.js';
-import {hashToken} from '../auth.js';
-import {HttpError} from '../errors.js';
-import {networkPreferences,saveNetworkPreferences,networkNotifications,dismissNetworkNotification} from './preferences.js';
-import {NetworkStore,lockNetworkOwners} from './store.js';
-import type {Database} from '../db.js';
-import type {OwnerIntentService} from './owner-intent.js';
+import type { FastifyInstance, FastifyRequest } from 'fastify';
+import { z } from 'zod';
+import {
+  NetworkPolicyInputSchema,
+  NetworkMemoryInputSchema,
+  NetworkRequestInputSchema,
+  NetworkDecisionSchema,
+} from '../../../../packages/domain/src/network.js';
+import { NetworkCoordinator } from './coordination.js';
+import { InternalCalendar } from './calendar.js';
+import { networkRequestActor } from './store.js';
+import { hashToken } from '../auth.js';
+import { HttpError } from '../errors.js';
+import {
+  networkPreferences,
+  saveNetworkPreferences,
+  networkNotifications,
+  dismissNetworkNotification,
+} from './preferences.js';
+import { NetworkStore, lockNetworkOwners } from './store.js';
+import type { Database } from '../db.js';
+import type { OwnerIntentService } from './owner-intent.js';
 
-export function registerNetworkRoutes(app:FastifyInstance,coordinator:NetworkCoordinator,calendar:InternalCalendar,db:Database,intents:OwnerIntentService){
-  const own=(req:FastifyRequest)=>{if(!req.ownerId)throw new HttpError(401,'unauthorized','Sign in to use klnk.');return req.ownerId;};
-  const rid=(req:FastifyRequest)=>z.uuid().parse((req.params as {id:string}).id);
-  const run=<T,>(req:FastifyRequest,fn:(owner:string)=>Promise<T>)=>networkRequestActor.run({ownerId:own(req),sessionHash:hashToken(req.headers.authorization!.slice(7))},()=>fn(own(req)));
-  app.addHook('onSend',async(req,reply,payload)=>{if(req.url.startsWith('/network/'))reply.header('Cache-Control','no-store');return payload;});
-  app.get('/network/identity',req=>run(req,o=>coordinator.identity(o)));
-  app.post('/network/owner-intents',{config:{rateLimit:{max:10,timeWindow:'1 minute'}}},req=>run(req,o=>intents.execute(o,z.object({commandId:z.uuid(),text:z.string().trim().min(1).max(1500)}).strict().parse(req.body))));
-  app.get('/network/owner-intents/:id',req=>run(req,o=>intents.read(o,rid(req))));
-  app.post('/network/owner-intents/:id/confirm',req=>run(req,o=>intents.confirm(o,rid(req),z.object({planHash:z.string().regex(/^[a-f0-9]{64}$/)}).strict().parse(req.body).planHash)));
-  app.get('/network/preferences',req=>run(req,o=>db.transaction(async sql=>{await lockNetworkOwners(sql,[o]);return networkPreferences(new NetworkStore(db,sql),o);})));
-  app.put('/network/preferences',req=>run(req,o=>{const b=z.object({preferences:z.unknown(),expectedVersion:z.number().int().positive()}).strict().parse(req.body);return saveNetworkPreferences(db,o,b.preferences,b.expectedVersion);}));
-  app.get('/network/notifications',req=>run(req,o=>networkNotifications(db,o)));
-  app.post('/network/notifications/:id/read',req=>run(req,o=>dismissNetworkNotification(db,o,rid(req))));
-  app.get('/network/connections',req=>run(req,async o=>({connections:await coordinator.connections(o)})));
-  app.post('/network/connections',req=>run(req,o=>coordinator.invite(o,z.object({memberCode:z.string().trim().min(8).max(150)}).strict().parse(req.body).memberCode)));
-  app.patch('/network/connections/:id',req=>run(req,o=>coordinator.updateConnection(o,rid(req),z.object({action:z.enum(['accept','decline','block','mute','unmute','allow_inbound','deny_inbound']),version:z.number().int().positive()}).strict().parse(req.body))));
-  app.get('/network/policy',req=>run(req,o=>coordinator.policy(o)));
-  app.put('/network/policy',req=>run(req,o=>{const b=z.object({policy:NetworkPolicyInputSchema,expectedVersion:z.number().int().positive()}).strict().parse(req.body);return coordinator.savePolicy(o,b.policy,b.expectedVersion);}));
-  app.get('/network/memories',req=>run(req,async o=>({memories:await coordinator.memories(o)})));
-  app.post('/network/memories',req=>run(req,o=>coordinator.saveMemory(o,NetworkMemoryInputSchema.parse(req.body))));
-  app.patch('/network/memories/:id',req=>run(req,o=>{const b=z.object({memory:NetworkMemoryInputSchema,version:z.number().int().positive()}).strict().parse(req.body);return coordinator.saveMemory(o,b.memory,rid(req),b.version);}));
-  app.delete('/network/memories/:id',req=>run(req,async o=>{await coordinator.deleteMemory(o,rid(req));return{ok:true};}));
-  app.get('/network/conversations',req=>run(req,o=>coordinator.inbox(o)));
-  app.post('/network/conversations',req=>run(req,o=>coordinator.submit(o,NetworkRequestInputSchema.parse(req.body))));
-  app.get('/network/conversations/requests/:id',req=>run(req,async o=>{const found=(await coordinator.inbox(o)).conversations.find(c=>c.initiatorId===o&&c.request.requestId===rid(req));if(!found)throw new HttpError(404,'not_found','That internal request has not been saved.');return found;}));
-  app.get('/network/conversations/:id',req=>run(req,o=>coordinator.detail(o,rid(req))));
-  app.post('/network/conversations/:id/decision',req=>run(req,o=>coordinator.decision(o,rid(req),NetworkDecisionSchema.parse(req.body))));
-  app.post('/network/conversations/:id/control',req=>run(req,o=>coordinator.control(o,rid(req),z.object({action:z.enum(['pause','resume','cancel'])}).strict().parse(req.body).action)));
-  app.post('/network/conversations/:id/read',req=>run(req,o=>coordinator.markRead(o,rid(req))));
-  app.get('/network/calendar',req=>run(req,o=>calendar.list(o)));
-  app.post('/network/calendar/:id/cancel',req=>run(req,o=>calendar.cancel(o,rid(req),z.object({revision:z.number().int().positive()}).strict().parse(req.body).revision)));
-  app.post('/network/reminders/:id/dismiss',req=>run(req,o=>calendar.dismissReminder(o,rid(req))));
+export function registerNetworkRoutes(
+  app: FastifyInstance,
+  coordinator: NetworkCoordinator,
+  calendar: InternalCalendar,
+  db: Database,
+  intents: OwnerIntentService,
+) {
+  const own = (req: FastifyRequest) => {
+    if (!req.ownerId) throw new HttpError(401, 'unauthorized', 'Sign in to use klnk.');
+    return req.ownerId;
+  };
+  const rid = (req: FastifyRequest) => z.uuid().parse((req.params as { id: string }).id);
+  const run = <T>(req: FastifyRequest, fn: (owner: string) => Promise<T>) =>
+    networkRequestActor.run(
+      { ownerId: own(req), sessionHash: hashToken(req.headers.authorization!.slice(7)) },
+      () => fn(own(req)),
+    );
+  app.addHook('onSend', async (req, reply, payload) => {
+    if (req.url.startsWith('/network/')) reply.header('Cache-Control', 'no-store');
+    return payload;
+  });
+  app.get('/network/identity', (req) => run(req, (o) => coordinator.identity(o)));
+  app.post(
+    '/network/owner-intents',
+    { config: { rateLimit: { max: 10, timeWindow: '1 minute' } } },
+    (req) =>
+      run(req, (o) =>
+        intents.execute(
+          o,
+          z
+            .object({ commandId: z.uuid(), text: z.string().trim().min(1).max(1500) })
+            .strict()
+            .parse(req.body),
+        ),
+      ),
+  );
+  app.get('/network/owner-intents/:id', (req) => run(req, (o) => intents.read(o, rid(req))));
+  app.post('/network/owner-intents/:id/confirm', (req) =>
+    run(req, (o) =>
+      intents.confirm(
+        o,
+        rid(req),
+        z
+          .object({ planHash: z.string().regex(/^[a-f0-9]{64}$/) })
+          .strict()
+          .parse(req.body).planHash,
+      ),
+    ),
+  );
+  app.get('/network/preferences', (req) =>
+    run(req, (o) =>
+      db.transaction(async (sql) => {
+        await lockNetworkOwners(sql, [o]);
+        return networkPreferences(new NetworkStore(db, sql), o);
+      }),
+    ),
+  );
+  app.put('/network/preferences', (req) =>
+    run(req, (o) => {
+      const b = z
+        .object({ preferences: z.unknown(), expectedVersion: z.number().int().positive() })
+        .strict()
+        .parse(req.body);
+      return saveNetworkPreferences(db, o, b.preferences, b.expectedVersion);
+    }),
+  );
+  app.get('/network/notifications', (req) => run(req, (o) => networkNotifications(db, o)));
+  app.post('/network/notifications/:id/read', (req) =>
+    run(req, (o) => dismissNetworkNotification(db, o, rid(req))),
+  );
+  app.get('/network/connections', (req) =>
+    run(req, async (o) => ({ connections: await coordinator.connections(o) })),
+  );
+  app.post('/network/connections', (req) =>
+    run(req, (o) =>
+      coordinator.invite(
+        o,
+        z
+          .object({ memberCode: z.string().trim().min(8).max(150) })
+          .strict()
+          .parse(req.body).memberCode,
+      ),
+    ),
+  );
+  app.patch('/network/connections/:id', (req) =>
+    run(req, (o) =>
+      coordinator.updateConnection(
+        o,
+        rid(req),
+        z
+          .object({
+            action: z.enum([
+              'accept',
+              'decline',
+              'block',
+              'mute',
+              'unmute',
+              'allow_inbound',
+              'deny_inbound',
+            ]),
+            version: z.number().int().positive(),
+          })
+          .strict()
+          .parse(req.body),
+      ),
+    ),
+  );
+  app.get('/network/policy', (req) => run(req, (o) => coordinator.policy(o)));
+  app.put('/network/policy', (req) =>
+    run(req, (o) => {
+      const b = z
+        .object({ policy: NetworkPolicyInputSchema, expectedVersion: z.number().int().positive() })
+        .strict()
+        .parse(req.body);
+      return coordinator.savePolicy(o, b.policy, b.expectedVersion);
+    }),
+  );
+  app.get('/network/memories', (req) =>
+    run(req, async (o) => ({ memories: await coordinator.memories(o) })),
+  );
+  app.post('/network/memories', (req) =>
+    run(req, (o) => coordinator.saveMemory(o, NetworkMemoryInputSchema.parse(req.body))),
+  );
+  app.patch('/network/memories/:id', (req) =>
+    run(req, (o) => {
+      const b = z
+        .object({ memory: NetworkMemoryInputSchema, version: z.number().int().positive() })
+        .strict()
+        .parse(req.body);
+      return coordinator.saveMemory(o, b.memory, rid(req), b.version);
+    }),
+  );
+  app.delete('/network/memories/:id', (req) =>
+    run(req, async (o) => {
+      await coordinator.deleteMemory(o, rid(req));
+      return { ok: true };
+    }),
+  );
+  app.get('/network/conversations', (req) => run(req, (o) => coordinator.inbox(o)));
+  app.post('/network/conversations', (req) =>
+    run(req, (o) => coordinator.submit(o, NetworkRequestInputSchema.parse(req.body))),
+  );
+  app.get('/network/conversations/requests/:id', (req) =>
+    run(req, async (o) => {
+      const found = (await coordinator.inbox(o)).conversations.find(
+        (c) => c.initiatorId === o && c.request.requestId === rid(req),
+      );
+      if (!found)
+        throw new HttpError(404, 'not_found', 'That internal request has not been saved.');
+      return found;
+    }),
+  );
+  app.get('/network/conversations/:id', (req) => run(req, (o) => coordinator.detail(o, rid(req))));
+  app.post('/network/conversations/:id/decision', (req) =>
+    run(req, (o) => coordinator.decision(o, rid(req), NetworkDecisionSchema.parse(req.body))),
+  );
+  app.post('/network/conversations/:id/control', (req) =>
+    run(req, (o) =>
+      coordinator.control(
+        o,
+        rid(req),
+        z
+          .object({ action: z.enum(['pause', 'resume', 'cancel']) })
+          .strict()
+          .parse(req.body).action,
+      ),
+    ),
+  );
+  app.post('/network/conversations/:id/read', (req) =>
+    run(req, (o) => coordinator.markRead(o, rid(req))),
+  );
+  app.get('/network/calendar', (req) => run(req, (o) => calendar.list(o)));
+  app.post('/network/calendar/:id/cancel', (req) =>
+    run(req, (o) =>
+      calendar.cancel(
+        o,
+        rid(req),
+        z.object({ revision: z.number().int().positive() }).strict().parse(req.body).revision,
+      ),
+    ),
+  );
+  app.post('/network/reminders/:id/dismiss', (req) =>
+    run(req, (o) => calendar.dismissReminder(o, rid(req))),
+  );
 }

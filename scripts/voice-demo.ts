@@ -17,5 +17,7 @@ await app.listen({ host: config.host, port: config.port });
 console.log(`klnk voice demo: http://localhost:${config.port}/demo`);
 console.log('OpenAI credentials stay on the server. Outbound telephone calls are disabled.');
 for (const signal of ['SIGINT', 'SIGTERM'] as const) {
-  process.once(signal, () => { void app.close().then(() => process.exit(0)); });
+  process.once(signal, () => {
+    void app.close().then(() => process.exit(0));
+  });
 }
