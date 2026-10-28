@@ -1,0 +1,7 @@
+{
+  "apps/server/src/openai-live.ts": "ff1443880cd0f4cc66338c052042b4598b2ab95c94aa32baf24f9cc8508b3b31",
+  "apps/server/src/app.ts": "a5103d4156a9b68c3ff0de3341ffd2b649b28d9978c982d6e88b01ca08f14177",
+  "apps/voice-demo/app.js": "7b7badb0593a4f75f2b3b3d8706034b5cd09cb5bb2396a1c1d6c4bf6c0344b1e",
+  "apps/voice-demo/index.html": "5905b232efd51738672db22a7c11b6e7681ccab2f6d9a22a4ca5b16a490d7fdf",
+  "apps/voice-demo/styles.css": "b360100816c4da5fcc93fdce6e1fb1728ef8419d3b287e6683424ca0e85346eb"
+}

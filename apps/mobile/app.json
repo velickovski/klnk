@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "klnk",
+    "slug": "personal-voice-agent",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "scheme": "personal-agent",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.personalvoiceagent.app",
+      "infoPlist": { "ITSAppUsesNonExemptEncryption": false }
+    },
+    "plugins": ["expo-secure-store"],
+    "web": { "bundler": "metro", "name": "klnk" }
+  }
+}

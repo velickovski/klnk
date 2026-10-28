@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-27T14:59:15.987Z",
+  "scope": "independent M3 local PostgreSQL runtime QA; no production or provider certification",
+  "serverVersion": "18.6",
+  "node": "v24.15.0",
+  "platform": "win32",
+  "command": "$env:KLNK_POSTGRES_TEST_CONNECTION_FILE='.data/production-pg/connection.json'; npx vitest run tests/qa-postgres-runtime.test.ts",
+  "result": {
+    "passed": 9,
+    "failed": 0,
+    "durationSeconds": 6.09
+  },
+  "scenarios": [
+    "two child processes apply migration ledger once",
+    "two processes duplicate same owner/request reserve once",
+    "two processes and owners respect global capacity",
+    "expired controller takeover fences old terminal and renewal authority",
+    "separate stale worker cannot dispatch next effect or finalize replacement",
+    "separate process Live reservation after deletion preflight blocks tombstone",
+    "concurrent personal write committed while deletion waits is erased",
+    "voice clear waits for owner without holding resource row",
+    "encrypted real PostgreSQL restore respects deletion journal and removes auth/controller authority"
+  ],
+  "isolation": {
+    "database": "guarded loopback klnk_qa",
+    "schemaPattern": "qa_<random UUID>",
+    "wholeDatabaseDeleted": false,
+    "publicTablesChanged": false,
+    "residualQaSchemas": 0,
+    "credentialsPrinted": false,
+    "childrenReceivedProviderEnvironment": false
+  },
+  "providers": "mock boundaries only; no calls or paid sessions",
+  "sourceHashesAtRecordTime": {
+    "apps/server/src/db.ts": "21cd9e9f04a9bd7f810659653b9011afe5f7a1a114be9e5637d6a180249d23c2",
+    "apps/server/src/engine.ts": "4e968bb93da7062478da9d654e9945b46468ab8d665dad155bb1b771bbcedd8c",
+    "apps/server/src/auth.ts": "8ded11bb17c11b59d9e0c39191c5ee1a32c6439078db2fc68314d845b347c9cf",
+    "apps/server/src/voice.ts": "b247cd0840269a91d814e1ab920046add5c3ac87e4fede8fc4ee61dc91908217",
+    "apps/server/src/app.ts": "366668c434d2e6b479a5fb1d8141a401d1041496845586d7f4d41a7e7d8562da",
+    "apps/server/src/live-session-store.ts": "07596068d31d52b91e93a934608a028098d5df40afa9b11846e7dde794d3e9c6",
+    "apps/server/src/openai-live.ts": "03ec3472451f797bfcc7b7a39543ad3ebb7446caddd19c93f02e9671a9743a7f",
+    "apps/server/src/readiness.ts": "c6021741ba01dc58089117d35db198a0ffc9339eed27cb1cb46956f0d8c0856d",
+    "tests/qa-postgres-runtime.test.ts": "49ca18483badf830d0a0aa722fdb1fb0d1e8f60f527b663676ef75a3f5666f6d",
+    "scripts/qa-postgres-child.ts": "ab5980c8377a55623d805fbdd1ddb776e34c4de5f57736875441648701779000"
+  },
+  "limitations": [
+    "local Windows PostgreSQL processes, not multi-host production or deployed rolling restart",
+    "fake provider effects; no live Calendar/Twilio/ElevenLabs writes",
+    "native/device and authorized deployment gates unrun",
+    "source hash capture may be followed by further M4 integration; root must rerun at candidate freeze"
+  ]
+}

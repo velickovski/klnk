@@ -1,0 +1,119 @@
+# Design system
+
+The immediate demo uses the user's navy/lavender/coral direction. The generated illustration is decorative and must not become a second button. See [00](00-current-brief.md).
+
+## Current demo palette
+
+The demo intentionally combines a dark hero with a pale conversation surface. This fixed brand composition is distinct from the advanced workspace's future system-appearance themes. Runtime values live in `apps/voice-demo/styles.css`.
+
+| Token | Value | Intended pair and calculated contrast |
+| --- | --- | --- |
+| `navy` | `#191D3A` | Hero canvas; text on coral |
+| `lavender` | `#ECEEFC` | Conversation surface |
+| `ink` | `#202440` | On lavender: 13.12:1 |
+| `muted` | `#414864` | On lavender: 7.79:1 |
+| `cream` | `#FFFDF9` | On navy: 16.17:1 |
+| `on-navy-muted` | `#C2C6E3` | On navy: 9.76:1 |
+| `coral` | `#FF899A` | Navy button label: 7.27:1 |
+| Required control edge | `#717B9E` | On lavender: 3.62:1 |
+
+These are static sRGB contrast calculations, not a complete conformance result. The disabled setup control is intentionally distinct; test every rendered interaction and state separately. The coral primary action uses a phone handset icon and the visible label Call klnk. The decorative image has empty alternative text and an assistive-technology-hidden wrapper.
+
+These are implementation values, not a mood board. Use semantic tokens in `src/design/tokens.ts` and a reactive theme provider. React Native units map to platform layout units; CSS values in the reference are CSS pixels. Neither is a physical-pixel specification.
+
+## Advanced workspace theme palette
+
+The following paired themes are the detailed workspace specification. When unifying the workspace with the demo, use the current coral family for primary actions and recompute contrast; keep semantic status colors distinct. Do not let the older blue accent drive the demo's visual identity.
+
+| Semantic token | Light | Dark | Use |
+| --- | --- | --- | --- |
+| `background` | `#F5F6FA` | `#0B0D12` | App canvas |
+| `surface` | `#FFFFFF` | `#141821` | Content groups and sheets |
+| `surfaceRaised` | `#E9EDF5` | `#1D2330` | Selected rows, input grouping |
+| `text` | `#151924` | `#F5F7FB` | Primary content |
+| `textSecondary` | `#424C60` | `#B3BDCC` | Supporting text and placeholders |
+| `accent` | `#203D87` | `#B9CBFF` | Primary controls, links, selected state |
+| `onAccent` | `#FFFFFF` | `#111B33` | Content on solid accent |
+| `borderStrong` | `#66738A` | `#69768B` | Required control edges |
+| `success` | `#135437` | `#A6DEC4` | Verified successful state label |
+| `warning` | `#704200` | `#FFD699` | Needs attention label |
+| `danger` | `#8E2035` | `#FFB4BE` | Destructive action/error label |
+
+Use semantic status colors as foregrounds on the three opaque surfaces. Do not assume white text on a danger or success fill passes. For destructive actions, use a danger-colored label and strong boundary on a neutral surface. Other status fills require separate measured pairs before introduction.
+
+### Verified token contrast
+
+Calculated using the WCAG sRGB formula on 2026-10-26. Values below are the **lowest** contrast against `background`, `surface` and `surfaceRaised`, except the button row. They are rounded for display only. All specified normal-text pairs exceed 7:1; required borders exceed 3:1.
+
+| Pair | Light | Dark |
+| --- | ---: | ---: |
+| Text / surfaces | 14.96:1 | 14.66:1 |
+| Secondary text / surfaces | 7.35:1 | 8.29:1 |
+| Accent text / surfaces | 8.61:1 | 9.77:1 |
+| Success text / surfaces | 7.61:1 | 10.38:1 |
+| Warning text / surfaces | 7.25:1 | 11.48:1 |
+| Danger text / surfaces | 7.43:1 | 9.38:1 |
+| Strong border / surfaces | 4.08:1 | 3.42:1 |
+| On-accent / accent button | 10.10:1 | 10.62:1 |
+
+These calculations do not verify the rendered app, alpha blends, disabled/pressed states or full accessibility conformance. Keep status and explanatory text at full opacity. Use background changes for presses; avoid fading whole controls and their labels.
+
+## Typography and spacing
+
+Use the platform system family. Web fallback: `-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`. Native uses the default system family with scalable `Text`. Do not set `allowFontScaling={false}` or cap essential content just to preserve a screenshot.
+
+| Role | Base size / line height | Weight | Usage |
+| --- | --- | --- | --- |
+| Hero | 34 / 40 | 600 | Empty Home only; at most three short lines |
+| Page title | 28 / 34 | 600 | People, Memory, Settings, detail title |
+| Section | 21 / 28 | 600 | Outcome, review section |
+| Body | 17 / 25 | 400 | Replies, requests, transcript, fields |
+| Action | 17 / 24 | 600 | Buttons and primary list title |
+| Supporting | 15 / 22 | 400 | Status explanation and metadata |
+| Caption | 13 / 18 | 500 | Noncritical timestamp or section context |
+
+These are default values; containers grow with text scaling. Avoid all-caps paragraphs and overly tight tracking. Use tabular figures only for durations and comparable times. The active conversation collapses the empty-state hero to a small title so actual messages stay visible.
+
+Spacing scale: **4, 8, 12, 16, 20, 24, 32, 40, 48**. Screen side inset is 24 at typical phone width, 16 below 375, 32 above 600. Content section gap is 24; label-to-field gap is 8; related rows use 12–16. Use 8 between adjacent targets and do not overlap expanded hit regions.
+
+Radius tokens: `control=16`, `group=24`, `sheet=32`, `capsule=999`. Use continuous-looking curves where the supported platform can provide them; ordinary rounded corners are the fallback. Borders are 1 layout unit; focus outline on web is 3 CSS px with a 3px offset. Verify the focus pair against its adjacent surface.
+
+## Layout and materials
+
+Phone content is edge-to-edge within safe insets. Never implement a fake phone frame inside the production app. The preview frame belongs only to the reference. At 600–899 wide, center content at max 560; at 900 and wider use max 720 for the first implementation. Long text remains readable and controls reflow; a tablet redesign can follow separately.
+
+Content uses opaque surfaces. Navigation can use a subtle elevated capsule with the same strong text contrast. Baseline elevation is `0 8px 24px rgba(0,0,0,0.12)` in light and `0 8px 24px rgba(0,0,0,0.30)` in dark for web reference; use supported native shadow APIs after checking the installed RN version. Shadows are decorative and never the only boundary.
+
+Native Liquid Glass is optional and limited to navigation or a small transient control. Verify a supported Expo/native implementation before adding it. Do not simulate glass by putting low-opacity text/cards over moving gradients. Reduce Transparency and unsupported platforms use opaque `surface`. The baseline must look finished without blur.
+
+Bottom navigation uses actual bottom safe-area inset plus 8 padding, 8 top padding, four equal-width targets with a 56-unit minimum height. Labels can grow and wrap at large text sizes; do not force a fixed-height bar. Scroll content reserves the measured bar height only if the bar overlays it. Prefer layout-flow navigation initially.
+
+## Component contracts
+
+| Component | Required behavior and states |
+| --- | --- |
+| `AppScreen` | Safe area, reactive background, keyboard-aware content, screen title, one principal scroll container |
+| `AppText` | Semantic type role, scalable text, selectable long evidence, full-opacity labels |
+| `ActionButton` | Primary/secondary/destructive; idle/pressed/focused/disabled/busy; 52 minimum height, 44 compact; multiline labels |
+| `IconButton` | 44 minimum target, 22–24 icon, explicit accessible label; no unlabeled decorative action |
+| `TextField` | Persistent label, hint, error association, placeholder token, 52 minimum height; multiline auto growth |
+| `InputModeControl` | Visible Talk and Type choices; selected semantics; preserves drafts and avoids incidental capture |
+| `VoiceAperture` | 96-unit control, optional decorative rings up to 144; accessible state label; no listening implication at rest |
+| `ModeLabel` | Always readable Simulation / Calling unavailable / supported live state; never color alone |
+| `RequestRow` | Recipient, request title, accurate status and time; 72 minimum height; one clear drill-in target |
+| `StatusLabel` | Neutral/success/warning/danger semantic foreground, accompanying text; no automatic green for cancelled or unknown |
+| `OutcomeSummary` | Known result first; separate evidence, unresolved items, unverified analysis and follow-up status |
+| `Disclosure` | 44 minimum trigger; expanded semantics; preserves selection/focus when opening |
+| `Notice` | Brief actionable explanation; inline by default; errors announced once; retry scope stated |
+| `DetailSheet` | Title, Close, focus containment/restoration, keyboard avoidance, unsaved-draft handling |
+| `EmptyState` | Specific missing content and relevant next action; no fake sample data in a real account |
+
+Long forms use section headings and disclosures, not a card around every field. Authorization-critical information must remain visible in the review even if optional composer settings were collapsed.
+
+## Motion and feedback
+
+Tokens: `instant=0ms`, `press=100ms`, `state=180ms`, `sheet=280ms`; easing for web state transitions `cubic-bezier(0.2,0,0,1)`. Use platform-native transitions when available; do not delay actions for animation. Avoid animating layout-heavy properties on every poll.
+
+At rest the aperture is static. Current `VoiceIO` exposes no amplitude value: show a static listening indicator and textual state. A future true level visualization requires an explicit adapter contract and tests; it is not part of this baseline. Use a standard activity indicator while preparing, without a fabricated completion percentage.
+
+Reduce Motion removes decorative transforms and uses immediate changes or at most a brief opacity transition. Stop animation when offscreen/backgrounded. Haptics are optional enhancement only after dependency/device verification; visible and spoken-accessible feedback remains sufficient.

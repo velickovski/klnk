@@ -1,0 +1,51 @@
+{
+  "runAt": "2026-10-27T15:20:21.740Z",
+  "scope": "standalone-browser-real-webrtc-in-app-read-only-tool",
+  "fixtureMicrophone": true,
+  "physicalMicrophoneUsed": false,
+  "nativeDeviceTested": false,
+  "checks": [
+    "one visible opening action",
+    "connected after real provider event",
+    "remote audio track playing in headless browser",
+    "actual provider captions rendered",
+    "mute acknowledged",
+    "unmute acknowledged"
+  ],
+  "error": "assertion_failed",
+  "sidebandTransportErrors": 0,
+  "sidebandClosedWithoutTerminalEvent": false,
+  "elapsedMs": 20045,
+  "failedAfter": "unmute acknowledged",
+  "sideband": {
+    "started": true,
+    "closed": true,
+    "outputAudioBytes": 604800,
+    "inputTranscriptCharacters": 76,
+    "outputTranscriptCharacters": 64,
+    "outputAfterInputTranscript": false,
+    "delegations": 0,
+    "toolCalls": [],
+    "providerErrorCodes": [],
+    "eventCounts": {
+      "session.started": 1,
+      "unrecognized": 71,
+      "session.output_audio.delta": 63,
+      "session.output_transcript.delta": 12,
+      "session.input_audio.muted": 1,
+      "session.input_audio.unmuted": 1,
+      "session.input_transcript.delta": 14,
+      "session.closed": 1
+    }
+  },
+  "configuredToolNames": [
+    "contacts_lookup"
+  ],
+  "inputFixtureKeywordsHeard": true,
+  "toolOutcomes": [],
+  "forwardedToolResults": [],
+  "continuations": 0,
+  "captionAfterForwardedResult": false,
+  "selectedEnglishCompletionClaimDetected": false,
+  "semanticSpokenResultVerified": false
+}

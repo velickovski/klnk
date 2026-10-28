@@ -1,0 +1,34 @@
+{
+  "environment": "Isolated simulator API; fictional fixtures; no provider credentials",
+  "checks": [
+    {
+      "name": "Invalid phone error associated with field",
+      "result": "passed"
+    },
+    {
+      "name": "Actual local API create normalized phone and explicit verification",
+      "result": "passed"
+    },
+    {
+      "name": "Phone edit clears verification and actual API preserves opt-out after explicit recheck",
+      "result": "passed"
+    },
+    {
+      "name": "Actual local API delete with reversible confirmation choice",
+      "result": "passed"
+    },
+    {
+      "name": "1000-contact fixture mounts50 rows and moves focus to next-page result summary",
+      "result": "passed"
+    },
+    {
+      "name": "Search filters full1000 fixture, distinct no-results, clear restores bounded list",
+      "result": "passed"
+    }
+  ],
+  "bundle": [
+    "/_expo/static/js/web/index-d330fd5e2eb8e720eb6db709ed43b3f7.js"
+  ],
+  "render1000To50Ms": 39,
+  "failure": "expect(received).toBe(expected) // Object.is equality\n\nExpected: true\nReceived: false"
+}

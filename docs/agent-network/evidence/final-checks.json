@@ -1,0 +1,88 @@
+{
+  "at": "2026-10-27T22:15:46.917Z",
+  "node": "v24.15.0",
+  "scope": "Final local internal-network candidate, not native or production certification",
+  "defaultVitest": {
+    "command": "npm test",
+    "passed": 662,
+    "passedFiles": 55,
+    "skipped": 20,
+    "skippedFiles": 3,
+    "durationSeconds": 148.56
+  },
+  "postgres": {
+    "command": "KLNK_POSTGRES_TEST_CONNECTION_FILE=.data/production-pg/connection.json npx vitest run tests/qa-network-postgres.test.ts tests/qa-postgres-runtime.test.ts tests/credential-clock.test.ts --maxWorkers=1 --no-file-parallelism",
+    "passed": 20,
+    "files": 3,
+    "durationSeconds": 21.73,
+    "independentFinalNetworkRerun": 9
+  },
+  "browser": {
+    "passed": 45,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationSeconds": 51.847314000000004,
+    "entry": {
+      "path": "apps/mobile/dist-e2e/_expo/static/js/web/index-8c9e08c97967866f63c309e9a9af902b.js",
+      "bytes": 1414890,
+      "sha256": "0ee8464d28999bf999581ebf5a75cd4aef44b456713dba075f40a62fa54c0801"
+    }
+  },
+  "standardWebExport": {
+    "path": "apps/mobile/dist/_expo/static/js/web/index-42a711c869e6504c62108df3288ad4a0.js",
+    "bytes": 1414350,
+    "sha256": "fd43cfeafe0a71b6e4060296c597b95a86156074ebb7d9fba56ef932aa756ca9"
+  },
+  "typeScript": {
+    "root": true,
+    "mobile": true,
+    "e2e": true
+  },
+  "qaRuntimeSourceHashesUnchanged": true,
+  "knownDependencyReleaseGate": {
+    "passed": false,
+    "vulnerabilities": {
+      "info": 0,
+      "low": 0,
+      "moderate": 0,
+      "high": 3,
+      "critical": 0,
+      "total": 3
+    }
+  },
+  "openai": {
+    "calls": 2,
+    "evidence": "model-smoke.json",
+    "laterPrivacyRedaction": "Separately verified by final automated/API/restore checks; model source hashes retained as executed."
+  },
+  "operations": {
+    "assertions": 17,
+    "currentMigrations": 8
+  },
+  "compatibilityDemo": {
+    "fictionalScenarios": 8,
+    "passed": true
+  },
+  "normalPreview": {
+    "apiReady": true,
+    "migrations": 8,
+    "agentNetwork": {
+      "delivery": "internal",
+      "queued": 0,
+      "running": 0,
+      "paused": 0,
+      "waitingForOwner": 0,
+      "externalEffectsEnabled": false
+    },
+    "openaiConfigured": true,
+    "openingOnlyAction": "Call klnk; observed via in-app browser, no capture started"
+  },
+  "remaining": [
+    "Native transport/signing/device/audio and assistive technology unverified",
+    "No complete AA/AAA or human usability/performance certification",
+    "3 high existing dependency findings",
+    "Production identity/recovery/key custody/operations/review/deployment gates unrun",
+    "No arbitrary task obligations or external delivery in v1"
+  ]
+}

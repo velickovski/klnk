@@ -1,0 +1,44 @@
+{
+  "environment": "Disposable simulator API; runtime unavailable because provider keys are absent; eligible GET and activity are explicitly mocked where noted",
+  "checks": [
+    {
+      "name": "One-action opening preserved; actual default grant off and unavailable runtime cannot enable",
+      "result": "passed"
+    },
+    {
+      "name": "Mock eligible GET permits explicit actual PUT of only four abilities; actual response returns unavailable runtime and revocation remains usable",
+      "result": "passed"
+    },
+    {
+      "name": "Known on grant can be disabled despite unavailable runtime, preserving existing tool list without auto-add",
+      "result": "passed"
+    },
+    {
+      "name": "Unknown turn-off retains confirmed-on state, hides raw technical errors and recovers with explicit refresh/retry",
+      "result": "passed"
+    },
+    {
+      "name": "Mock structural activity renders latest12 with proposed/queued/unconfirmed/cancel distinctions and no backend identifiers",
+      "result": "passed"
+    },
+    {
+      "name": "Settled320px/200percent text reflow has no horizontal overflow, external requests or microphone capture",
+      "result": "passed"
+    }
+  ],
+  "externalRequests": 0,
+  "captureAttempts": 0,
+  "bundle": [
+    "/_expo/static/js/web/index-fd5c8ec63e1a19a59780c2547a3ea718.js"
+  ],
+  "layout": {
+    "width": 320,
+    "scrollWidth": 320,
+    "overflow": []
+  },
+  "initialImmediateResizeLayout": {
+    "width": 320,
+    "scrollWidth": 326
+  },
+  "layoutReadiness": "Waited for two animation frames after viewport resize and after combined text overrides; initial immediate measurement preceded responsive layout commit."
+}

@@ -1,0 +1,33 @@
+{
+  "recordedAt": "2026-10-27T15:23:47.248Z",
+  "files": [
+    {
+      "path": "apps/server/src/openai-live.ts",
+      "sha256": "6d9662495ad06f1d7f4068aaf8a274bcff498ebc13f3be42ea5c5efa2bcf21df"
+    },
+    {
+      "path": "apps/server/src/openai-tool-delegation.ts",
+      "sha256": "36169736e28bb15db4993e5ac2964d4872015e98aad3b4d8ae50b3db5d90914e"
+    },
+    {
+      "path": "tests/openai-live-tools.test.ts",
+      "sha256": "0099861d130e7df7b8fbd519b83662b64a13bacab2948ece597d581071afea0f"
+    },
+    {
+      "path": "apps/mobile/src/features/live/browser-live.ts",
+      "sha256": "9a3158fc10cdc2ad3b9837cc7d9787c6e86c28ee38ad943d66f81f499104aaec"
+    },
+    {
+      "path": "apps/mobile/src/features/live/payloads.ts",
+      "sha256": "018e6dad436a130db50c4de0a9101822ce2d65a69b89e0454920dc9718618a94"
+    },
+    {
+      "path": "apps/mobile/src/features/live/useLiveConversation.web.ts",
+      "sha256": "6d1b50c8eaab14761eadda5fdf0ddce73d11d5d685ddc4be6a17a0e52209bc45"
+    },
+    {
+      "path": "apps/mobile/test/voice-live.test.ts",
+      "sha256": "b0f291cfa8b10d03ed07ccde6a4d5275918875973552aa88242a1c000c406cf5"
+    }
+  ]
+}

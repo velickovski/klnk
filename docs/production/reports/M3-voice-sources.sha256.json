@@ -1,0 +1,45 @@
+{
+  "recordedAt": "2026-10-27T14:22:30.023Z",
+  "files": [
+    {
+      "path": "apps/server/src/openai-live.ts",
+      "sha256": "03ec3472451f797bfcc7b7a39543ad3ebb7446caddd19c93f02e9671a9743a7f"
+    },
+    {
+      "path": "apps/mobile/src/features/live/browser-live.ts",
+      "sha256": "959c3eb4e34a422616aa3e578b66999a26444eb5c84ca21a5e490db58e7de8df"
+    },
+    {
+      "path": "apps/mobile/src/features/live/payloads.ts",
+      "sha256": "b52bf3ab0dec90408a7f92c26a0f7aab91b3533c1c7da722611e74e1a0be0e4f"
+    },
+    {
+      "path": "apps/mobile/src/features/live/types.ts",
+      "sha256": "4cf65163ef95c8c1cffd7f747dc86e07b2f077e579a2b22dfde99cca32766d16"
+    },
+    {
+      "path": "apps/mobile/src/features/launch/LaunchScreen.tsx",
+      "sha256": "0c9bf2f9d680c1f0dfbe907fb39c78dbf908f726846a4a78a53fdd5e5ff8a02f"
+    },
+    {
+      "path": "apps/voice-demo/app.js",
+      "sha256": "7a91a9d1abf24cf53f5486d939216c69f02c4a58374657280686a025ee9ce444"
+    },
+    {
+      "path": "scripts/voice-browser-smoke.mjs",
+      "sha256": "b6d8e3c8e21aab9f553f37354f9a88db239a85c53dfbb1dc21f5f4381fd1363c"
+    },
+    {
+      "path": "tests/openai-live.test.ts",
+      "sha256": "1f277b3e9326970cda6498e2a25892e65b1fb7c4681370e938fd37f558989c21"
+    },
+    {
+      "path": "tests/voice-demo-client.test.ts",
+      "sha256": "a2e84d56dd03abe609f616c5d2467eb923fbda12cfd651a16e37c0dca7bf4f4f"
+    },
+    {
+      "path": "apps/mobile/test/voice-live.test.ts",
+      "sha256": "d9e08524043cbb421d176703d9e7ca8340cfc6e9b6f55d6be8188bd10870fba0"
+    }
+  ]
+}

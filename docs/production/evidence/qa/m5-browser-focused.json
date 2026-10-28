@@ -1,0 +1,53 @@
+{
+  "scope": "Additional initial-heading-in-viewport assertion and optional result/tool screenshots; same exported bundle",
+  "stats": {
+    "startTime": "2026-10-27T15:39:27.562Z",
+    "duration": 77901.99,
+    "expected": 8,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "cases": [
+    {
+      "name": "A11Y-02 320px light opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 5204
+    },
+    {
+      "name": "A11Y-02 390px light opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 4590
+    },
+    {
+      "name": "A11Y-02 430px light opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 5444
+    },
+    {
+      "name": "A11Y-02 320px dark opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 3783
+    },
+    {
+      "name": "A11Y-02 390px dark opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 4090
+    },
+    {
+      "name": "A11Y-02 430px dark opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 4662
+    },
+    {
+      "name": "REQ-01 typed exact message creates one simulated request without a mandatory composer",
+      "status": "passed",
+      "durationMs": 9460
+    },
+    {
+      "name": "SETTINGS-03 mocked eligibility gates actual grant PUT, readback and revocation without enabling runtime",
+      "status": "passed",
+      "durationMs": 4575
+    }
+  ]
+}

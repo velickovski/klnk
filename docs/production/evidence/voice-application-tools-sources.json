@@ -1,0 +1,46 @@
+{
+  "scope": "Successful read-only Live browser tool smoke; source identity captured after run",
+  "at": "2026-10-27T15:25:31.042Z",
+  "files": [
+    {
+      "path": "apps/server/src/openai-live.ts",
+      "sha256": "6d9662495ad06f1d7f4068aaf8a274bcff498ebc13f3be42ea5c5efa2bcf21df"
+    },
+    {
+      "path": "apps/server/src/openai-tool-delegation.ts",
+      "sha256": "36169736e28bb15db4993e5ac2964d4872015e98aad3b4d8ae50b3db5d90914e"
+    },
+    {
+      "path": "apps/server/src/live-session-store.ts",
+      "sha256": "07596068d31d52b91e93a934608a028098d5df40afa9b11846e7dde794d3e9c6"
+    },
+    {
+      "path": "apps/server/src/integrations/gateway.ts",
+      "sha256": "802ae8e55cc192499005452cc276c9786ed4229063bddd8533fa1e5e1a6f67e9"
+    },
+    {
+      "path": "apps/server/src/integrations/tool-contract.ts",
+      "sha256": "522a779c0246e22b655394856e825883a33f1f7d16ab10cd28b7d0a179eeadf6"
+    },
+    {
+      "path": "apps/server/src/app.ts",
+      "sha256": "a44c1191d9d8e3e196fc904f72606e038ac5e3756d1bb3753c4fcc98d7b15a62"
+    },
+    {
+      "path": "packages/domain/src/tools.ts",
+      "sha256": "fa04d61214edbedbacc5afb5f5e2bd68635e446d48985bed57fc4e1d6875e5a4"
+    },
+    {
+      "path": "scripts/voice-browser-smoke.mjs",
+      "sha256": "6ab6a249515e9c95a6212b8a5f041a4e4c4b5777196fbe2187e124105f7d6c21"
+    },
+    {
+      "path": "scripts/lib/live-smoke-observer.ts",
+      "sha256": "1c721c9eee2e044205bd87a9450ef6d6a0c5158c5c71419b1cab97df6be80e06"
+    },
+    {
+      "path": "scripts/create-voice-smoke-fixture.ps1",
+      "sha256": "ce3357813a22b9240d79aa0fbc3494ab0b60ac2027bb2f9d7f650b1021900a3b"
+    }
+  ]
+}

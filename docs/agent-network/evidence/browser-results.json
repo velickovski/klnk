@@ -1,0 +1,1920 @@
+{
+  "recordedAt": "2026-10-27T22:11:06.836Z",
+  "stats": {
+    "startTime": "2026-10-27T22:10:00.224Z",
+    "duration": 51847.314000000006,
+    "expected": 45,
+    "skipped": 0,
+    "unexpected": 0,
+    "flaky": 0
+  },
+  "cases": [
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 320px light opening and workspace reflow",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1208,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 320px light enlarged People Memory targets and vertical text fit",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 968,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 390px light opening and workspace reflow",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 838,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 390px light enlarged People Memory targets and vertical text fit",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 738,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 430px light opening and workspace reflow",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 939,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 430px light enlarged People Memory targets and vertical text fit",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 711,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 320px dark opening and workspace reflow",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 657,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 320px dark enlarged People Memory targets and vertical text fit",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 623,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 390px dark opening and workspace reflow",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 682,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 390px dark enlarged People Memory targets and vertical text fit",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 607,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 430px dark opening and workspace reflow",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 782,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 430px dark enlarged People Memory targets and vertical text fit",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 607,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-02 combined text spacing and 200 percent text retain the opening action",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 344,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "accessibility.spec.ts",
+      "title": "A11Y-01 keyboard opens and dismisses a clean sheet and restores its trigger",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 446,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "boundaries.spec.ts",
+      "title": "VOICE-01 malformed Live readiness never requests microphone or paid session",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 337,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "boundaries.spec.ts",
+      "title": "VOICE-01 microphone denial reaches a functional separate typed workspace",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 488,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "boundaries.spec.ts",
+      "title": "API-01 malformed successful auth stays signed out with a recoverable error",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 315,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "boundaries.spec.ts",
+      "title": "API-01 malformed successful bootstrap shows recovery instead of crashing",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 413,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "boundaries.spec.ts",
+      "title": "AUTH-01 late owner A unauthorized response cannot sign owner B out",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 940,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "boundaries.spec.ts",
+      "title": "AUTH-01 late successful owner A bootstrap cannot populate owner B profile",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 737,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "journeys.spec.ts",
+      "title": "VOICE-01 opening has one action and never captures on launch",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 301,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "journeys.spec.ts",
+      "title": "REQ-01 typed exact message creates one simulated request without a mandatory composer",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 4913,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "journeys.spec.ts",
+      "title": "AUTH-04 typed draft survives panel navigation and is cleared at owner change",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 721,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "journeys.spec.ts",
+      "title": "SETTINGS-01 unsaved profile survives navigation or offers Save/Discard/Stay",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 556,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "journeys.spec.ts",
+      "title": "SETTINGS-01 failed profile save preserves draft and a real retry/refetch agrees",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 676,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "journeys.spec.ts",
+      "title": "SETTINGS-02 disposable account export is explicit and deletion clears its workspace",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 632,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "journeys.spec.ts",
+      "title": "PEOPLE-02 failed save preserves fields and unsaved dismissal can stay or discard",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 659,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "journeys.spec.ts",
+      "title": "MEMORY-02 failed save preserves private draft and provenance is explicit",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 522,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK opening keeps exactly one Call klnk action and loaded bytes match the exported source",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 369,
+      "retries": 0,
+      "observations": {
+        "network-served-source-identity": {
+          "path": "/_expo/static/js/web/index-8c9e08c97967866f63c309e9a9af902b.js",
+          "servedSha256": "0ee8464d28999bf999581ebf5a75cd4aef44b456713dba075f40a62fa54c0801",
+          "exportedSha256": "0ee8464d28999bf999581ebf5a75cd4aef44b456713dba075f40a62fa54c0801",
+          "browserVersion": "156.0.8078.48"
+        },
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK two separate authenticated owners coordinate while Jordan is offline; returning owner sees truthful summary/event/reminder",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 2735,
+      "retries": 0,
+      "observations": {
+        "network-egress-observations": {
+          "contexts": 4,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK only Jordan can approve exact terms; UI reading is distinct from owner approval",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 3718,
+      "retries": 0,
+      "observations": {
+        "network-egress-observations": {
+          "contexts": 3,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK failed memory save retains typed draft; navigation preserves it and signout clears private owner state",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1083,
+      "retries": 0,
+      "observations": {
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK freeform exact Tell recovers a lost response using the same command; unavailable planning keeps a typed route",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 2700,
+      "retries": 0,
+      "observations": {
+        "network-egress-observations": {
+          "contexts": 3,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK delayed old-owner private memory response cannot populate a newly signed-in owner",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1003,
+      "retries": 0,
+      "observations": {
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK pre-claim instruction failure and 404 readback permit an explicit retry with the exact frozen command",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1861,
+      "retries": 0,
+      "observations": {
+        "network-egress-observations": {
+          "contexts": 3,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK layout 320px light, all panels plus 200 percent text",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 965,
+      "retries": 0,
+      "observations": {
+        "network-layout-metrics": {
+          "width": 320,
+          "colorScheme": "light",
+          "panelMetrics": [
+            {
+              "panel": "Inbox",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Calendar",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "People",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Memory",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Settings",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            }
+          ]
+        },
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK layout 390px light, all panels plus 200 percent text",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1210,
+      "retries": 0,
+      "observations": {
+        "network-layout-metrics": {
+          "width": 390,
+          "colorScheme": "light",
+          "panelMetrics": [
+            {
+              "panel": "Inbox",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 155.03125,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 212.96875,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 171.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 196.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Calendar",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 151.546875,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 216.453125,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 171.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 196.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "People",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 153.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 214.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 173.359375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 194.640625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Memory",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 153.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 214.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 169.171875,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 198.828125,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Settings",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 153.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 214.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 171.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 196.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            }
+          ]
+        },
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK layout 430px light, all panels plus 200 percent text",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1005,
+      "retries": 0,
+      "observations": {
+        "network-layout-metrics": {
+          "width": 430,
+          "colorScheme": "light",
+          "panelMetrics": [
+            {
+              "panel": "Inbox",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 175.03125,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 232.96875,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 191.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 216.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Calendar",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 171.546875,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 236.453125,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 191.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 216.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "People",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 173.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 234.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 193.359375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 214.640625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Memory",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 173.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 234.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 189.171875,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 218.828125,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Settings",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 173.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 234.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 191.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 216.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            }
+          ]
+        },
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK layout 320px dark, all panels plus 200 percent text",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1042,
+      "retries": 0,
+      "observations": {
+        "network-layout-metrics": {
+          "width": 320,
+          "colorScheme": "dark",
+          "panelMetrics": [
+            {
+              "panel": "Inbox",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Calendar",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "People",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Memory",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Settings",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 304,
+                  "height": 77,
+                  "top": 427,
+                  "bottom": 504,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 304,
+                  "height": 77,
+                  "top": 510,
+                  "bottom": 587,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 304,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 304,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 304,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            }
+          ]
+        },
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK layout 390px dark, all panels plus 200 percent text",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1285,
+      "retries": 0,
+      "observations": {
+        "network-layout-metrics": {
+          "width": 390,
+          "colorScheme": "dark",
+          "panelMetrics": [
+            {
+              "panel": "Inbox",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 155.03125,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 212.96875,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 171.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 196.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Calendar",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 151.546875,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 216.453125,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 171.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 196.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "People",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 153.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 214.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 173.359375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 194.640625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Memory",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 153.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 214.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 169.171875,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 198.828125,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Settings",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 153.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 214.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 171.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 196.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 374,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            }
+          ]
+        },
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "network.spec.ts",
+      "title": "NETWORK layout 430px dark, all panels plus 200 percent text",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 1154,
+      "retries": 0,
+      "observations": {
+        "network-layout-metrics": {
+          "width": 430,
+          "colorScheme": "dark",
+          "panelMetrics": [
+            {
+              "panel": "Inbox",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 175.03125,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 232.96875,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 191.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 216.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Calendar",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 171.546875,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 236.453125,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 191.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 216.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "People",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 173.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 234.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 193.359375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 214.640625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Memory",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 173.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 234.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 189.171875,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 218.828125,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            },
+            {
+              "panel": "Settings",
+              "navigation": [
+                {
+                  "name": "Inbox",
+                  "width": 173.40625,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "Calendar",
+                  "width": 234.59375,
+                  "height": 77,
+                  "top": 593,
+                  "bottom": 670,
+                  "textFits": true
+                },
+                {
+                  "name": "People",
+                  "width": 191.84375,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Memory",
+                  "width": 216.15625,
+                  "height": 77,
+                  "top": 676,
+                  "bottom": 753,
+                  "textFits": true
+                },
+                {
+                  "name": "Settings",
+                  "width": 414,
+                  "height": 77,
+                  "top": 759,
+                  "bottom": 836,
+                  "textFits": true
+                }
+              ]
+            }
+          ]
+        },
+        "network-egress-observations": {
+          "contexts": 1,
+          "blockedNonlocalAttempts": 0
+        }
+      }
+    },
+    {
+      "file": "permissions-recovery.spec.ts",
+      "title": "SETTINGS-03 mocked eligibility gates actual grant PUT, readback and revocation without enabling runtime",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 729,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "permissions-recovery.spec.ts",
+      "title": "SETTINGS-03 a mocked foreign-owner permission response cannot enable or save access",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 511,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "permissions-recovery.spec.ts",
+      "title": "VOICE-04 mocked asynchronous no-ID recovery keeps uncertainty and preserves typed access without automatic start",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 605,
+      "retries": 0,
+      "observations": {}
+    },
+    {
+      "file": "permissions-recovery.spec.ts",
+      "title": "VOICE-04 mocked asynchronous no-ID recovery reconciles rejection and preserves typed access without automatic start",
+      "expectedStatus": "passed",
+      "status": "expected",
+      "result": "passed",
+      "durationMs": 618,
+      "retries": 0,
+      "observations": {}
+    }
+  ]
+}

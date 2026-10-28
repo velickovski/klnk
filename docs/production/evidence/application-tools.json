@@ -1,0 +1,174 @@
+{
+  "schemaVersion": 1,
+  "at": "2026-10-27T14:56:59.341Z",
+  "environment": "isolated PGlite / fictional fixtures",
+  "providersContacted": false,
+  "liveToolsEnabled": false,
+  "assertions": {
+    "draftRequiresReview": true,
+    "deniedWithoutEffect": true,
+    "unknownNotReplayed": true,
+    "privateTraceRedaction": true
+  },
+  "scenarios": [
+    {
+      "scenario": "draft_prepared_for_review",
+      "outcome": {
+        "toolName": "request_prepare",
+        "status": "proposed",
+        "reasonCode": "draft_prepared",
+        "verification": "local_commit"
+      },
+      "trace": [
+        {
+          "schemaVersion": 1,
+          "eventId": "45b53359-f64d-434a-b567-6c3b7a1efbe1",
+          "occurredAt": "2026-10-27T14:56:59.308Z",
+          "event": "tool_requested",
+          "traceId": "8f8ff939-0921-8cd6-94ee-66261853c6c1",
+          "requestId": "8f8ff939-0921-8cd6-94ee-66261853c6c1",
+          "sessionRef": "987ab753-45e8-4072-890c-374c57688748",
+          "ownerRef": "9a88f630-382d-4415-84fa-a8af14e959c9",
+          "toolName": "request_prepare",
+          "toolVersion": 1,
+          "adapter": "application",
+          "status": "running",
+          "reasonCode": "queued",
+          "verification": "local_commit",
+          "argumentSummary": {
+            "operation": "prepare",
+            "resourceCount": 0
+          },
+          "durationMs": 5
+        },
+        {
+          "schemaVersion": 1,
+          "eventId": "59cbb90b-bc33-46fa-a92c-9e5fd7d5cc35",
+          "occurredAt": "2026-10-27T14:56:59.310Z",
+          "event": "tool_validated",
+          "traceId": "8f8ff939-0921-8cd6-94ee-66261853c6c1",
+          "requestId": "8f8ff939-0921-8cd6-94ee-66261853c6c1",
+          "sessionRef": "987ab753-45e8-4072-890c-374c57688748",
+          "ownerRef": "9a88f630-382d-4415-84fa-a8af14e959c9",
+          "toolName": "request_prepare",
+          "toolVersion": 1,
+          "adapter": "application",
+          "status": "running",
+          "reasonCode": "queued",
+          "verification": "local_commit",
+          "argumentSummary": {
+            "operation": "prepare",
+            "resourceCount": 0
+          },
+          "durationMs": 7
+        },
+        {
+          "schemaVersion": 1,
+          "eventId": "1476de74-472e-400a-ab7e-393d64c61b10",
+          "occurredAt": "2026-10-27T14:56:59.313Z",
+          "event": "tool_started",
+          "traceId": "8f8ff939-0921-8cd6-94ee-66261853c6c1",
+          "requestId": "8f8ff939-0921-8cd6-94ee-66261853c6c1",
+          "sessionRef": "987ab753-45e8-4072-890c-374c57688748",
+          "ownerRef": "9a88f630-382d-4415-84fa-a8af14e959c9",
+          "toolName": "request_prepare",
+          "toolVersion": 1,
+          "adapter": "application",
+          "status": "running",
+          "reasonCode": "queued",
+          "verification": "local_commit",
+          "argumentSummary": {
+            "operation": "prepare",
+            "resourceCount": 0
+          },
+          "durationMs": 10
+        },
+        {
+          "schemaVersion": 1,
+          "eventId": "d4862041-ad78-4ed5-be80-4230e6c4421e",
+          "occurredAt": "2026-10-27T14:56:59.320Z",
+          "event": "tool_succeeded",
+          "traceId": "8f8ff939-0921-8cd6-94ee-66261853c6c1",
+          "requestId": "8f8ff939-0921-8cd6-94ee-66261853c6c1",
+          "sessionRef": "987ab753-45e8-4072-890c-374c57688748",
+          "ownerRef": "9a88f630-382d-4415-84fa-a8af14e959c9",
+          "toolName": "request_prepare",
+          "toolVersion": 1,
+          "adapter": "application",
+          "status": "proposed",
+          "reasonCode": "draft_prepared",
+          "verification": "local_commit",
+          "argumentSummary": {
+            "operation": "prepare",
+            "resourceCount": 1
+          },
+          "durationMs": 17
+        }
+      ]
+    },
+    {
+      "scenario": "explicit_grant_denied",
+      "outcome": {
+        "toolName": "request_dispatch",
+        "status": "blocked",
+        "reasonCode": "tool_access_required",
+        "verification": "policy_denial"
+      },
+      "trace": [
+        {
+          "schemaVersion": 1,
+          "eventId": "5a078f7d-9a3a-412d-8d2e-01b774104926",
+          "occurredAt": "2026-10-27T14:56:59.327Z",
+          "event": "tool_blocked",
+          "traceId": "f88b92ed-0126-81eb-9048-9fb03e4ccf1f",
+          "requestId": "f88b92ed-0126-81eb-9048-9fb03e4ccf1f",
+          "sessionRef": "987ab753-45e8-4072-890c-374c57688748",
+          "ownerRef": "9a88f630-382d-4415-84fa-a8af14e959c9",
+          "toolName": "request_dispatch",
+          "toolVersion": 1,
+          "adapter": "application",
+          "status": "blocked",
+          "reasonCode": "tool_access_required",
+          "verification": "policy_denial",
+          "argumentSummary": {
+            "operation": "dispatch",
+            "resourceCount": 0
+          },
+          "durationMs": 4
+        }
+      ]
+    },
+    {
+      "scenario": "interrupted_receipt_not_replayed",
+      "outcome": {
+        "toolName": "contacts_lookup",
+        "status": "unknown",
+        "reasonCode": "reconciliation_required",
+        "verification": "unconfirmed"
+      },
+      "trace": [
+        {
+          "schemaVersion": 1,
+          "eventId": "f4af8577-e10d-4485-86fc-f124412389d5",
+          "occurredAt": "2026-10-27T14:56:59.336Z",
+          "event": "tool_reconciliation_required",
+          "traceId": "61e34400-922f-8c10-8ff4-560b36d2baa2",
+          "requestId": "61e34400-922f-8c10-8ff4-560b36d2baa2",
+          "sessionRef": "987ab753-45e8-4072-890c-374c57688748",
+          "ownerRef": "9a88f630-382d-4415-84fa-a8af14e959c9",
+          "toolName": "contacts_lookup",
+          "toolVersion": 1,
+          "adapter": "application",
+          "status": "unknown",
+          "reasonCode": "reconciliation_required",
+          "verification": "unconfirmed",
+          "argumentSummary": {
+            "operation": "lookup",
+            "resourceCount": 0
+          },
+          "durationMs": 3
+        }
+      ]
+    }
+  ]
+}

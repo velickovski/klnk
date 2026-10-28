@@ -1,0 +1,874 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-27T15:43:21.728Z",
+  "scope": "independent final Expo browser/local API deterministic integration",
+  "node": "v24.15.0",
+  "platform": "win32",
+  "runner": "@playwright/test 1.64.1",
+  "browserChannel": "installed Chrome headless",
+  "commands": [
+    "npm run e2e:build",
+    "$env:KLNK_E2E_CHANNEL='chrome'; $env:KLNK_E2E_SCREENSHOTS='true'; npm run e2e",
+    "npx tsc -p e2e/tsconfig.json --noEmit"
+  ],
+  "runAt": "2026-10-27T15:41:06.393Z",
+  "result": {
+    "passed": 32,
+    "failed": 0,
+    "skipped": 0,
+    "flaky": 0,
+    "durationSeconds": 116.89058899999999
+  },
+  "loadedBundle": {
+    "pathname": "/_expo/static/js/web/index-00b72dc0187662ccac68836f776bbf40.js",
+    "loadedSha256": "2e528891031c07b983764cad97ec136b15b3c0d03d6996234f961111b0212812",
+    "exportedSha256": "2e528891031c07b983764cad97ec136b15b3c0d03d6996234f961111b0212812"
+  },
+  "providerSessionsCreated": 0,
+  "physicalMicrophoneUsed": false,
+  "nativeDeviceTested": false,
+  "fixture": "real isolated Fastify + in-memory PGlite; simulator only; external credentials absent",
+  "mockedBoundaries": [
+    "malformed/failed/late response scenarios explicitly intercept relevant HTTP responses",
+    "tool eligibility GET runtimeAvailable presentation only; grant PUT, returned unavailable runtime and persistent GET readback use actual local API",
+    "foreign-owner tools/access GET response only; no mutation",
+    "asynchronous no-ID recovery and terminal request receipt GETs only; no actual Live reservation or provider"
+  ],
+  "enlargedLayoutSummary": {
+    "cases": 6,
+    "measuredNavigationTargets": 48,
+    "minWidth": 97.5,
+    "minHeight": 88,
+    "maxBottom": 832,
+    "allVerticalTextFits": true,
+    "allHorizontalTextFits": true,
+    "allPrimaryActionsFit": true
+  },
+  "supersedes": "Earlier 276/307px target heights resulted from QA paragraph-margin/icon overscope; corrected helper excludes decorative glyphs and margins control labels, and strengthens primary action clipping checks.",
+  "metrics": [
+    {
+      "width": 320,
+      "colorScheme": "light",
+      "metrics": [
+        {
+          "panel": "People",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 160,
+              "height": 88,
+              "top": 656,
+              "bottom": 744,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 160,
+              "height": 88,
+              "top": 656,
+              "bottom": 744,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 160,
+              "height": 88,
+              "top": 744,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 160,
+              "height": 88,
+              "top": 744,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        },
+        {
+          "panel": "Memory",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 160,
+              "height": 88,
+              "top": 656,
+              "bottom": 744,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 160,
+              "height": 88,
+              "top": 656,
+              "bottom": 744,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 160,
+              "height": 88,
+              "top": 744,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 160,
+              "height": 88,
+              "top": 744,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "colorScheme": "light",
+      "metrics": [
+        {
+          "panel": "People",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        },
+        {
+          "panel": "Memory",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "colorScheme": "light",
+      "metrics": [
+        {
+          "panel": "People",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        },
+        {
+          "panel": "Memory",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        }
+      ]
+    },
+    {
+      "width": 320,
+      "colorScheme": "dark",
+      "metrics": [
+        {
+          "panel": "People",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 160,
+              "height": 88,
+              "top": 656,
+              "bottom": 744,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 160,
+              "height": 88,
+              "top": 656,
+              "bottom": 744,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 160,
+              "height": 88,
+              "top": 744,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 160,
+              "height": 88,
+              "top": 744,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        },
+        {
+          "panel": "Memory",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 160,
+              "height": 88,
+              "top": 656,
+              "bottom": 744,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 160,
+              "height": 88,
+              "top": 656,
+              "bottom": 744,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 160,
+              "height": 88,
+              "top": 744,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 160,
+              "height": 88,
+              "top": 744,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        }
+      ]
+    },
+    {
+      "width": 390,
+      "colorScheme": "dark",
+      "metrics": [
+        {
+          "panel": "People",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        },
+        {
+          "panel": "Memory",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 97.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        }
+      ]
+    },
+    {
+      "width": 430,
+      "colorScheme": "dark",
+      "metrics": [
+        {
+          "panel": "People",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        },
+        {
+          "panel": "Memory",
+          "navigation": [
+            {
+              "name": "Home",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "People",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Memory",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            },
+            {
+              "name": "Settings",
+              "width": 107.5,
+              "height": 119,
+              "top": 713,
+              "bottom": 832,
+              "verticalTextFits": true,
+              "horizontalTextFits": true
+            }
+          ],
+          "primaryActionFits": true
+        }
+      ]
+    }
+  ],
+  "cases": [
+    {
+      "name": "A11Y-02 320px light opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 3866
+    },
+    {
+      "name": "A11Y-02 320px light enlarged People Memory targets and vertical text fit",
+      "status": "passed",
+      "durationMs": 2071
+    },
+    {
+      "name": "A11Y-02 390px light opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 2943
+    },
+    {
+      "name": "A11Y-02 390px light enlarged People Memory targets and vertical text fit",
+      "status": "passed",
+      "durationMs": 1955
+    },
+    {
+      "name": "A11Y-02 430px light opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 2392
+    },
+    {
+      "name": "A11Y-02 430px light enlarged People Memory targets and vertical text fit",
+      "status": "passed",
+      "durationMs": 2405
+    },
+    {
+      "name": "A11Y-02 320px dark opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 2617
+    },
+    {
+      "name": "A11Y-02 320px dark enlarged People Memory targets and vertical text fit",
+      "status": "passed",
+      "durationMs": 3054
+    },
+    {
+      "name": "A11Y-02 390px dark opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 3022
+    },
+    {
+      "name": "A11Y-02 390px dark enlarged People Memory targets and vertical text fit",
+      "status": "passed",
+      "durationMs": 1999
+    },
+    {
+      "name": "A11Y-02 430px dark opening and workspace reflow",
+      "status": "passed",
+      "durationMs": 2502
+    },
+    {
+      "name": "A11Y-02 430px dark enlarged People Memory targets and vertical text fit",
+      "status": "passed",
+      "durationMs": 2082
+    },
+    {
+      "name": "A11Y-02 combined text spacing and 200 percent text retain the opening action",
+      "status": "passed",
+      "durationMs": 1178
+    },
+    {
+      "name": "A11Y-01 keyboard opens and dismisses a clean sheet and restores its trigger",
+      "status": "passed",
+      "durationMs": 1722
+    },
+    {
+      "name": "VOICE-01 malformed Live readiness never requests microphone or paid session",
+      "status": "passed",
+      "durationMs": 1221
+    },
+    {
+      "name": "VOICE-01 microphone denial reaches a functional separate typed workspace",
+      "status": "passed",
+      "durationMs": 4194
+    },
+    {
+      "name": "API-01 malformed successful auth stays signed out with a recoverable error",
+      "status": "passed",
+      "durationMs": 6795
+    },
+    {
+      "name": "API-01 malformed successful bootstrap shows recovery instead of crashing",
+      "status": "passed",
+      "durationMs": 3474
+    },
+    {
+      "name": "AUTH-01 late owner A unauthorized response cannot sign owner B out",
+      "status": "passed",
+      "durationMs": 4133
+    },
+    {
+      "name": "AUTH-01 late successful owner A bootstrap cannot populate owner B profile",
+      "status": "passed",
+      "durationMs": 4292
+    },
+    {
+      "name": "VOICE-01 opening has one action and never captures on launch",
+      "status": "passed",
+      "durationMs": 1162
+    },
+    {
+      "name": "REQ-01 typed exact message creates one simulated request without a mandatory composer",
+      "status": "passed",
+      "durationMs": 7783
+    },
+    {
+      "name": "AUTH-04 typed draft survives panel navigation and is cleared at owner change",
+      "status": "passed",
+      "durationMs": 4625
+    },
+    {
+      "name": "SETTINGS-01 unsaved profile survives navigation or offers Save/Discard/Stay",
+      "status": "passed",
+      "durationMs": 2412
+    },
+    {
+      "name": "SETTINGS-01 failed profile save preserves draft and a real retry/refetch agrees",
+      "status": "passed",
+      "durationMs": 3185
+    },
+    {
+      "name": "SETTINGS-02 disposable account export is explicit and deletion clears its workspace",
+      "status": "passed",
+      "durationMs": 3347
+    },
+    {
+      "name": "PEOPLE-02 failed save preserves fields and unsaved dismissal can stay or discard",
+      "status": "passed",
+      "durationMs": 3643
+    },
+    {
+      "name": "MEMORY-02 failed save preserves private draft and provenance is explicit",
+      "status": "passed",
+      "durationMs": 2067
+    },
+    {
+      "name": "SETTINGS-03 mocked eligibility gates actual grant PUT, readback and revocation without enabling runtime",
+      "status": "passed",
+      "durationMs": 2967
+    },
+    {
+      "name": "SETTINGS-03 a mocked foreign-owner permission response cannot enable or save access",
+      "status": "passed",
+      "durationMs": 2602
+    },
+    {
+      "name": "VOICE-04 mocked asynchronous no-ID recovery keeps uncertainty and preserves typed access without automatic start",
+      "status": "passed",
+      "durationMs": 2256
+    },
+    {
+      "name": "VOICE-04 mocked asynchronous no-ID recovery reconciles rejection and preserves typed access without automatic start",
+      "status": "passed",
+      "durationMs": 1902
+    }
+  ],
+  "testAndHarnessHashes": {
+    "e2e/browser/helpers.ts": "bd2110dfcc658ad68952315d5e40753ae55aed81603c438600a346e2488c313d",
+    "e2e/browser/journeys.spec.ts": "df74a51edb65645f20fb7726d1d75f18e8eb941cf7968d11833248fbf65469fa",
+    "e2e/browser/boundaries.spec.ts": "1f3ab4d61d2037620efa13acd460c62282e62f3c6029d3c267711562cc60b41a",
+    "e2e/browser/accessibility.spec.ts": "f63dabd4ba751890a8415c132ebf036d84a4ef895f26246e173bfb751c607920",
+    "e2e/browser/permissions-recovery.spec.ts": "8ba200b6c0fe7344bbc194e7a9c6fba6cf8825f9541c058166d9e8de2295ed22",
+    "playwright.config.ts": "5dbd8cc53f276988a76ea3f80c9fc4b220a25184f0462cf5b7667cf230cdc788",
+    "scripts/e2e-server.ts": "50b51464d7b75f63d8b794247a3f702618074d958cc1f4d11473a9db5c424f91",
+    "scripts/e2e-build.ts": "267a8fda9eaf477d0991e0f993e11f0c3d6afea3fb7879f0ab1386b0fb9912dc"
+  },
+  "screenshots": [
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-enlarged-people-light.png",
+      "width": 320,
+      "height": 844,
+      "sha256": "658a96f7448dac887fb9067c40d3fdf8cf8b3f4f78a82f0eb047969c2e1504f6"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-enlarged-memory-light.png",
+      "width": 320,
+      "height": 844,
+      "sha256": "97f9d30649bc1a6976b82a3e3177c1e00cceb6da4d912655edc51f592895f3cd"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-opening-390-light.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "dd731b34471f329f8da982eb851b7232e933be08f363f068c5cf51462a612092"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-home-390-light.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "a642e77f743733158e63be488401c35e44b71e4ed67ff6a07d7537220103db4f"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-people-390-light.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "24c9d15b0dfcb4a8867d846c222a4c70df572878e46ae21a9969e28c1848943a"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-memory-390-light.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "d755e48e338c46d694d985b9324ca348c1f9904faa5b590bceed6468d884344a"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-settings-390-light.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "b8616bad019ec28b2f4ea0f624fcac89cddf0195f7e6388ce5ac9fdb902a6435"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-enlarged-people-dark.png",
+      "width": 320,
+      "height": 844,
+      "sha256": "b7f8a47a3f750b386d94970ae25847dde8dfff33f20e224097cfd7c405c27f19"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-enlarged-memory-dark.png",
+      "width": 320,
+      "height": 844,
+      "sha256": "92f023c08f298da9762d03ae5e81ffe1020363b820a83c9eaaf31aba4ed42276"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-opening-390-dark.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "dd731b34471f329f8da982eb851b7232e933be08f363f068c5cf51462a612092"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-home-390-dark.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "06efb811de024144ed5695ba939f1318071a95a096e9e0299fef5a49472306b7"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-people-390-dark.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "edf2cf86eb8f6ac5e7022e558dfad9946e5ce3380cad943047811416e76c5d34"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-memory-390-dark.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "564615791086ba1f3bac3d74c836fe593abe58d42696cfa694166d470a087c36"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-settings-390-dark.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "a132518abe042529cb0804588c673f9b89a214a9302c6dd112b9c08ae4de4943"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-simulated-request-result.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "9cac114481391250ba8cef8d0fb4abd25c856ae0bb1af7dcff60facf3694c183"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-tools-enabled-runtime-unavailable.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "0c77b9bed3491c20bce0c63fa196fbd08c4edc8e7ccc1b974eabe44ec43d590d"
+    },
+    {
+      "path": "docs/production/evidence/qa/visual-final/fictional-no-id-recovery-error.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "2c863f48978cc69131977a5a3e85c4b4edeb384ca236bc3dc04bda8f1201d619"
+    }
+  ],
+  "limitations": [
+    "Not a release certification or completed M5 gate",
+    "Programmatic text scaling/spacing is partial web accessibility evidence, not browser zoom or native Dynamic Type",
+    "Full empty/error/active screenshot matrix and interaction recording missing",
+    "Manual screen reader, native assistive inputs, exact signed iPhone audio/device tests unrun",
+    "Representative performance, 20-cycle resources, 20-run conversational latency and human usability/naturalness unrun",
+    "QA performed no provider or external-service round trip; root readonly tool smoke is separately recorded and does not verify spoken semantics"
+  ]
+}

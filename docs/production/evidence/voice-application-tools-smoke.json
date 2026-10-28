@@ -1,0 +1,72 @@
+{
+  "runAt": "2026-10-27T15:22:44.187Z",
+  "scope": "standalone-browser-real-webrtc-in-app-read-only-tool",
+  "fixtureMicrophone": true,
+  "physicalMicrophoneUsed": false,
+  "nativeDeviceTested": false,
+  "checks": [
+    "one visible opening action",
+    "connected after real provider event",
+    "remote audio track playing in headless browser",
+    "actual provider captions rendered",
+    "mute acknowledged",
+    "unmute acknowledged",
+    "fictional input transcribed; subsequent assistant caption received",
+    "UI confirms terminal provider evidence",
+    "one paid session creation request",
+    "remote playback released",
+    "real delegated lookup recorded; result forwarded and backend continued; later caption observed; no outbound request created"
+  ],
+  "error": null,
+  "sidebandTransportErrors": 0,
+  "sidebandClosedWithoutTerminalEvent": false,
+  "elapsedMs": 25311,
+  "sideband": {
+    "started": true,
+    "closed": true,
+    "outputAudioBytes": 768000,
+    "inputTranscriptCharacters": 95,
+    "outputTranscriptCharacters": 89,
+    "outputAfterInputTranscript": true,
+    "delegations": 1,
+    "toolCalls": [
+      "function_call:contacts_lookup"
+    ],
+    "providerErrorCodes": [],
+    "eventCounts": {
+      "session.started": 1,
+      "unrecognized": 91,
+      "session.output_audio.delta": 80,
+      "session.output_transcript.delta": 16,
+      "session.input_audio.muted": 1,
+      "session.input_audio.unmuted": 1,
+      "session.input_transcript.delta": 19,
+      "session.delegation.created": 1,
+      "response.event": 39,
+      "session.closed": 1
+    }
+  },
+  "configuredToolNames": [
+    "contacts_lookup"
+  ],
+  "inputFixtureKeywordsHeard": true,
+  "toolOutcomes": [
+    {
+      "toolName": "contacts_lookup",
+      "status": "succeeded",
+      "reasonCode": "lookup_complete",
+      "verification": "local_commit"
+    }
+  ],
+  "forwardedToolResults": [
+    {
+      "toolName": "contacts_lookup",
+      "status": "succeeded",
+      "verification": "local_commit"
+    }
+  ],
+  "continuations": 1,
+  "captionAfterForwardedResult": true,
+  "selectedEnglishCompletionClaimDetected": false,
+  "semanticSpokenResultVerified": false
+}

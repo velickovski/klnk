@@ -1,0 +1,63 @@
+{
+  "environment": "Isolated simulator; fictional API records and mocked scale/layout fixtures; provider credentials absent",
+  "checks": [
+    {
+      "name": "Actual UI/API creates private owner-sourced memory",
+      "result": "passed"
+    },
+    {
+      "name": "Actual edit preserves explicit confirmation/disclosure and prior-source reference",
+      "result": "passed"
+    },
+    {
+      "name": "Removed relationship is visible, cannot save stale scope, explicit owner-scope recovery works",
+      "result": "passed"
+    },
+    {
+      "name": "Actual memory delete with Keep/Confirm choices",
+      "result": "passed"
+    },
+    {
+      "name": "1000-memory scale mounts50, pages/focuses, filters500review, distinguishes no-results and searches last item",
+      "result": "passed"
+    }
+  ],
+  "layouts": [
+    {
+      "panel": "People",
+      "colorScheme": "light",
+      "result": "passed",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": []
+    },
+    {
+      "panel": "People",
+      "colorScheme": "dark",
+      "result": "passed",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": []
+    },
+    {
+      "panel": "Memory",
+      "colorScheme": "light",
+      "result": "passed",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": []
+    },
+    {
+      "panel": "Memory",
+      "colorScheme": "dark",
+      "result": "passed",
+      "width": 320,
+      "scrollWidth": 320,
+      "overflow": []
+    }
+  ],
+  "bundle": [
+    "/_expo/static/js/web/index-aea5930317b2227757aa48a379115963.js"
+  ],
+  "render1000To50Ms": 50
+}

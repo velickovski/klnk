@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "scope": "M1 initial deterministic Expo browser integration",
+  "runAt": "2026-10-27T14:08:26.588Z",
+  "node": "v24.15.0",
+  "platform": "win32",
+  "runner": "@playwright/test 1.64.1",
+  "browserChannel": "installed Chrome headless",
+  "fixture": "real local Fastify plus in-memory PGlite, simulator only, no provider credentials",
+  "physicalMicrophoneUsed": false,
+  "providerSessionsCreated": 0,
+  "nativeDeviceTested": false,
+  "exportBundle": "apps/mobile/dist-e2e/_expo/static/js/web/index-f2390b48381abde9b37b668119a62547.js",
+  "exportBundleSha256": "d0cdcdfcdd3b9296056d12f82a2021e3170b50b566944b1597c08c4219a783d9",
+  "passed": 10,
+  "failed": 9,
+  "cases": [
+    {
+      "name": "A11Y-02 320px light opening and workspace reflow",
+      "status": "failed",
+      "durationMs": 10569
+    },
+    {
+      "name": "A11Y-02 390px light opening and workspace reflow",
+      "status": "failed",
+      "durationMs": 10544
+    },
+    {
+      "name": "A11Y-02 430px light opening and workspace reflow",
+      "status": "failed",
+      "durationMs": 10527
+    },
+    {
+      "name": "A11Y-02 320px dark opening and workspace reflow",
+      "status": "failed",
+      "durationMs": 10556
+    },
+    {
+      "name": "A11Y-02 390px dark opening and workspace reflow",
+      "status": "failed",
+      "durationMs": 10530
+    },
+    {
+      "name": "A11Y-02 430px dark opening and workspace reflow",
+      "status": "failed",
+      "durationMs": 10725
+    },
+    {
+      "name": "A11Y-02 combined text spacing and 200 percent text retain the opening action",
+      "status": "passed",
+      "durationMs": 369
+    },
+    {
+      "name": "A11Y-01 keyboard opens and dismisses a clean sheet and restores its trigger",
+      "status": "passed",
+      "durationMs": 439
+    },
+    {
+      "name": "VOICE-01 malformed Live readiness never requests microphone or paid session",
+      "status": "passed",
+      "durationMs": 293
+    },
+    {
+      "name": "VOICE-01 microphone denial reaches a functional separate typed workspace",
+      "status": "passed",
+      "durationMs": 423
+    },
+    {
+      "name": "API-01 malformed successful auth stays signed out with a recoverable error",
+      "status": "passed",
+      "durationMs": 290
+    },
+    {
+      "name": "API-01 malformed successful bootstrap shows recovery instead of crashing",
+      "status": "passed",
+      "durationMs": 433
+    },
+    {
+      "name": "AUTH-01 late owner A unauthorized response cannot sign owner B out",
+      "status": "passed",
+      "durationMs": 931
+    },
+    {
+      "name": "VOICE-01 opening has one action and never captures on launch",
+      "status": "passed",
+      "durationMs": 249
+    },
+    {
+      "name": "REQ-01 typed exact message creates one simulated request without a mandatory composer",
+      "status": "failed",
+      "durationMs": 10446
+    },
+    {
+      "name": "AUTH-04 typed draft survives panel navigation and is cleared at owner change",
+      "status": "passed",
+      "durationMs": 794
+    },
+    {
+      "name": "SETTINGS-01 unsaved profile survives navigation or offers Save/Discard/Stay",
+      "status": "failed",
+      "durationMs": 10560
+    },
+    {
+      "name": "PEOPLE-02 failed save preserves fields and unsaved dismissal can stay or discard",
+      "status": "passed",
+      "durationMs": 668
+    },
+    {
+      "name": "MEMORY-02 failed save preserves private draft and provenance is explicit",
+      "status": "failed",
+      "durationMs": 456
+    }
+  ],
+  "notes": [
+    "Permission-denial case initially lacked model/voice readiness fields and was corrected after this run; initial pass establishes recovery but not a real permission attempt.",
+    "Memory failed on duplicate Private radio selector; selector was subsequently scoped to dialog; checked-state assertion remains required.",
+    "Missing tab ARIA state and Settings draft loss are confirmed defects; Request details click is a no-op on a fresh voice-created mission."
+  ]
+}

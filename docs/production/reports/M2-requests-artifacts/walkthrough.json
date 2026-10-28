@@ -1,0 +1,33 @@
+{
+  "runAt": "2026-10-27T14:35:19.551Z",
+  "scope": "isolated-server-backed-simulation-with-browser-boundary-fixtures",
+  "physicalDevice": false,
+  "providerCalls": 0,
+  "checks": [
+    "180-second zero-retry choices follow bootstrap",
+    "failed save retains draft and explains recovery",
+    "dirty close Stay preserves request",
+    "authorization requires explicit review of intended recipient",
+    "stale 409 refresh resets recipient confirmation without automatic authorization",
+    "reconfirmed request runs only in simulation",
+    "unsupported guidance has no operational-looking input or save control",
+    "45-second fixture exposes no unsupported duration",
+    "accepted save survives bootstrap refresh failure without offering duplicate draft submission"
+  ],
+  "screenshots": [
+    "failed-save.png",
+    "review-confirmed.png",
+    "stale-review.png",
+    "simulated-result.png",
+    "unsupported-guidance.png",
+    "strict-limits.png",
+    "accepted-save-refresh-failure.png"
+  ],
+  "bundles": [
+    {
+      "path": "/_expo/static/js/web/index-37daaf64f6946d3bb783f9bff16d28c9.js",
+      "sha256": "17186513821537ded3651037f86daf7aaea414b211744458c5d6ef87fbd36cf9"
+    }
+  ],
+  "error": null
+}

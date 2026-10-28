@@ -1,0 +1,34 @@
+[
+  {
+    "path": "packages/domain/src/network.ts",
+    "sha256": "c821121943f4e9005c56681090dab0bb8ea5df8ab753941b44ebccb4beba792c"
+  },
+  {
+    "path": "apps/server/src/network/store.ts",
+    "sha256": "6d33b2b2c83d91d4e64adbc399c80f6ff6aa9e8c97058ea9294e96c721e9dd24"
+  },
+  {
+    "path": "apps/server/src/network/coordination.ts",
+    "sha256": "425a66048d1d9f2a1f54afeca6aed6d3e07bc3c3d0500ec93f9cd97b43565349"
+  },
+  {
+    "path": "apps/server/src/network/policy.ts",
+    "sha256": "08b805fef6dcc4ca9a07f5fb3a595ef195b61739ca7e87f2a51fcc26c6fc761f"
+  },
+  {
+    "path": "apps/server/src/network/calendar.ts",
+    "sha256": "56ae72ba8065e2cdaadf989fe00c4f68a01fb7af89662af25d0531062e4c7a55"
+  },
+  {
+    "path": "apps/server/src/network/preferences.ts",
+    "sha256": "2eb0c6f9265a0d7a98a7740ff39f67360ab426224a52cbbddbcf71e5ea51b5fb"
+  },
+  {
+    "path": "apps/server/src/network/owner-intent.ts",
+    "sha256": "e76836c71124f6e0f452d9fc2ae3cc1f8ca039562c9b3a1fecf5ca40287ea4a3"
+  },
+  {
+    "path": "scripts/network-model-smoke.ts",
+    "sha256": "36fde29832e871baa636dec1d54f553c63c938e015b25f9e93f6a688591045ec"
+  }
+]

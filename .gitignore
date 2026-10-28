@@ -1,0 +1,17 @@
+node_modules/
+.env
+.env.local
+.env.*.local
+.env.*
+!.env.example
+.idea/
+.data/
+.expo/
+dist/
+apps/mobile/dist-*/
+coverage/
+playwright-report/
+test-results/
+*.log
+apps/mobile/ios/
+apps/mobile/android/

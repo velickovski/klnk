@@ -1,0 +1,45 @@
+{
+  "runAt": "2026-10-27T14:20:41.405Z",
+  "scope": "standalone-browser-broker-real-webrtc",
+  "fixtureMicrophone": true,
+  "physicalMicrophoneUsed": false,
+  "nativeDeviceTested": false,
+  "checks": [
+    "one visible opening action",
+    "connected after real provider event",
+    "remote audio track playing in headless browser",
+    "actual provider captions rendered",
+    "mute acknowledged",
+    "unmute acknowledged",
+    "fictional input transcribed; subsequent assistant caption received",
+    "UI confirms terminal provider evidence",
+    "one paid session creation request",
+    "remote playback released",
+    "sideband closure confirmed; no tool calls observed"
+  ],
+  "error": null,
+  "sidebandTransportErrors": 0,
+  "sidebandClosedWithoutTerminalEvent": false,
+  "elapsedMs": 19784,
+  "sideband": {
+    "started": true,
+    "closed": true,
+    "outputAudioBytes": 604800,
+    "inputTranscriptCharacters": 103,
+    "outputTranscriptCharacters": 169,
+    "outputAfterInputTranscript": true,
+    "delegations": 0,
+    "toolCalls": [],
+    "providerErrorCodes": [],
+    "eventCounts": {
+      "session.started": 1,
+      "unrecognized": 69,
+      "session.output_audio.delta": 63,
+      "session.output_transcript.delta": 30,
+      "session.input_audio.muted": 1,
+      "session.input_audio.unmuted": 1,
+      "session.input_transcript.delta": 15,
+      "session.closed": 1
+    }
+  }
+}

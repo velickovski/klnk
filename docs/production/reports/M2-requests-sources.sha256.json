@@ -1,0 +1,29 @@
+{
+  "recordedAt": "2026-10-27T14:39:26.760Z",
+  "files": [
+    {
+      "path": "apps/mobile/src/mission-composer.tsx",
+      "sha256": "52764039fb89208c2f95562e60456b8613b0c882131e9fc9e91be37779c5ffaa"
+    },
+    {
+      "path": "apps/mobile/src/mission-conversation.tsx",
+      "sha256": "665ba81ee538d9a88ef98555d4221ab9c9b458d6edf2f0037201f51a8fb4eb5a"
+    },
+    {
+      "path": "apps/mobile/src/features/voice/presentation.ts",
+      "sha256": "89c70d1b18e09de34e40d24ec980cb76bd28cfd39c3fc07aeec24ccdfe588015"
+    },
+    {
+      "path": "apps/mobile/src/features/missions/request-state.ts",
+      "sha256": "689dbe695115b04ae309470226d663b9b71ce8d22df465e6cef2cf6f2351d45f"
+    },
+    {
+      "path": "apps/mobile/test/request-state.test.ts",
+      "sha256": "572fd0e0483fd3c34f8e9d7c200cc67cc29eb1873800b66f45f5fdf643d89639"
+    },
+    {
+      "path": "apps/mobile/test/presentation.test.ts",
+      "sha256": "ed30a3c5a0212c7be220f3027bcea3598d7d07fdd54f6b93ff2aaf3c32558719"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "environment": "Actual disposable local draft plus intercepted simulated active detail/bootstrap and failed guidance boundary; no providers",
+  "checks": [
+    {
+      "name": "Failed simulated guidance save preserves unsent instruction",
+      "result": "passed"
+    },
+    {
+      "name": "Dirty close offers Save/Discard/Stay and Stay retains guidance",
+      "result": "passed"
+    },
+    {
+      "name": "Explicit discard closes and reopening begins a clean instruction",
+      "result": "passed"
+    }
+  ],
+  "bundle": [
+    "/_expo/static/js/web/index-3cb21e05374637503cabe892cadd66df.js"
+  ]
+}

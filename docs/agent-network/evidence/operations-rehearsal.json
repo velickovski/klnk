@@ -1,0 +1,71 @@
+{
+  "at": "2026-10-27T22:06:10.156Z",
+  "environment": "isolated local PostgreSQL",
+  "serverVersion": "PostgreSQL 18.6",
+  "dumpVersion": "pg_dump (PostgreSQL) 18.6",
+  "restoreVersion": "pg_restore (PostgreSQL) 18.6",
+  "portableArchiveSha256": "e2246ba91d22345bc3d017586c09ede52d9df180b1eeb480f050445f1cad84e2",
+  "dumpSha256": "9fcda6aadd06aeb4edd75a281aa7e2388ea18047c712c4b59f73ce369dd8dc3c",
+  "migrationArtifacts": [
+    {
+      "name": "001_initial.sql",
+      "checksum": "458c5c02f2277aa40c67f7b82f6d7ea28f2b981cf8099b24f450a5a327c88b7e"
+    },
+    {
+      "name": "002_voice_sessions.sql",
+      "checksum": "64f484a1522a48286c36d79de4f3bf04fed8dbb7a9b18d0020e67966de0c0ddb"
+    },
+    {
+      "name": "003_runtime.sql",
+      "checksum": "220a9525348ea260a2e96f8a12851307131a4a5f93c894f41bfa56979c3288b8"
+    },
+    {
+      "name": "004_live_controller.sql",
+      "checksum": "116c01aab8d2dc641c7b92f65e3e7fd3ca81b7818f8ba1a569c715754d404138"
+    },
+    {
+      "name": "005_application_tools.sql",
+      "checksum": "a0be7edbba70b1993a9456908acc38500ea874895e33d6850819ff7474a9b42f"
+    },
+    {
+      "name": "006_mission_submissions.sql",
+      "checksum": "f17362c904ce7f580b38ce113f685e76900135288e591350421f6b4dba524133"
+    },
+    {
+      "name": "007_agent_network.sql",
+      "checksum": "3014b937cf8eb95c9d437183a6143b24bbc38502b9514a0f400127fa64120229"
+    },
+    {
+      "name": "008_network_preferences.sql",
+      "checksum": "0f377d8678247ccbc8cbe0fd2fccacbc459e1d00844da053aaed6597c79ab7db"
+    }
+  ],
+  "providersContacted": false,
+  "trafficSwitched": false,
+  "priorCandidateRollback": "not_run_no_prior_artifact",
+  "assertions": {
+    "operatorJournalExportsPostDumpDeletion": true,
+    "operatorJournalNeverOverwrites": true,
+    "dumpRestoredOldSession": true,
+    "dumpRestoredOldController": true,
+    "dumpRestoredOldWorkerLease": true,
+    "dumpWouldResurrectDeletedContent": true,
+    "applicationBackupEncrypted": true,
+    "cleanRetainsAllowedContent": true,
+    "cleanRejectsOldAuthentication": true,
+    "cleanSuppressesDeletedContent": true,
+    "cleanFencesController": true,
+    "cleanFencesWorker": true,
+    "cleanupSurvivesDeletion": true,
+    "currentArtifactReopensCurrentLedger": true,
+    "unknownLedgerRejected": true,
+    "checksumDriftRejected": true,
+    "forwardArtifactUnchanged": true
+  },
+  "elapsedMs": 2999,
+  "cleanup": {
+    "createdDatabases": 3,
+    "remainingDatabases": 0,
+    "temporaryArtifactsRemoved": true
+  }
+}

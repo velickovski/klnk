@@ -1,0 +1,251 @@
+{
+  "recordedAt": "2026-10-27T22:11:06.848Z",
+  "scope": "Explicit integrated source and independent QA paths; no private data scanned.",
+  "files": [
+    {
+      "path": "AGENTS.md",
+      "bytes": 2666,
+      "sha256": "cc8a5443a7c3dc9fc511fa0183dea50ce914da87cf6eb7fb9f157aee826bf341"
+    },
+    {
+      "path": "apps/mobile/App.tsx",
+      "bytes": 29692,
+      "sha256": "6acb0d1fc66ee1ccd8e06d9e3c6fbb2c7943e840ab174b39f51f58a0f95d431f"
+    },
+    {
+      "path": "apps/mobile/src/api.ts",
+      "bytes": 10535,
+      "sha256": "07e44be889380b4f7c861da218b25a5ed5062cc0978bb3352da3ab000d8a3c09"
+    },
+    {
+      "path": "apps/mobile/src/features/network/AutonomyPanel.tsx",
+      "bytes": 15276,
+      "sha256": "d48df6326a5ff13bb81b3b46468b92cda503a09dcfd35360e60212c91cd5797c"
+    },
+    {
+      "path": "apps/mobile/src/features/network/CalendarPanel.tsx",
+      "bytes": 7869,
+      "sha256": "e4d91fe2e9c5359c56854c628f29da2de47b1c2b62a1010a60150aa742aed57e"
+    },
+    {
+      "path": "apps/mobile/src/features/network/InboxPanel.tsx",
+      "bytes": 16738,
+      "sha256": "afe62ca8c5d66baa84a9d88a5fb2286437eafb7b526c918b051c9ce87223de67"
+    },
+    {
+      "path": "apps/mobile/src/features/network/MemoryPanel.tsx",
+      "bytes": 8556,
+      "sha256": "de499ea16fed91a65f41cbbede2ac0ea419b0df98b759e1a6184cf8d139e7d7d"
+    },
+    {
+      "path": "apps/mobile/src/features/network/NotificationsPanel.tsx",
+      "bytes": 1546,
+      "sha256": "c994ec5e294119f0cb2d59b2383041231b683507e8225bf6ef406c527d5fe134"
+    },
+    {
+      "path": "apps/mobile/src/features/network/OwnerIntentPanel.tsx",
+      "bytes": 5892,
+      "sha256": "9e16e389128580463e5d71c179b5740c8f8352d83592bb8f90473781f8890082"
+    },
+    {
+      "path": "apps/mobile/src/features/network/PeoplePanel.tsx",
+      "bytes": 7269,
+      "sha256": "b7777f08dceee6cd655d52fc160787b89efbadb89a7ab3ec8f98d48c4da589d1"
+    },
+    {
+      "path": "apps/mobile/src/features/network/PreferencesPanel.tsx",
+      "bytes": 2683,
+      "sha256": "05c31669b5b839a42cca42f2cd974b25409f2f716bd391908fc216e7873a5569"
+    },
+    {
+      "path": "apps/mobile/src/features/network/VoiceAccessPanel.tsx",
+      "bytes": 5424,
+      "sha256": "baace06993bc9a695362cd88e0c25a9d165deef94f49dc47bf3eb35dcf5b3b7e"
+    },
+    {
+      "path": "apps/mobile/src/features/network/Workspace.tsx",
+      "bytes": 4432,
+      "sha256": "9d53b303ffb3cc11df312766ed7a52d6f15f289e2dbc8a061cfc4960d54c6393"
+    },
+    {
+      "path": "apps/mobile/src/features/network/api.ts",
+      "bytes": 366,
+      "sha256": "2e0d75112a99ad3fd24067e945add58b41143c8b45a15f6c314a4666bf8d0a36"
+    },
+    {
+      "path": "apps/mobile/src/features/network/panel-hooks.ts",
+      "bytes": 1335,
+      "sha256": "9eb85987f40bacab53246903334e332e54d7c6c71f04ff7cc5a478345458439c"
+    },
+    {
+      "path": "apps/mobile/src/features/network/panel-state.ts",
+      "bytes": 8178,
+      "sha256": "512974f82a7075f47272dd0329242ca4217e870cdef514b083ee05d9da62e46b"
+    },
+    {
+      "path": "apps/server/migrations/001_initial.sql",
+      "bytes": 1818,
+      "sha256": "458c5c02f2277aa40c67f7b82f6d7ea28f2b981cf8099b24f450a5a327c88b7e"
+    },
+    {
+      "path": "apps/server/migrations/002_voice_sessions.sql",
+      "bytes": 455,
+      "sha256": "64f484a1522a48286c36d79de4f3bf04fed8dbb7a9b18d0020e67966de0c0ddb"
+    },
+    {
+      "path": "apps/server/migrations/003_runtime.sql",
+      "bytes": 1209,
+      "sha256": "220a9525348ea260a2e96f8a12851307131a4a5f93c894f41bfa56979c3288b8"
+    },
+    {
+      "path": "apps/server/migrations/004_live_controller.sql",
+      "bytes": 336,
+      "sha256": "116c01aab8d2dc641c7b92f65e3e7fd3ca81b7818f8ba1a569c715754d404138"
+    },
+    {
+      "path": "apps/server/migrations/005_application_tools.sql",
+      "bytes": 325,
+      "sha256": "a0be7edbba70b1993a9456908acc38500ea874895e33d6850819ff7474a9b42f"
+    },
+    {
+      "path": "apps/server/migrations/006_mission_submissions.sql",
+      "bytes": 346,
+      "sha256": "f17362c904ce7f580b38ce113f685e76900135288e591350421f6b4dba524133"
+    },
+    {
+      "path": "apps/server/migrations/007_agent_network.sql",
+      "bytes": 935,
+      "sha256": "3014b937cf8eb95c9d437183a6143b24bbc38502b9514a0f400127fa64120229"
+    },
+    {
+      "path": "apps/server/migrations/008_network_preferences.sql",
+      "bytes": 276,
+      "sha256": "0f377d8678247ccbc8cbe0fd2fccacbc459e1d00844da053aaed6597c79ab7db"
+    },
+    {
+      "path": "apps/server/src/app.ts",
+      "bytes": 34489,
+      "sha256": "db8ba0173e6aab099768bfca7b4df12197d34a8d4cb543762935a011cfdc9dd1"
+    },
+    {
+      "path": "apps/server/src/db.ts",
+      "bytes": 16382,
+      "sha256": "bc4981173e8cc8730da4df0e0a594f8fefcec2f175a1989369e1b9c0f66ddd4a"
+    },
+    {
+      "path": "apps/server/src/integrations/gateway.ts",
+      "bytes": 21729,
+      "sha256": "23f556396674867a966c0966ce8490153f616b16538036657770690899148a98"
+    },
+    {
+      "path": "apps/server/src/network/calendar.ts",
+      "bytes": 15532,
+      "sha256": "56ae72ba8065e2cdaadf989fe00c4f68a01fb7af89662af25d0531062e4c7a55"
+    },
+    {
+      "path": "apps/server/src/network/coordination.ts",
+      "bytes": 27925,
+      "sha256": "425a66048d1d9f2a1f54afeca6aed6d3e07bc3c3d0500ec93f9cd97b43565349"
+    },
+    {
+      "path": "apps/server/src/network/data-lifecycle.ts",
+      "bytes": 2578,
+      "sha256": "c482ca303ce6fd398cac497199a81e220a95db0dee9342170674f3d2b1dd679a"
+    },
+    {
+      "path": "apps/server/src/network/owner-intent.ts",
+      "bytes": 23046,
+      "sha256": "b1e238d8da20ca38460cc197f326b8538ddcb6ce52cb065d6674ffaafcf74918"
+    },
+    {
+      "path": "apps/server/src/network/policy.ts",
+      "bytes": 4907,
+      "sha256": "08b805fef6dcc4ca9a07f5fb3a595ef195b61739ca7e87f2a51fcc26c6fc761f"
+    },
+    {
+      "path": "apps/server/src/network/preferences.ts",
+      "bytes": 5641,
+      "sha256": "6ff8e0d7655620e4da3b810b5e805e58a22983804edb59b8e4fd2dade9a8e7d0"
+    },
+    {
+      "path": "apps/server/src/network/redaction.ts",
+      "bytes": 524,
+      "sha256": "0f3a51cb3f9813868870fe7880e8b03fceb592fa8b83cb7f4d7dc741c74e084d"
+    },
+    {
+      "path": "apps/server/src/network/routes.ts",
+      "bytes": 5364,
+      "sha256": "fac8d38d8749e7abf5a2bc958c08098dbd9b80ab78aa45dff3af2f3b142a433b"
+    },
+    {
+      "path": "apps/server/src/network/store.ts",
+      "bytes": 3427,
+      "sha256": "6d33b2b2c83d91d4e64adbc399c80f6ff6aa9e8c97058ea9294e96c721e9dd24"
+    },
+    {
+      "path": "apps/server/src/network/voice-tools.ts",
+      "bytes": 12859,
+      "sha256": "f7a245b6dcf30b82acec7a188bcf7c8bef48f0e01ad613b1a5292cd5370e2e7b"
+    },
+    {
+      "path": "apps/server/src/openai-live.ts",
+      "bytes": 33269,
+      "sha256": "ae7bb9ff98f5f77416a34fff865fcab741b151c9b0d3546ac384d41210b4253e"
+    },
+    {
+      "path": "e2e/browser/network-helpers.ts",
+      "bytes": 5587,
+      "sha256": "e6ed2917e0bffb4ac910e8458d87c6510eda19eb2c43a7d07a2865cc4ec27765"
+    },
+    {
+      "path": "e2e/browser/network.spec.ts",
+      "bytes": 21064,
+      "sha256": "6de776f34ee7f8a5fdc0885cbab6161ab8cc11cb9a2dd54c8e8051298d3553d3"
+    },
+    {
+      "path": "packages/domain/src/network.ts",
+      "bytes": 8587,
+      "sha256": "c821121943f4e9005c56681090dab0bb8ea5df8ab753941b44ebccb4beba792c"
+    },
+    {
+      "path": "packages/domain/src/tools.ts",
+      "bytes": 6094,
+      "sha256": "24e0b63acbbd8b092cf055854fab0db5be37f46ededc04425d44a25e003f8e12"
+    },
+    {
+      "path": "playwright.config.ts",
+      "bytes": 641,
+      "sha256": "5dbd8cc53f276988a76ea3f80c9fc4b220a25184f0462cf5b7667cf230cdc788"
+    },
+    {
+      "path": "scripts/e2e-build.ts",
+      "bytes": 528,
+      "sha256": "267a8fda9eaf477d0991e0f993e11f0c3d6afea3fb7879f0ab1386b0fb9912dc"
+    },
+    {
+      "path": "scripts/e2e-server.ts",
+      "bytes": 3949,
+      "sha256": "74382db3a55cdc3b13d128202305850cb618a537e09db8afdb077037b4e15e28"
+    },
+    {
+      "path": "tests/network-egress-guard.ts",
+      "bytes": 1713,
+      "sha256": "16fa4ff897810b05e09a855fd6feb4e5b3a058432ea69e0d37ca29b3f43d5d16"
+    },
+    {
+      "path": "tests/qa-network-api.test.ts",
+      "bytes": 21571,
+      "sha256": "e881c984cc93fb01928767db5c3e397c95b232e0b66367009b4c6be994558d54"
+    },
+    {
+      "path": "tests/qa-network-child.ts",
+      "bytes": 2532,
+      "sha256": "103a3c2323aa9760233add695dfc3972cc9c7fe7d1559076cd3857c5e141bc68"
+    },
+    {
+      "path": "tests/qa-network-postgres.test.ts",
+      "bytes": 13483,
+      "sha256": "9a7a79e9156df4b7833d97e487b108b00f22635ed4dc838d8ab311f0cdf247a7"
+    }
+  ]
+}

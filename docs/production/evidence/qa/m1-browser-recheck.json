@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-27T14:13:58.845Z",
+  "scope": "Independent deterministic M1 repair verification; M5 incomplete",
+  "node": "v24.15.0",
+  "runner": "@playwright/test 1.64.1",
+  "browserChannel": "chrome",
+  "fixture": "isolated real Fastify/in-memoryPGlite simulator; provider credentials absent",
+  "paidProviderSessionCreated": false,
+  "physicalMicrophoneUsed": false,
+  "nativeDeviceTested": false,
+  "export": {
+    "bundle": "apps/mobile/dist-e2e/_expo/static/js/web/index-07454e517b4ad28050d3d4e0e91c8e25.js",
+    "sha256": "c02480f6a1fb70b1102a6d5ffba5ed4a8d656ee349d63343af0f509e0a646e68"
+  },
+  "runs": [
+    {
+      "command": "npm run e2e:build",
+      "result": "passed"
+    },
+    {
+      "command": "$env:KLNK_E2E_CHANNEL='chrome'; npm run e2e -- --grep 'microphone denial|malformed Live|API-01|AUTH-01|MEMORY-02'",
+      "artifact": "initial export f2390b48381abde9b37b668119a62547",
+      "passed": 5,
+      "failed": 1,
+      "remainingFailure": "missing aria-checked on Private radio"
+    },
+    {
+      "command": "$env:KLNK_E2E_CHANNEL='chrome'; npm run e2e -- --grep 'late successful owner A'",
+      "artifact": "initial export f2390b48381abde9b37b668119a62547",
+      "passed": 1,
+      "failed": 0
+    },
+    {
+      "command": "npm run e2e:build",
+      "result": "passed",
+      "artifact": "/_expo/static/js/web/index-07454e517b4ad28050d3d4e0e91c8e25.js"
+    },
+    {
+      "command": "$env:KLNK_E2E_CHANNEL='chrome'; npm run e2e -- --grep 'A11Y-|REQ-01|MEMORY-02'",
+      "artifact": "/_expo/static/js/web/index-07454e517b4ad28050d3d4e0e91c8e25.js",
+      "passed": 10,
+      "failed": 0
+    },
+    {
+      "command": "$env:KLNK_E2E_CHANNEL='chrome'; npm run e2e -- --grep 'REQ-01|A11Y-01 keyboard'",
+      "artifact": "/_expo/static/js/web/index-07454e517b4ad28050d3d4e0e91c8e25.js",
+      "passed": 2,
+      "failed": 0,
+      "notes": "strengthened to require actual dialog SIMULATED label/truthfulness notice and inaccessible background tab"
+    }
+  ],
+  "sourceHashesAtRecordTime": {
+    "apps/mobile/App.tsx": "09b5354e9ebd05167dd32af1c42564449f28ac3cbdfc413d35c9ecfeb9cfc0da",
+    "apps/mobile/src/api.ts": "07e44be889380b4f7c861da218b25a5ed5062cc0978bb3352da3ab000d8a3c09",
+    "apps/mobile/src/api-contracts.ts": "0cbcd62bd2900f200d2edb717b06b0aaa8de7f14a5a30a4e99e9e4c3f8f5f4f3",
+    "apps/mobile/src/components/accessibility.ts": "6ba7a53313072e28339143bdebe2696a051003e5a6bb193b3f703c3d1fa8d211",
+    "apps/mobile/src/components/primitives.tsx": "0e5da29f3d30a1105665944ce2b9b0418dc0e5b2bea035205f2ce5dfdc702328",
+    "apps/mobile/src/ui.tsx": "d5c1636679e705e1b0b38a299c2b240a349a010559206c8978e008c0d12d09a2",
+    "e2e/browser/helpers.ts": "176723e90d6dc6681d8d15150cd80123eb0948daafc3b5b57201fda596928dc8",
+    "e2e/browser/journeys.spec.ts": "a560b2edec3f811890fd8dafefd11579c246dfc397a9f52b4fc27c9a4ae0c0d9",
+    "e2e/browser/boundaries.spec.ts": "1f3ab4d61d2037620efa13acd460c62282e62f3c6029d3c267711562cc60b41a",
+    "e2e/browser/accessibility.spec.ts": "fa674e056db9ca4abfa075501d10ea7ef2e1cf5518f05c527ad5d7c68da5248b"
+  },
+  "open": [
+    "SETTINGS-01 unsaved profile draft loss; not rerun after repair subset because Settings remains unchanged",
+    "Complete current 20-case suite after integrated panels",
+    "Browser screen-reader/full AA process evaluation",
+    "Signed native artifact and physical iPhone matrix",
+    "Authorized service sandbox and operational staging",
+    "Independent human usability and release candidate review"
+  ]
+}

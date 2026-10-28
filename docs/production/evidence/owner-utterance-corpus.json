@@ -1,0 +1,1637 @@
+{
+  "schemaVersion": 1,
+  "evaluatedAt": "2026-10-27T15:24:06.066Z",
+  "corpusVersion": "owner-text-domain-v1",
+  "sampleCount": 20,
+  "environment": {
+    "channel": "authenticated /voice/turn text input via local API injection",
+    "provider": "simulator",
+    "model": "none; planner and speech credentials absent",
+    "worker": false,
+    "isolatedAccountPerSample": true,
+    "fictionalData": true,
+    "externalNetworkDenied": true,
+    "networkAttempts": 0,
+    "noHttpListener": true,
+    "fixtureCleanup": "Queued fictional work is cancelled after each sampled observation, outside the scored utterance."
+  },
+  "limits": [
+    "Text/domain routing only; not ASR, speech synthesis, OpenAI Live, native or human listening evidence.",
+    "No naturalness score or twenty-run voice latency result is measured.",
+    "Setup turns establish context and are not additional scored utterances.",
+    "Legacy owner-turn exact-message routing differs from the bounded OpenAI Live draft-preparation tool contract."
+  ],
+  "sourceIdentity": [
+    {
+      "path": "apps/server/src/voice.ts",
+      "sha256": "254df4e65a762cc1bcec4df6d9db31a979c90c72da9fa696fffa72dea014b9a8"
+    },
+    {
+      "path": "packages/domain/src/core.ts",
+      "sha256": "37617a0974f26286a1578fcfc64cf912c0c14fc6af4c71f2150ce03774cf0648"
+    },
+    {
+      "path": "apps/server/src/engine.ts",
+      "sha256": "6516ede47b1f78c615324597b4723f015a68b081bfaf974ea76f222db5abdc51"
+    }
+  ],
+  "summary": {
+    "passed": 20,
+    "findings": 0,
+    "safetyFailures": 0,
+    "networkAttempts": 0
+  },
+  "results": [
+    {
+      "id": "OC-01",
+      "tags": [
+        "exact_message"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "queued"
+      ],
+      "actualStatus": "queued",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "exact_message_fast_path_preserved",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "approved_message_matches_exact_input",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 1,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-02",
+      "tags": [
+        "exact_message",
+        "polite_prefix"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "queued"
+      ],
+      "actualStatus": "queued",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "exact_message_fast_path_preserved",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "approved_message_matches_exact_input",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 1,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-03",
+      "tags": [
+        "exact_question"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "queued"
+      ],
+      "actualStatus": "queued",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "exact_message_fast_path_preserved",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "approved_message_matches_exact_input",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 1,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-04",
+      "tags": [
+        "relative_time",
+        "exact_message"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "queued"
+      ],
+      "actualStatus": "queued",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "exact_message_fast_path_preserved",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "relative_time_anchored_to_original_instruction",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 1,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-05",
+      "tags": [
+        "ambiguous_name"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "needs_reply"
+      ],
+      "actualStatus": "needs_reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-06",
+      "tags": [
+        "recipient_correction",
+        "clarification"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "queued"
+      ],
+      "actualStatus": "queued",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "exact_message_fast_path_preserved",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "approved_message_matches_exact_input",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 1,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-07",
+      "tags": [
+        "phone_correction",
+        "readback"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "needs_reply"
+      ],
+      "actualStatus": "needs_reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-08",
+      "tags": [
+        "missing_recipient"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "needs_reply"
+      ],
+      "actualStatus": "needs_reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-09",
+      "tags": [
+        "private_clause"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "needs_reply"
+      ],
+      "actualStatus": "needs_reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-10",
+      "tags": [
+        "private_clause",
+        "sensitive_information"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "needs_reply"
+      ],
+      "actualStatus": "needs_reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-11",
+      "tags": [
+        "consequential_commitment"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "needs_reply"
+      ],
+      "actualStatus": "needs_reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-12",
+      "tags": [
+        "negated_call"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "needs_reply"
+      ],
+      "actualStatus": "needs_reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-13",
+      "tags": [
+        "unavailable_calendar"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "reply",
+        "needs_reply"
+      ],
+      "actualStatus": "reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "specific_intent_acknowledged_or_unavailability_explained",
+          "passed": true,
+          "category": "routing"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-14",
+      "tags": [
+        "unavailable_messages"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "reply",
+        "needs_reply"
+      ],
+      "actualStatus": "reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "specific_intent_acknowledged_or_unavailability_explained",
+          "passed": true,
+          "category": "routing"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 0,
+        "authorizedMissions": 0,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-15",
+      "tags": [
+        "stop",
+        "existing_authority"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "cancelled"
+      ],
+      "actualStatus": "cancelled",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-16",
+      "tags": [
+        "cancel",
+        "existing_authority"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "cancelled"
+      ],
+      "actualStatus": "cancelled",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-17",
+      "tags": [
+        "clear_chat",
+        "privacy",
+        "not_cancellation"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "reply"
+      ],
+      "actualStatus": "reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "chat_cleared_without_erasing_effect_receipt",
+          "passed": true,
+          "category": "safety"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-18",
+      "tags": [
+        "conversation_end",
+        "not_call_cancellation"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "reply",
+        "needs_reply"
+      ],
+      "actualStatus": "reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "specific_intent_acknowledged_or_unavailability_explained",
+          "passed": true,
+          "category": "routing"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-19",
+      "tags": [
+        "interruption_intent",
+        "playback_scope"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "reply",
+        "needs_reply"
+      ],
+      "actualStatus": "reply",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "specific_intent_acknowledged_or_unavailability_explained",
+          "passed": true,
+          "category": "routing"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 0,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    },
+    {
+      "id": "OC-20",
+      "tags": [
+        "status",
+        "simulated_outcome"
+      ],
+      "outcome": "passed",
+      "expectedStatuses": [
+        "completed"
+      ],
+      "actualStatus": "completed",
+      "checks": [
+        {
+          "name": "expected_response_status",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "expected_mission_count",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "simulation_mode_and_no_provider_audio",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_external_attempts",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_calendar_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_followup_or_integration_effect",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "saved_memory_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "no_unreviewed_contact_change",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "mission_authority_is_owner_bound_and_bounded",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "existing_authorization_unchanged",
+          "passed": true,
+          "category": "safety"
+        },
+        {
+          "name": "expected_persisted_request_state",
+          "passed": true,
+          "category": "routing"
+        },
+        {
+          "name": "completed_report_explicitly_simulated",
+          "passed": true,
+          "category": "routing"
+        }
+      ],
+      "observed": {
+        "newMissions": 0,
+        "totalMissions": 1,
+        "authorizedMissions": 1,
+        "attempts": 1,
+        "externalAttempts": 0,
+        "replyMode": "simulator",
+        "audioReturned": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "recordedAt": "2026-10-27T15:20:19.632Z",
+  "scope": "independent final Live callback/protocol and operations evidence review",
+  "node": "v24.15.0",
+  "platform": "win32",
+  "commands": [
+    {
+      "command": "npx vitest run tests/qa-live-tools.test.ts",
+      "passed": 5,
+      "failed": 1,
+      "defect": "orphan delegation announcements bypassed response budgets"
+    },
+    {
+      "command": "npx vitest run tests/qa-live-tools.test.ts tests/operations-rehearsal.test.ts",
+      "passed": 9,
+      "failed": 0,
+      "classification": "6 independent Live local/mocked cases plus 3 operator guard/journal tests"
+    },
+    {
+      "command": "npx tsc --noEmit",
+      "result": "passed after adding explicit this annotations in QA spies"
+    }
+  ],
+  "cases": [
+    "foreign owner grant and browser-supplied identity/tools cannot enable this owner",
+    "grant revoked before callback closes original session without lookup",
+    "revoked after callback commit suppresses output and continuation",
+    "close waits started callback and drops later calls/output",
+    "oversized function batch fails before callback",
+    "orphan delegation announcements fail at bounded map capacity"
+  ],
+  "operationsEvidenceReviewed": {
+    "independentQaExecutedCli": false,
+    "recordedAssertions": 17,
+    "allRecordedAssertionsTrue": true,
+    "recordedRemainingDatabases": 0,
+    "recordedProvidersContacted": false,
+    "recordedTrafficSwitched": false,
+    "priorCandidateRollback": "not_run_no_prior_artifact"
+  },
+  "officialProtocolReference": "https://developers.openai.com/api/docs/guides/live-delegation",
+  "sourceHashesAtRecordTime": {
+    "apps/server/src/openai-tool-delegation.ts": "36169736e28bb15db4993e5ac2964d4872015e98aad3b4d8ae50b3db5d90914e",
+    "apps/server/src/openai-live.ts": "6d9662495ad06f1d7f4068aaf8a274bcff498ebc13f3be42ea5c5efa2bcf21df",
+    "apps/server/src/app.ts": "a44c1191d9d8e3e196fc904f72606e038ac5e3756d1bb3753c4fcc98d7b15a62",
+    "apps/server/src/integrations/gateway.ts": "802ae8e55cc192499005452cc276c9786ed4229063bddd8533fa1e5e1a6f67e9",
+    "apps/server/src/integrations/tool-contract.ts": "522a779c0246e22b655394856e825883a33f1f7d16ab10cd28b7d0a179eeadf6",
+    "packages/domain/src/tools.ts": "fa04d61214edbedbacc5afb5f5e2bd68635e446d48985bed57fc4e1d6875e5a4",
+    "tests/qa-live-tools.test.ts": "8c30c9efcbe01a0653ae531c1ed4066c4290187155c10809078e74961e25654b",
+    "scripts/operations-rehearsal.ts": "cc8b6cf706a45c19db22dbfab77096555b2a127c54f55ed118c23491d31c12cf",
+    "tests/operations-rehearsal.test.ts": "cd0ac172f55f76bafc51ff5ae67aa4997dc5e5e6e4b589c5c41822b43378b4bc"
+  },
+  "paidProviderSessionsCreatedByThisQaPass": 0,
+  "notes": [
+    "Configured local opt-in tools preserve runtime owner/session/controller checks and external effects disabled",
+    "Smoke script reviewed only; root owns authorized paid test and its actual result",
+    "Forwarded function item and continuation are local transport observations; later caption is temporal evidence, not semantic spoken-result certification",
+    "No root browser port/build lease used during this review",
+    "Native, external sandbox, manual assistive input and production rollout gates remain open"
+  ]
+}

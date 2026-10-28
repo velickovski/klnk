@@ -1,0 +1,34 @@
+{
+  "environment": "Actual isolated simulator API with missing Google configuration; all external network blocked",
+  "checks": [
+    {
+      "name": "Actual missing configuration shows unavailable with no connect/disconnect action",
+      "result": "passed"
+    },
+    {
+      "name": "Explicit refresh retains authoritative unavailable state",
+      "result": "passed"
+    },
+    {
+      "name": "Failed refresh retains service row and marks last status uncertain",
+      "result": "passed"
+    },
+    {
+      "name": "Manual refresh recovers after status failure",
+      "result": "passed"
+    },
+    {
+      "name": "320px with200percent text has no horizontal overflow or external/provider requests",
+      "result": "passed"
+    }
+  ],
+  "externalRequests": 0,
+  "connectionMutations": 0,
+  "bundle": [
+    "/_expo/static/js/web/index-00784d3628e4c439b9b828f1ce96d6dc.js"
+  ],
+  "layout": {
+    "width": 320,
+    "scrollWidth": 320
+  }
+}
