@@ -19,7 +19,7 @@ const service = await createApp({
   worker: true,
   rateLimitKey: (r) => String(r.headers['x-klnk-test-client'] ?? r.ip),
   config: {
-    ...getConfig(),
+    ...getConfig({ NODE_ENV: 'test' }),
     production: false,
     demoEnabled: true,
     legacyEnabled: true,
