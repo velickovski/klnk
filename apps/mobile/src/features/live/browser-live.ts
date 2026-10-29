@@ -9,7 +9,6 @@ import {
   liveRecovery,
   liveRequestId,
   liveSessionId,
-  objectValue,
 } from './payloads';
 
 type OwnedSession = { id: string; address: string; authorization: string };
@@ -67,7 +66,6 @@ export class BrowserLiveController {
   private commandSequence = 0;
   private iceCancel: (() => void) | null = null;
   private identity: LiveIdentity;
-  private selfAuthorization: { source: LiveIdentity; token: string } | null = null;
   constructor(private env: LiveEnvironment) {
     this.value = initial(env.supported);
     this.identity = env.identity();
@@ -92,17 +90,6 @@ export class BrowserLiveController {
       next.token === previous.token
     )
       return;
-    const own = this.selfAuthorization;
-    if (
-      own &&
-      next.generation === own.source.generation + 1 &&
-      next.url === own.source.url &&
-      (next.token === null || next.token === own.token)
-    ) {
-      this.identity = next;
-      return;
-    }
-    this.selfAuthorization = null;
     this.identity = next;
     this.generation++;
     this.readiness++;
@@ -143,7 +130,7 @@ export class BrowserLiveController {
     const revision = ++this.readiness,
       identity = this.env.identity();
     try {
-      const result = liveReadiness(await this.env.request('/demo/status'));
+      const result = liveReadiness(await this.env.request('/voice/live/status'));
       if (
         revision !== this.readiness ||
         identity.generation !== this.env.identity().generation ||
@@ -260,6 +247,13 @@ export class BrowserLiveController {
       this.creationPending
     )
       return;
+    if (!this.env.identity().token) {
+      this.update({
+        state: 'error',
+        error: 'Sign in or create an account before talking to your agent. Your microphone is off.',
+      });
+      return;
+    }
     if (!this.env.supported) {
       this.update({
         state: 'error',
@@ -280,7 +274,7 @@ export class BrowserLiveController {
       statusText: 'Checking live voice…',
     });
     try {
-      const readiness = liveReadiness(await this.env.request('/demo/status'));
+      const readiness = liveReadiness(await this.env.request('/voice/live/status'));
       if (!this.sameIdentity()) this.identityChanged();
       if (generation !== this.generation || this.value.state !== 'checking') return;
       this.update({ configured: readiness.configured === true });
@@ -366,35 +360,10 @@ export class BrowserLiveController {
       await peer.setLocalDescription(await peer.createOffer());
       await this.waitForIce(peer, generation);
       if (!this.current(generation)) return;
-      let connection = this.env.connection();
-      if (!connection.authorization) {
-        const auth = objectValue(await this.env.request('/auth/demo', 'POST', {}));
-        if (!this.current(generation)) return;
-        if (typeof auth?.token !== 'string' || !/^\S{1,4096}$/.test(auth.token))
-          throw invalidLiveResponse();
-        const own = { source: this.env.identity(), token: auth.token };
-        this.selfAuthorization = own;
-        try {
-          await this.env.saveToken(auth.token);
-          const next = this.env.identity();
-          if (
-            next.generation !== own.source.generation + 1 ||
-            next.url !== own.source.url ||
-            next.token !== own.token
-          ) {
-            this.identityChanged();
-            throw new Error('The account changed before voice could connect.');
-          }
-          this.identity = next;
-        } finally {
-          if (this.selfAuthorization === own) this.selfAuthorization = null;
-        }
-        connection = this.env.connection();
-        if (!(await this.recover(true))) return;
-      }
+      const connection = this.env.connection();
       if (!this.current(generation)) return;
       if (!connection.authorization)
-        throw new Error('The live connection requires owner authorization.');
+        throw new Error('Sign in before talking to your agent. Your microphone is off.');
       const ownedConnection = {
         address: connection.address,
         authorization: connection.authorization,

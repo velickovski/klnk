@@ -1,24 +1,29 @@
-import React, { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import React from 'react';
+import { View } from 'react-native';
+import { AppText as Text } from '../../components/primitives';
 import { Button, Card, Notice, useUI } from '../../ui';
-import { networkApi } from './api';
+import { useNetworkClient, useNetworkQuery } from './data-provider';
+import { formatDateTime } from './format';
 import { usePanelTask } from './panel-hooks';
-type NoticeItem = { id: string; conversationId: string; kind: string; at: string };
-export function NotificationsPanel({ ownerId }: { ownerId: string }) {
+export type NoticeItem = { id: string; conversationId: string; kind: string; at: string };
+export type NoticesView = { items: NoticeItem[]; delivery: 'in_app' };
+export function NotificationsPanel({
+  ownerId: _ownerId,
+  onConversation,
+}: {
+  ownerId: string;
+  onConversation?: (id: string) => void;
+}) {
   const { styles } = useUI(),
     task = usePanelTask(),
-    [items, setItems] = useState<NoticeItem[]>([]);
-  const refresh = () =>
-    task.run(
-      () =>
-        networkApi.request<{ items: NoticeItem[]; delivery: 'in_app' }>('/network/notifications'),
-      (result) => setItems(result.items),
-    );
-  useEffect(() => {
-    void refresh();
-  }, [ownerId]);
+    networkApi = useNetworkClient(),
+    query = useNetworkQuery<NoticesView>('/network/notifications');
+  const items = query.data?.items ?? [];
+  const refresh = () => task.run(query.refetch, () => undefined);
   return (
     <View style={{ gap: 12 }}>
+      {query.loading ? <Text style={styles.small}>Loading in-app notices…</Text> : null}
+      {query.data && !items.length ? <Text style={styles.small}>No unread notices.</Text> : null}
       {items.length ? (
         <>
           <Text accessibilityRole="header" style={styles.h2}>
@@ -34,9 +39,15 @@ export function NotificationsPanel({ ownerId }: { ownerId: string }) {
                     : 'A request has an update'}
               </Text>
               <Text style={styles.small}>
-                {new Date(item.at).toLocaleString()}. Open the matching conversation below for its
-                current summary. Reading a notice never accepts a proposal.
+                {formatDateTime(item.at)}. Reading a notice never accepts a proposal.
               </Text>
+              {onConversation ? (
+                <Button
+                  label="Open notice conversation"
+                  secondary
+                  onPress={() => onConversation(item.conversationId)}
+                />
+              ) : null}
               <Button
                 label="Dismiss this notice"
                 secondary
@@ -44,7 +55,11 @@ export function NotificationsPanel({ ownerId }: { ownerId: string }) {
                 onPress={() =>
                   void task.run(
                     () => networkApi.request(`/network/notifications/${item.id}/read`, 'POST', {}),
-                    () => setItems((current) => current.filter((x) => x.id !== item.id)),
+                    () =>
+                      networkApi.update<NoticesView>('/network/notifications', (current) => ({
+                        delivery: 'in_app',
+                        items: (current?.items ?? []).filter((x) => x.id !== item.id),
+                      })),
                   )
                 }
               />
@@ -52,7 +67,7 @@ export function NotificationsPanel({ ownerId }: { ownerId: string }) {
           ))}
         </>
       ) : null}
-      {task.error ? <Notice tone="error">{task.error}</Notice> : null}
+      {task.error || query.error ? <Notice tone="error">{task.error || query.error}</Notice> : null}
       <Button
         label="Refresh in-app notices"
         secondary

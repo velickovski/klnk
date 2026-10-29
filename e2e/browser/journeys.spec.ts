@@ -9,6 +9,8 @@ import {
   expectNoCapture,
   installNoCaptureProbe,
   settingsProfile,
+  startSimulation,
+  showLocalDemo,
 } from './helpers';
 
 test.beforeEach(async ({ page, context }, testInfo) => {
@@ -92,7 +94,7 @@ test('AUTH-04 typed draft survives panel navigation and is cleared at owner chan
   await expect(await chooseType(page)).toHaveValue('QA fictional owner A unsent draft');
   await page.getByRole('tab', { name: 'Settings', exact: true }).click();
   await page.getByRole('button', { name: 'Sign out', exact: true }).click();
-  await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
+  await startSimulation(page);
   await expect(await chooseType(page)).toHaveValue('');
   await expect(page.getByText('QA fictional owner A unsent draft', { exact: true })).toHaveCount(0);
   await expectNoCapture(page);
@@ -167,6 +169,7 @@ test('SETTINGS-02 disposable account export is explicit and deletion clears its 
   );
   await page.getByRole('button', { name: 'Confirm account deletion', exact: true }).click();
   expect((await (await deleted).json()).ok).toBe(true);
+  await showLocalDemo(page);
   await expect(page.getByRole('button', { name: 'Try the simulation', exact: true })).toBeVisible();
   await expect(page.getByRole('tab')).toHaveCount(0);
   await expect(

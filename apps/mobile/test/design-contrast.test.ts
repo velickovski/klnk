@@ -28,12 +28,19 @@ describe('specified opaque design color pairs', () => {
     it(`${scheme}: action, status and error text pairs reach 7:1`, () => {
       for (const [text, background] of [
         [c.onAction, c.action],
+        [c.onAction, c.actionPressed],
         [c.success, c.successSurface],
         [c.warning, c.warningSurface],
         [c.danger, c.dangerSurface],
         [c.accent, c.surfaceRaised],
       ])
         expect(contrast(text, background)).toBeGreaterThanOrEqual(7);
+    });
+    it(`${scheme}: primary edge and pressed edge reach 3:1 against adjoining surfaces`, () => {
+      for (const background of [c.background, c.surface, c.surfaceRaised]) {
+        expect(contrast(c.borderStrong, background)).toBeGreaterThanOrEqual(3);
+        expect(contrast(c.text, background)).toBeGreaterThanOrEqual(3);
+      }
     });
   }
   it('fixed opening text pairs reach 7:1', () => {

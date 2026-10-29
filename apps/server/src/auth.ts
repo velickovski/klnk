@@ -24,7 +24,7 @@ export async function checkPassword(password: string, stored: string) {
 export async function createSession(db: Database, owner: string) {
   const token = randomBytes(32).toString('base64url');
   const inserted = await db.query(
-    'INSERT INTO sessions(token_hash,owner_id,expires_at) SELECT $1,id,$3 FROM users WHERE id=$2 AND deleted_at IS NULL RETURNING token_hash',
+    "INSERT INTO sessions(token_hash,owner_id,expires_at,reauth_until) SELECT $1,id,$3,clock_timestamp()+interval '5 minutes' FROM users WHERE id=$2 AND deleted_at IS NULL RETURNING token_hash",
     [hashToken(token), owner, new Date(Date.now() + 7 * 86400000).toISOString()],
   );
   if (!inserted.length)
@@ -34,7 +34,7 @@ export async function createSession(db: Database, owner: string) {
 export async function ownerFromToken(db: Database, header?: string) {
   if (!header?.startsWith('Bearer ')) return undefined;
   const [row] = await db.query(
-    'SELECT s.owner_id FROM sessions s JOIN users u ON u.id=s.owner_id WHERE token_hash=$1 AND expires_at>now() AND u.deleted_at IS NULL',
+    "UPDATE sessions s SET last_used_at=clock_timestamp() FROM users u WHERE u.id=s.owner_id AND s.token_hash=$1 AND s.expires_at>clock_timestamp() AND s.last_used_at>clock_timestamp()-interval '30 minutes' AND u.deleted_at IS NULL RETURNING s.owner_id",
     [hashToken(header.slice(7))],
   );
   return row?.owner_id as string | undefined;

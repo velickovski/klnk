@@ -1,6 +1,8 @@
 import { createHash, randomBytes } from 'node:crypto';
 import {
   NetworkDecisionSchema,
+  NetworkAnswerInputSchema,
+  NetworkCounterproposalInputSchema,
   NetworkMemoryInputSchema,
   NetworkPolicyInputSchema,
   NetworkRequestInputSchema,
@@ -24,6 +26,9 @@ import {
   defaultNetworkPolicy,
   meetingRuleAllows,
   networkReceiptId,
+  nextPolicyAuthorityVersions,
+  policyAuthorityVersion,
+  automaticAnswerAllowed,
 } from './policy.js';
 import { publishNetworkNotification, sweepNetworkRetention } from './preferences.js';
 import { workerLogger, type WorkerLogger } from '../worker-logging.js';
@@ -40,6 +45,8 @@ type ConnectionChange = {
     | 'accept'
     | 'decline'
     | 'block'
+    | 'unblock'
+    | 'remove'
     | 'mute'
     | 'unmute'
     | 'allow_inbound'
@@ -138,7 +145,28 @@ export class NetworkCoordinator {
         existing = (await store.list<NetworkConnection>(owner, 'connection')).find(
           (r) => r.ownerA === target.id || r.ownerB === target.id,
         );
-      if (existing) return { ...existing.value, peer: await this.member(store, target.id) };
+      if (existing) {
+        if (!['declined', 'removed'].includes(existing.value.status))
+          return { ...existing.value, peer: await this.member(store, target.id) };
+        const connection: NetworkConnection = {
+          ...existing.value,
+          fromId: owner,
+          toId: target.id,
+          status: 'pending',
+          version: existing.version + 1,
+          authorityVersion: (existing.value.authorityVersion ?? existing.version) + 1,
+          blockedBy: [],
+          inbound: { [owner]: true, [target.id]: false },
+          updatedAt: nowIso(),
+        };
+        await store.put({
+          ...existing,
+          status: 'pending',
+          version: connection.version,
+          value: connection,
+        });
+        return { ...connection, peer: await this.member(store, target.id) };
+      }
       await this.member(store, owner);
       const at = nowIso(),
         connection: NetworkConnection = {
@@ -147,6 +175,8 @@ export class NetworkCoordinator {
           toId: target.id,
           status: 'pending',
           version: 1,
+          authorityVersion: 1,
+          blockedBy: [],
           inbound: { [owner]: true, [target.id]: false },
           mutedBy: [],
           createdAt: at,
@@ -191,8 +221,36 @@ export class NetworkCoordinator {
       if (c.version !== (input.version ?? input.expectedVersion))
         conflict('network_version_conflict', 'The connection changed. Reload before editing.');
       if (input.action === 'block') {
+        c.blockedBy = [
+          ...new Set([
+            ...(c.blockedBy ?? (c.status === 'blocked' ? [c.fromId, c.toId] : [])),
+            owner,
+          ]),
+        ];
         c.status = 'blocked';
         c.inbound[owner] = false;
+      } else if (input.action === 'unblock') {
+        if (c.status !== 'blocked')
+          conflict('network_connection_state', 'This connection is not blocked.');
+        const blockers = c.blockedBy ?? [c.fromId, c.toId];
+        if (!blockers.includes(owner))
+          conflict(
+            'network_connection_state',
+            'Only an owner who blocked the connection can remove their block.',
+          );
+        c.blockedBy = blockers.filter((id) => id !== owner);
+        if (!c.blockedBy.length) {
+          c.status = 'removed';
+          c.inbound = { [c.fromId]: false, [c.toId]: false };
+        }
+      } else if (input.action === 'remove') {
+        if (c.status === 'blocked')
+          conflict(
+            'network_connection_state',
+            'Remove your block first. Other owners’ blocks remain effective.',
+          );
+        c.status = 'removed';
+        c.inbound = { [c.fromId]: false, [c.toId]: false };
       } else if (input.action === 'accept' || input.action === 'decline') {
         if (owner !== c.toId || c.status !== 'pending')
           conflict(
@@ -211,13 +269,17 @@ export class NetworkCoordinator {
             input.action === 'inbound' ? input.enabled === true : input.action === 'allow_inbound';
         else throw new HttpError(400, 'network_connection_action', 'Unknown connection action.');
       }
+      c.authorityVersion =
+        (c.authorityVersion ?? c.version) + Number(!['mute', 'unmute'].includes(input.action));
       c.version++;
       c.updatedAt = nowIso();
+      const record = await store.get<NetworkConnection>('connection', id);
+      if (!record) throw new HttpError(404, 'not_found', 'Connection not found.');
       await store.put({
         id,
         kind: 'connection',
-        ownerA: c.fromId,
-        ownerB: c.toId,
+        ownerA: record.ownerA,
+        ownerB: record.ownerB,
         status: c.status,
         version: c.version,
         value: c,
@@ -269,6 +331,7 @@ export class NetworkCoordinator {
         ...parsed,
         ownerId: owner,
         version: previous.version + 1,
+        authorityVersions: nextPolicyAuthorityVersions(previous, parsed),
         updatedAt: nowIso(),
       };
       await this.putPolicy(store, policy);
@@ -327,7 +390,9 @@ export class NetworkCoordinator {
     input: NetworkRequestInput,
     expectedAuthority?: {
       policyVersion: number;
+      authorityVersion?: number;
       connectionVersion: number;
+      connectionAuthorityVersion?: number;
       requireAutonomy?: boolean;
     },
   ) {
@@ -393,8 +458,15 @@ export class NetworkCoordinator {
         at = nowIso();
       if (
         expectedAuthority &&
-        (initiatorPolicy.version !== expectedAuthority.policyVersion ||
-          current.version !== expectedAuthority.connectionVersion)
+        (((parsed.kind === 'meeting' || expectedAuthority.requireAutonomy) &&
+          (expectedAuthority.authorityVersion !== undefined
+            ? policyAuthorityVersion(initiatorPolicy, 'meeting') !==
+              expectedAuthority.authorityVersion
+            : initiatorPolicy.version !== expectedAuthority.policyVersion)) ||
+          (expectedAuthority.connectionAuthorityVersion === undefined
+            ? current.version !== expectedAuthority.connectionVersion
+            : (current.authorityVersion ?? current.version) !==
+              expectedAuthority.connectionAuthorityVersion))
       )
         conflict(
           'network_authority_changed',
@@ -421,7 +493,16 @@ export class NetworkCoordinator {
         state: 'queued',
         version: 1,
         connectionVersion: current.version,
+        connectionAuthorityVersion: current.authorityVersion ?? current.version,
         policyVersions: { [owner]: initiatorPolicy.version, [recipient]: recipientPolicy.version },
+        ...(parsed.kind === 'inform'
+          ? {}
+          : {
+              authorityVersions: {
+                [owner]: policyAuthorityVersion(initiatorPolicy, parsed.kind),
+                [recipient]: policyAuthorityVersion(recipientPolicy, parsed.kind),
+              },
+            }),
         messages: [],
         acceptances: [],
         decisionOwnerIds: [],
@@ -439,7 +520,18 @@ export class NetworkCoordinator {
     });
   }
   private project(c: NetworkConversation, owner: string): NetworkConversation {
-    return { ...c, policyVersions: { [owner]: c.policyVersions[owner] } };
+    return {
+      ...c,
+      policyVersions: { [owner]: c.policyVersions[owner] },
+      ...(c.authorityVersions
+        ? { authorityVersions: { [owner]: c.authorityVersions[owner] } }
+        : {}),
+      acceptances: c.acceptances.map((acceptance) => {
+        if (acceptance.ownerId === owner) return acceptance;
+        const { authorityVersion, ...sharedProof } = acceptance;
+        return sharedProof;
+      }),
+    };
   }
   async inbox(owner: string) {
     return this.db.transaction(async (sql) => {
@@ -483,7 +575,12 @@ export class NetworkCoordinator {
       version: c.version,
       value: c,
     });
-    if (old?.value.state !== c.state && c.state !== 'agreed') {
+    const changedDecision =
+      c.state === 'awaiting_approval' &&
+      (old?.value.state !== c.state ||
+        old.value.proposal?.hash !== c.proposal?.hash ||
+        JSON.stringify(old.value.decisionOwnerIds) !== JSON.stringify(c.decisionOwnerIds));
+    if ((old?.value.state !== c.state || changedDecision) && c.state !== 'agreed') {
       if (c.state === 'awaiting_approval')
         for (const owner of c.decisionOwnerIds)
           await publishNetworkNotification(store, owner, c, 'decision');
@@ -579,13 +676,15 @@ export class NetworkCoordinator {
         this.finish(c, 'declined', 'The proposal was declined by its recipient.');
         await this.taskStatus(store, c, 'done');
       } else {
+        const currentPolicy = await this.getPolicy(store, owner);
         const at = nowIso(),
           acceptance: NetworkAcceptance = {
             ownerId: owner,
             proposalHash: c.proposal!.hash,
             proposalVersion: c.proposal!.version,
             source: 'owner_approval',
-            policyVersion: c.policyVersions[owner],
+            policyVersion: currentPolicy.version,
+            authorityVersion: policyAuthorityVersion(currentPolicy, 'meeting'),
             at,
           };
         c.acceptances = c.acceptances.filter((a) => a.ownerId !== owner);
@@ -607,13 +706,125 @@ export class NetworkCoordinator {
             conversationId: c.id,
             proposalHash: c.proposal!.hash,
             proposalVersion: c.proposal!.version,
-            policyVersion: c.policyVersions[owner],
+            policyVersion: currentPolicy.version,
+            authorityVersion: policyAuthorityVersion(currentPolicy, 'meeting'),
             at,
           },
         });
         this.message(c, owner, 'accept', 'The owner approved these exact proposal terms.', 'owner');
         await this.queue(store, c);
       }
+      await this.persist(store, c);
+      return this.project(c, owner);
+    });
+  }
+  async answer(owner: string, id: string, input: unknown) {
+    const answer = NetworkAnswerInputSchema.parse(input),
+      initial = await this.conversation(this.store, owner, id);
+    return this.db.transaction(async (sql) => {
+      await lockNetworkOwners(sql, [initial.initiatorId, initial.recipientId]);
+      const store = this.store.in(sql),
+        c = await this.conversation(store, owner, id);
+      await this.authority(store, c);
+      if (
+        c.request.kind !== 'ask' ||
+        c.recipientId !== owner ||
+        c.state !== 'awaiting_approval' ||
+        c.version !== answer.version ||
+        !c.decisionOwnerIds.includes(owner)
+      )
+        conflict(
+          'network_stale_answer',
+          'This question is no longer awaiting your answer. Refresh before replying.',
+        );
+      this.message(c, owner, 'inform', answer.answer, 'owner');
+      this.finish(c, 'answered', 'The recipient personally answered this question.');
+      c.readBy = [owner];
+      await this.taskStatus(store, c, 'done');
+      await this.persist(store, c);
+      return this.project(c, owner);
+    });
+  }
+
+  async counterpropose(owner: string, id: string, input: unknown) {
+    const counter = NetworkCounterproposalInputSchema.parse(input),
+      initial = await this.conversation(this.store, owner, id);
+    return this.db.transaction(async (sql) => {
+      await lockNetworkOwners(sql, [initial.initiatorId, initial.recipientId]);
+      const store = this.store.in(sql),
+        c = await this.conversation(store, owner, id);
+      await this.authority(store, c);
+      if (
+        c.request.kind !== 'meeting' ||
+        c.state !== 'awaiting_approval' ||
+        c.version !== counter.version ||
+        !c.proposal ||
+        !c.decisionOwnerIds.includes(owner)
+      )
+        conflict(
+          'network_stale_decision',
+          'This meeting is no longer awaiting your counterproposal.',
+        );
+      if (c.turns >= 6)
+        conflict('network_exchange_limit', 'Start a new request after six exchanges.');
+      if (Date.parse(counter.slot.startAt) <= Date.now())
+        conflict('network_slot_started', 'Choose a future meeting time.');
+      if (!(await this.calendar.available(sql, [c.initiatorId, c.recipientId], counter.slot)))
+        conflict('network_calendar_conflict', 'A participant is busy at that time.');
+      const terms = { ...c.proposal!.terms, slot: counter.slot },
+        at = nowIso(),
+        policy = await this.getPolicy(store, owner);
+      c.proposal = {
+        id: networkId(),
+        version: c.proposal!.version + 1,
+        hash: canonicalProposalHash(terms),
+        terms,
+        expiresAt: c.request.expiresAt,
+      };
+      const acceptance: NetworkAcceptance = {
+        ownerId: owner,
+        proposalHash: c.proposal.hash,
+        proposalVersion: c.proposal.version,
+        source: 'owner_approval',
+        policyVersion: policy.version,
+        authorityVersion: policyAuthorityVersion(policy, 'meeting'),
+        at,
+      };
+      c.acceptances = [acceptance];
+      c.turns++;
+      c.decisionOwnerIds = [owner === c.initiatorId ? c.recipientId : c.initiatorId];
+      await store.put({
+        id: networkReceiptId(c.id, owner, c.proposal.hash),
+        kind: 'receipt',
+        ownerA: owner,
+        status: 'approved',
+        version: 1,
+        value: {
+          kind: 'network_approval',
+          ownerId: owner,
+          conversationId: c.id,
+          proposalHash: c.proposal.hash,
+          proposalVersion: c.proposal.version,
+          policyVersion: policy.version,
+          authorityVersion: acceptance.authorityVersion,
+          at,
+        },
+      });
+      this.message(
+        c,
+        owner,
+        'counterpropose',
+        'The owner proposed this new exact time. Previous acceptances do not apply.',
+        'owner',
+      );
+      this.finish(
+        c,
+        'awaiting_approval',
+        'A different time needs the other participant’s personal approval.',
+        'Review the new proposal and approve, decline or counterpropose before its deadline.',
+      );
+      c.readBy = [owner];
+      await this.taskStatus(store, c, 'waiting');
       await this.persist(store, c);
       return this.project(c, owner);
     });
@@ -811,20 +1022,29 @@ export class NetworkCoordinator {
       return;
     }
     if (c.request.kind === 'ask') {
-      this.message(c, c.initiatorId, 'ask', c.request.message, 'owner');
+      if (
+        !c.messages.some((message) => message.kind === 'ask' && message.actorId === c.initiatorId)
+      )
+        this.message(c, c.initiatorId, 'ask', c.request.message, 'owner');
       // Private context remains in this owner actor. Only the explicitly selected projection is shared.
-      const memories = (await store.list<NetworkMemory>(c.recipientId, 'memory'))
-        .map((r) => r.value)
-        .filter(
-          (m) =>
-            recipientPolicy.sharedMemoryIds.includes(m.id) &&
-            m.confirmed &&
-            m.source === 'owner' &&
-            m.sharing === 'connections' &&
-            m.memberIds.includes(c.initiatorId) &&
-            m.topic === c.request.topic &&
-            Date.parse(m.expiresAt) > Date.now(),
-        );
+      const automatic =
+        automaticAnswerAllowed(recipientPolicy, c.initiatorId, c.request.topic) &&
+        policyAuthorityVersion(recipientPolicy, 'ask') ===
+          (c.authorityVersions?.[c.recipientId] ?? c.policyVersions[c.recipientId]);
+      const memories = !automatic
+        ? []
+        : (await store.list<NetworkMemory>(c.recipientId, 'memory'))
+            .map((r) => r.value)
+            .filter(
+              (m) =>
+                recipientPolicy.sharedMemoryIds.includes(m.id) &&
+                m.confirmed &&
+                m.source === 'owner' &&
+                m.sharing === 'connections' &&
+                m.memberIds.includes(c.initiatorId) &&
+                m.topic === c.request.topic &&
+                Date.parse(m.expiresAt) > Date.now(),
+            );
       await this.authority(store, c);
       if (!memories.length) {
         this.message(
@@ -833,11 +1053,12 @@ export class NetworkCoordinator {
           'needs_owner',
           'No currently permitted confirmed answer is available.',
         );
+        c.decisionOwnerIds = [c.recipientId];
         this.finish(
           c,
-          'unresolved',
-          'The recipient’s agent has no permitted confirmed answer.',
-          'The recipient may share appropriate context, then the initiator can submit a new question.',
+          'awaiting_approval',
+          'The recipient’s owner can answer this question personally.',
+          'Open the question and reply with exactly what you want shared.',
         );
       } else {
         this.message(
@@ -867,7 +1088,10 @@ export class NetworkCoordinator {
         if (Date.parse(slot.startAt) <= Date.now()) continue;
         if (!(await this.calendar.available(sql, [c.initiatorId, c.recipientId], slot))) continue;
         firstAvailable ??= slot;
-        if (meetingRuleAllows(recipientPolicy, c.initiatorId, c.request.topic, slot)) {
+        if (
+          meetingRuleAllows(recipientPolicy, c.initiatorId, c.request.topic, slot) &&
+          (await this.calendar.hasAvailability(sql, c.recipientId, slot))
+        ) {
           selected = slot;
           break;
         }
@@ -897,6 +1121,7 @@ export class NetworkCoordinator {
             proposalVersion: c.proposal.version,
             source: 'owner_request',
             policyVersion: initiatorPolicy.version,
+            authorityVersion: policyAuthorityVersion(initiatorPolicy, 'meeting'),
             at: nowIso(),
           },
         ];
@@ -906,13 +1131,17 @@ export class NetworkCoordinator {
           'propose',
           'A submitted candidate slot is available in the internal calendar.',
         );
-        if (meetingRuleAllows(recipientPolicy, c.initiatorId, c.request.topic, selected))
+        if (
+          meetingRuleAllows(recipientPolicy, c.initiatorId, c.request.topic, selected) &&
+          (await this.calendar.hasAvailability(sql, c.recipientId, selected))
+        )
           c.acceptances.push({
             ownerId: c.recipientId,
             proposalHash: c.proposal.hash,
             proposalVersion: c.proposal.version,
             source: 'delegation_rule',
             policyVersion: recipientPolicy.version,
+            authorityVersion: policyAuthorityVersion(recipientPolicy, 'meeting'),
             at: nowIso(),
           });
       }

@@ -61,6 +61,7 @@ async function clearStoredSession() {
     await SecureStore.setItemAsync(
       'personal-agent-session-v2',
       JSON.stringify({ url: API_URL, token: null }),
+      { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY },
     );
   } catch {
     await SecureStore.deleteItemAsync('personal-agent-session-v2');
@@ -116,6 +117,7 @@ export async function changeApiUrl(value: string, allowLocalHttp: boolean) {
         await SecureStore.setItemAsync(
           'personal-agent-connection',
           JSON.stringify({ url: next, allowLocalHttp }),
+          { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY },
         );
         assertCurrent(snapshot);
         storageFailed = false;
@@ -228,6 +230,7 @@ export async function setSession(value: string | null) {
           await SecureStore.setItemAsync(
             'personal-agent-session-v2',
             JSON.stringify({ url: snapshot.url, token: value }),
+            { keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY },
           );
         else await clearStoredSession();
         assertCurrent(snapshot);
@@ -262,7 +265,10 @@ export async function api<T = any>(path: string, method = 'GET', body?: unknown)
     requestToken = snapshot.token;
   const controller = new AbortController();
   requests.add(controller);
-  const timeout = setTimeout(() => controller.abort(), path.startsWith('/voice/') ? 120000 : 20000);
+  const timeout = setTimeout(
+    () => controller.abort(),
+    path.startsWith('/voice/') || path.startsWith('/network/voice/') ? 120000 : 20000,
+  );
   try {
     const response = await fetch(`${address}${path}`, {
       method,

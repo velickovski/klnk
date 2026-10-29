@@ -101,7 +101,12 @@ const web = createAsyncServer(async (req, res) => {
   }
   try {
     const pathname = decodeURIComponent(new URL(req.url ?? '/', 'http://127.0.0.1:8083').pathname);
-    const target = resolve(root, pathname === '/' ? 'index.html' : '.' + pathname);
+    const target = resolve(
+      root,
+      pathname === '/' || /^\/(workspace|join|account)(\/|$)/.test(pathname)
+        ? 'index.html'
+        : '.' + pathname,
+    );
     if (!target.startsWith(root.endsWith(sep) ? root : root + sep)) {
       res.writeHead(404);
       res.end();

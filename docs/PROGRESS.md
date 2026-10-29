@@ -1,5 +1,7 @@
 # Implementation progress
 
+Current local candidate, 29 October 2026: use the [review status](review/2026-10-28/STATUS.md) and [resumed QA](review/2026-10-29/platform-resumed-qa.md). Account lifecycle, human question answers, counterproposals, manual availability, native recorded voice/local reminder adapters, shared cache/router and accessibility repairs are implemented with explicit device/release gaps. All sections below retain historical evidence and must not be treated as current counts or release approval.
+
 Current production checkpoint, 27 October 2026: all panels, account/session fencing, durable Live receipts/controller ownership, worker leases, secure Google OAuth and the granted local tool gateway are implemented. Independent browser/PostgreSQL checks and real synthetic-audio tool evidence are linked in [production evidence](production/05-evidence.md). [The release review](production/reports/M6-release-review.md) keeps native hardware, real services, dependency, privacy/operations and rollout gates open. Later sections preserve earlier checkpoints; their counts and tool-free limitations are historical.
 
 ## Production audit and multi-agent handoff — 27 October 2026

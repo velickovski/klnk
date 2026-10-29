@@ -45,18 +45,28 @@ describe('internal network authenticated vertical slice and lifecycle', () => {
         googleClientSecret: undefined,
       },
     });
-    const register = async (name: string) =>
-      (
-        await s.app.inject({
-          url: '/auth/register',
-          method: 'POST',
-          payload: {
-            name,
-            email: `${randomUUID()}@example.invalid`,
-            password: 'fictional-password-42',
-          },
-        })
-      ).json();
+    const register = async (name: string) => {
+      const email = `${randomUUID()}@example.invalid`,
+        password = 'fictional-password-42';
+      const pending = await s.app.inject({
+        url: '/auth/register',
+        method: 'POST',
+        payload: {
+          name,
+          email,
+          password,
+        },
+      });
+      expect(pending.statusCode).toBe(202);
+      expect(pending.json()).not.toHaveProperty('token');
+      const login = await s.app.inject({
+        url: '/auth/login',
+        method: 'POST',
+        payload: { email, password },
+      });
+      expect(login.statusCode).toBe(200);
+      return login.json();
+    };
     alice = await register('Alice');
     jordan = await register('Jordan Lee');
     outsider = await register('Mallory');
@@ -104,7 +114,7 @@ describe('internal network authenticated vertical slice and lifecycle', () => {
       [jordan, alice],
     ]) {
       const old = (await request(user, '/network/policy')).json(),
-        { ownerId, version, updatedAt, ...input } = old;
+        { ownerId, version, updatedAt, authorityVersions, ...input } = old;
       const saved = await request(user, '/network/policy', 'PUT', {
         expectedVersion: version,
         policy: {
@@ -124,6 +134,9 @@ describe('internal network authenticated vertical slice and lifecycle', () => {
         },
       });
       expect(saved.statusCode, saved.body).toBe(200);
+      await s.internalCalendar.confirmAvailability(user.user.id, {
+        confirmedThrough: new Date(Date.now() + 7 * 86400000).toISOString(),
+      });
     }
   });
   it('commits one meeting while recipient is offline, with separate read/agent acceptance states', async () => {

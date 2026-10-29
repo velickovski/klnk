@@ -15,6 +15,7 @@ const secure = vi.hoisted(() => ({
 }));
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }));
 vi.mock('expo-secure-store', () => ({
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY: 7,
   getItemAsync: secure.get,
   setItemAsync: secure.set,
   deleteItemAsync: secure.remove,
@@ -124,6 +125,21 @@ describe('AUTH-01 / NET-02 account response lifetime', () => {
 });
 
 describe('AUTH-02 / AUTH-03 secure storage', () => {
+  it('binds bearer and revocation tombstone writes to unlocked device-only storage', async () => {
+    const client = await import('../src/api');
+    await client.setSession('private-fixture-token');
+    expect(secure.set).toHaveBeenCalledWith(
+      'personal-agent-session-v2',
+      JSON.stringify({ url: 'https://one.example', token: 'private-fixture-token' }),
+      { keychainAccessible: 7 },
+    );
+    await client.setSession(null);
+    expect(secure.set).toHaveBeenCalledWith(
+      'personal-agent-session-v2',
+      JSON.stringify({ url: 'https://one.example', token: null }),
+      { keychainAccessible: 7 },
+    );
+  });
   it('does not restore a late persisted account over a new sign-in', async () => {
     const service = await import('../src/api');
     const read = deferred<string | null>();

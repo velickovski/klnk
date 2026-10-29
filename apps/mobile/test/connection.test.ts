@@ -4,6 +4,7 @@ import { normalizeApiUrl } from '../src/connection';
 const storage = vi.hoisted(() => new Map<string, string>());
 vi.mock('react-native', () => ({ Platform: { OS: 'ios' } }));
 vi.mock('expo-secure-store', () => ({
+  WHEN_UNLOCKED_THIS_DEVICE_ONLY: 7,
   getItemAsync: async (key: string) => storage.get(key) ?? null,
   setItemAsync: async (key: string, value: string) => {
     storage.set(key, value);

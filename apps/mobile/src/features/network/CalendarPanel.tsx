@@ -1,22 +1,31 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
-import type { NetworkAcceptance, NetworkEvent, NetworkReminder } from '@personal-agent/domain';
+import { FlatList, View } from 'react-native';
+import { AppText as Text } from '../../components/primitives';
+import type {
+  NetworkAcceptance,
+  NetworkEvent,
+  NetworkReminder,
+  NetworkBusy,
+  NetworkAvailability,
+} from '@personal-agent/domain';
 import { getSessionSnapshot, isSessionCurrent } from '../../api';
 import { Badge, Button, Card, Disclosure, Empty, Notice, useUI } from '../../ui';
-import { networkApi } from './api';
+import { useNetworkClient, useNetworkQuery, useSessionState } from './data-provider';
+import { formatDateTime } from './format';
+import { AvailabilityPanel, BusyBlockRow } from './AvailabilityPanel';
 
-type CalendarView = { events: NetworkEvent[]; reminders: NetworkReminder[]; scope: 'klnk_only' };
-function dateTime(value: string, timezone: string) {
-  return new Intl.DateTimeFormat(undefined, {
-    timeZone: timezone,
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric',
-    hour: 'numeric',
-    minute: '2-digit',
-    timeZoneName: 'short',
-  }).format(new Date(value));
-}
+type CalendarView = {
+  events: NetworkEvent[];
+  reminders: NetworkReminder[];
+  scope: 'klnk_only';
+  busyBlocks?: NetworkBusy[];
+  availability?: NetworkAvailability | null;
+};
+type CalendarRow =
+  | { kind: 'event'; value: NetworkEvent }
+  | { kind: 'reminder'; value: NetworkReminder }
+  | { kind: 'busy'; value: NetworkBusy }
+  | { kind: 'reminders-heading' };
 function acceptanceLabel(source: NetworkAcceptance['source']) {
   return source === 'owner_approval'
     ? 'Owner approved these exact terms'
@@ -33,11 +42,17 @@ export function CalendarPanel({
   onConversation?: (id: string) => void;
 }) {
   const { styles } = useUI();
-  const [data, setData] = useState<CalendarView>(),
-    [error, setError] = useState(''),
+  const networkApi = useNetworkClient(),
+    calendarQuery = useNetworkQuery<CalendarView>('/network/calendar');
+  const data = calendarQuery.data;
+  const setData = (value: CalendarView) => networkApi.update('/network/calendar', () => value);
+  const [error, setError] = useState(''),
     [notice, setNotice] = useState('');
   const [working, setWorking] = useState(false),
-    [confirmId, setConfirmId] = useState<string>();
+    [confirmId, setConfirmId] = useSessionState<string | undefined>(
+      `${ownerId}:calendar:cancel`,
+      undefined,
+    );
   const lifetime = useRef(0),
     request = useRef(0),
     busy = useRef(false);
@@ -50,8 +65,7 @@ export function CalendarPanel({
     setWorking(true);
     setError('');
     try {
-      const value = await networkApi.request<CalendarView>('/network/calendar');
-      if (current()) setData(value);
+      await calendarQuery.refetch();
     } catch (cause) {
       if (current())
         setError(
@@ -60,20 +74,17 @@ export function CalendarPanel({
     } finally {
       if (current()) setWorking(false);
     }
-  }, [ownerId]);
+  }, [ownerId, calendarQuery.refetch]);
   useEffect(() => {
     lifetime.current++;
     busy.current = false;
-    setData(undefined);
     setError('');
     setNotice('');
-    setConfirmId(undefined);
-    void load();
     return () => {
       lifetime.current++;
       request.current++;
     };
-  }, [load]);
+  }, [ownerId]);
 
   const mutate = async (path: string, body: unknown, message: string) => {
     if (busy.current || working) return;
@@ -115,53 +126,105 @@ export function CalendarPanel({
   };
 
   return (
-    <>
-      <View style={{ gap: 8 }}>
-        <Text style={styles.label}>IN-APP AGREEMENTS</Text>
-        <Text accessibilityRole="header" style={styles.title}>
-          Your calendar.
-        </Text>
-        <Text style={styles.subtitle}>
-          Meetings accepted by both representatives, with your own reminders.
-        </Text>
-      </View>
-      <Notice>
-        This calendar covers klnk meetings only. Reminders appear in the app; a scheduled or due
-        reminder does not confirm that a push notification was delivered.
-      </Notice>
-      {error ? <Notice tone="error">{error}</Notice> : null}
-      {notice ? (
-        <Text accessibilityLiveRegion="polite" style={styles.text}>
-          {notice}
-        </Text>
-      ) : null}
-      <Button
-        label={working ? 'Loading calendar' : 'Refresh calendar'}
-        secondary
-        loading={working}
-        onPress={() => {
-          if (!busy.current) void load();
-        }}
-      />
-      {!data && !working ? (
-        <Card>
-          <Empty
-            icon="calendar-outline"
-            title="Calendar unavailable"
-            detail="Refresh to load current meetings and reminders."
+    <FlatList<CalendarRow>
+      data={[
+        ...(data?.busyBlocks ?? []).map((value) => ({ kind: 'busy' as const, value })),
+        ...(data?.events ?? []).map((value) => ({ kind: 'event' as const, value })),
+        ...(data ? [{ kind: 'reminders-heading' as const }] : []),
+        ...(data?.reminders ?? []).map((value) => ({ kind: 'reminder' as const, value })),
+      ]}
+      keyExtractor={(row) => ('value' in row ? row.kind + ':' + row.value.id : row.kind)}
+      style={{ flex: 1 }}
+      contentContainerStyle={styles.page}
+      keyboardShouldPersistTaps="handled"
+      initialNumToRender={8}
+      maxToRenderPerBatch={8}
+      windowSize={5}
+      ListHeaderComponent={
+        <View style={{ gap: 24 }}>
+          <View style={{ gap: 8 }}>
+            <Text style={styles.label}>IN-APP AGREEMENTS</Text>
+            <Text accessibilityRole="header" style={styles.title}>
+              Your calendar.
+            </Text>
+            <Text style={styles.subtitle}>
+              Meetings accepted by both representatives, with your own reminders.
+            </Text>
+          </View>
+          <Notice>
+            This calendar covers klnk meetings only. Reminders appear in the app; a scheduled or due
+            reminder does not confirm that a push notification was delivered.
+          </Notice>
+          {error || calendarQuery.error ? (
+            <Notice tone="error">{error || calendarQuery.error}</Notice>
+          ) : null}
+          {notice ? (
+            <Text accessibilityLiveRegion="polite" style={styles.text}>
+              {notice}
+            </Text>
+          ) : null}
+          <AvailabilityPanel ownerId={ownerId} />
+          <Button
+            label={working || calendarQuery.loading ? 'Loading calendar' : 'Refresh calendar'}
+            secondary
+            loading={working || calendarQuery.loading}
+            onPress={() => {
+              if (!busy.current) void load();
+            }}
           />
-        </Card>
-      ) : null}
-      {data && !data.events.length ? (
-        <Card>
-          <Empty
-            icon="calendar-outline"
-            title="No shared meetings yet"
-            detail="A meeting appears after both participants accept the same terms. Your other calendars are not connected here."
-          />
-        </Card>
-      ) : null}
-      {data?.events.map((event) => {
+          {!data && !working && !calendarQuery.loading ? (
+            <Card>
+              <Empty
+                icon="calendar-outline"
+                title="Calendar unavailable"
+                detail="Refresh to load current meetings and reminders."
+              />
+            </Card>
+          ) : null}
+          {data && !data.events.length ? (
+            <Card>
+              <Empty
+                icon="calendar-outline"
+                title="No shared meetings yet"
+                detail="A meeting appears after both participants accept the same terms. Your other calendars are not connected here."
+              />
+            </Card>
+          ) : null}
+        </View>
+      }
+      renderItem={({ item: row }) => {
+        if (row.kind === 'busy') return <BusyBlockRow block={row.value} />;
+        if (row.kind === 'reminders-heading')
+          return (
+            <View style={{ gap: 12 }}>
+              <Text accessibilityRole="header" style={styles.h3}>
+                Your in-app reminders
+              </Text>
+              {!data?.reminders.length ? (
+                <Text style={styles.text}>
+                  No reminders are scheduled for your shared meetings.
+                </Text>
+              ) : null}
+            </View>
+          );
+        if (row.kind === 'reminder') {
+          const reminder = row.value;
+          return (
+            <Reminder
+              key={reminder.id}
+              reminder={reminder}
+              working={working}
+              onDismiss={() =>
+                void mutate(
+                  `/network/reminders/${reminder.id}/dismiss`,
+                  {},
+                  'Your in-app reminder was dismissed.',
+                )
+              }
+            />
+          );
+        }
+        const event = row.value;
         const slot = event.terms.slot,
           own = event.acceptances.find((value) => value.ownerId === ownerId),
           other = event.acceptances.find((value) => value.ownerId !== ownerId);
@@ -172,11 +235,11 @@ export function CalendarPanel({
             </Text>
             <Badge
               text={event.status === 'confirmed' ? 'Confirmed by both participants' : 'Cancelled'}
-              tone={event.status === 'confirmed' ? 'green' : 'neutral'}
+              tone={event.status === 'confirmed' ? 'success' : 'neutral'}
             />
             <Text style={styles.text}>
-              {dateTime(slot.startAt, slot.timezone)}
-              {'\n'}to {dateTime(slot.endAt, slot.timezone)}
+              {formatDateTime(slot.startAt, slot.timezone)}
+              {'\n'}to {formatDateTime(slot.endAt, slot.timezone)}
             </Text>
             <Text style={styles.small}>Meeting timezone: {slot.timezone}</Text>
             <Disclosure title={`Meeting details: ${event.terms.purpose}`}>
@@ -247,32 +310,8 @@ export function CalendarPanel({
             ) : null}
           </Card>
         );
-      })}
-      {data ? (
-        <View style={{ gap: 16 }}>
-          <Text accessibilityRole="header" style={styles.h3}>
-            Your in-app reminders
-          </Text>
-          {!data.reminders.length ? (
-            <Text style={styles.text}>No reminders are scheduled for your shared meetings.</Text>
-          ) : null}
-          {data.reminders.map((reminder) => (
-            <Reminder
-              key={reminder.id}
-              reminder={reminder}
-              working={working}
-              onDismiss={() =>
-                void mutate(
-                  `/network/reminders/${reminder.id}/dismiss`,
-                  {},
-                  'Your in-app reminder was dismissed.',
-                )
-              }
-            />
-          ))}
-        </View>
-      ) : null}
-    </>
+      }}
+    />
   );
 }
 
@@ -298,10 +337,10 @@ function Reminder({
             cancelled: 'Cancelled',
           }[reminder.status]
         }
-        tone={reminder.status === 'due' ? 'amber' : 'neutral'}
+        tone={reminder.status === 'due' ? 'warning' : 'neutral'}
       />
       <Text style={styles.small}>
-        {dateTime(reminder.dueAt, reminder.timezone)} · {reminder.timezone}
+        {formatDateTime(reminder.dueAt, reminder.timezone)} · {reminder.timezone}
       </Text>
       {['scheduled', 'due'].includes(reminder.status) ? (
         <Button

@@ -57,10 +57,16 @@ export function appendLiveDelta(
     index < 0 ||
     (timed && next[index].endMs !== undefined && startMs! - next[index].endMs! >= 2000)
   ) {
-    next.push({ id: `${next.length + 1}`, speaker, text: delta, ...(timed ? { endMs } : {}) });
+    const sequence = Math.max(0, ...next.map((turn) => Number(turn.id) || 0)) + 1;
+    next.push({
+      id: `${sequence}`,
+      speaker,
+      text: delta.slice(-4000),
+      ...(timed ? { endMs } : {}),
+    });
   } else {
-    next[index].text += delta;
+    next[index].text = (next[index].text + delta).slice(-4000);
     if (timed) next[index].endMs = endMs;
   }
-  return next;
+  return next.slice(-40);
 }

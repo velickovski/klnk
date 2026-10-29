@@ -1,8 +1,13 @@
 # Security implementation and open launch blockers
 
-Local development status, updated **27 October 2026**. This is an implementation record, not a certification or a production security assessment. See [independent QA](production/reports/M4-qa.md) and [release review](production/reports/M6-release-review.md) for current gates.
+Local development status, updated **29 October 2026**. This is an implementation record, not a certification or a production security assessment. The [current review status](review/2026-10-28/STATUS.md), [independent account review](review/2026-10-28/qa-account-security.md) and [operations guide](OPERATIONS.md) supersede older release checkpoints.
 
 ## Implemented controls
+
+- Production defaults fail closed without validated database/key/HTTPS configuration. Shared SQL limits apply after authentication and per email; trusted proxy ranges are explicit. Public health/readiness omit provider details. Metadata-only logging excludes bodies, credentials and transcripts.
+- Generic registration, password-bound one-use email/reset challenges, session revocation and 30-minute idle/seven-day absolute expiry are implemented. Export/delete require recent bearer-bound reauthentication under owner locks. SMTP delivery is separately disabled by default; real mailbox proof remains unverified.
+- Internal network transactions recheck owner, current bearer, connection and operation-specific policy/proposal authority. Counterproposals require fresh approvals. Plain message delivery does not imply meeting authority. Model and peer text never grant disclosure rights; browser Live inform/ask remains review-gated. Native recorded confirmation binds an exact owner plan.
+- Native local reminders are explicit opt-in with generic OS content, scoped identifiers and serialized sign-out cleanup. Previously synchronized alerts may remain stale while closed; no APNs or remote cancellation is claimed. The following telephone controls describe retained flagged compatibility code where applicable.
 
 - Bearer sessions use random tokens; only token hashes are stored server-side. Passwords use salted scrypt. Sessions expire and can be revoked. Native clients use platform secure storage; no provider key is distributed to the client.
 - API resource queries bind authenticated owner, kind and identifier. Cross-owner contacts, relationship memory, missions, actions, voices and export access are tested in `tests/api.test.ts`.
@@ -18,27 +23,27 @@ Local development status, updated **27 October 2026**. This is an implementation
 
 ## Dependency findings that remain open
 
-Latest audit, **27 October 2026**: `npm audit --json` exits 1 with **three high** and zero critical findings, involving `expo`, `@expo/cli` and nested `zod`. A compatible `node-forge` 1.4.1 patch was applied; the initial four/five-finding outputs below are historical snapshots. This remains an open release gate. See [production evidence](production/05-evidence.md).
+Latest audit, **29 October 2026**: `npm audit --audit-level=high` exits 0 with **zero high/critical and 15 low** findings. A scoped `@expo/cli` override selects Zod 4.6.7; Expo remains SDK58. CLI exports and browser checks passed with the override. Existing node-forge 1.4.1 is retained. Earlier three-high reports are historical and no longer describe this lockfile.
 
-The earlier `npm audit --omit=dev` reported five high findings in the Expo build dependency chain. A nonzero audit is not a passing check. “omit dev” includes Expo's CLI because Expo is a mobile application dependency; it does not mean these findings originate in backend request code.
+Low findings currently arise from deepmerge and its Expo/Jest dependency parents. They remain visible; a passing high-severity gate is not a zero-vulnerability claim. Do not apply a forced SDK downgrade to silence the report.
 
 | Installed path | Finding | Current status |
 | --- | --- | --- |
 | Historical `expo@58.0.19 → @expo/cli@58.1.15 → node-forge@1.4.0` | RSA signature validation issue [GHSA-86w9-cpqp-85rv](https://github.com/advisories/GHSA-86w9-cpqp-85rv) | Compatible 1.4.1 patch now installed; no longer reported by the latest audit |
-| `expo@58.0.19 → @expo/cli@58.1.15 → zod@3.25.76` | Validation resource-exhaustion issue [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5) | Fixed line begins at Zod 4.6.6; application/server use 4.6.7, while Expo CLI still requires a Zod 3 dependency |
+| Historical `expo@58.0.19 → @expo/cli@58.1.15 → zod@3.25.76` | Validation resource-exhaustion issue [GHSA-mrhx-c7xc-m3w5](https://github.com/advisories/GHSA-mrhx-c7xc-m3w5) | Scoped CLI override now resolves 4.6.7; no longer reported by the latest audit |
 
-Audit counts include the affected parents (`expo`, `@expo/cli`, `@expo/code-signing-certificates`) as well as `node-forge` and nested `zod`; they do not represent five distinct root advisories. Reproduce with:
+Audit counts include affected dependency parents, not only distinct root advisories. Reproduce with:
 
 ```powershell
-npm audit --omit=dev
+npm audit --audit-level=high
 npm ls expo @expo/cli @expo/code-signing-certificates node-forge zod --all
 ```
 
-The suggested automated fix would downgrade Expo to SDK 54 and does not preserve this SDK 58 native dependency set. A global Zod 4 override would change a dependency’s major API without evidence of CLI compatibility. Neither workaround was applied. Before producing a release, update to an upstream compatible fixed Expo toolchain or explicitly review an independently tested mitigation. Keep the development server bound to local/trusted networks; no public Expo dev server was authorized.
+Keep the development server bound to local/trusted networks; no public Expo dev server was authorized. Production dependency/image inventory and Linux execution still require verification.
 
 ## Production work still required
 
-- Verified account recovery and identity/email verification; production-grade authentication abuse controls and operational monitoring.
+- Actual SMTP proof/reset delivery and operational abuse/identity monitoring. Account lifecycle and shared authentication limits now have local injected/HTTP regression evidence; that does not establish delivery or production operations.
 - Separate production encryption-key management, rotation, backup encryption, restore exercises and database access controls. Encryption at rest here is not end-to-end encryption.
 - TLS termination and secure infrastructure configuration; the local HTTP API is a development service.
 - A provider-authorized commercial arrangement and owner verification before clone enrollment; consent alone cannot mark a voice verified.

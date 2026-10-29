@@ -14,7 +14,7 @@ afterEach(async () => {
   for (const db of databases.splice(0)) await db.close();
 });
 function input(p: NetworkPolicy): NetworkPolicyInput {
-  const { ownerId, version, updatedAt, ...value } = p;
+  const { ownerId, version, updatedAt, authorityVersions, ...value } = p;
   return value;
 }
 async function fixture() {
@@ -56,6 +56,9 @@ async function fixture() {
       },
       p.version,
     );
+    await new InternalCalendar(db).confirmAvailability(owner, {
+      confirmedThrough: new Date(Date.now() + 7 * 86400000).toISOString(),
+    });
   }
   const plan = {
     type: 'plan' as const,
@@ -97,6 +100,65 @@ async function fixture() {
   return { db, a, b, coordinator, connection, plan, fetcher, service };
 }
 describe('owner intent planning', () => {
+  it('binds recorded exact-message review to a separate trusted source option and confirms only its exact draft', async () => {
+    const f = await fixture(),
+      command = {
+        commandId: randomUUID(),
+        text: 'Tell Fictional Jordan that the fountain is open.',
+      };
+    const draft = await f.service.execute(f.a, command, { requireInformationReview: true });
+    expect(draft.status).toBe('draft');
+    expect((await f.coordinator.inbox(f.a)).conversations).toHaveLength(0);
+    await expect(f.service.execute(f.a, command)).rejects.toMatchObject({
+      code: 'owner_intent_conflict',
+    });
+    await expect(
+      f.service.execute(f.a, {
+        ...command,
+        commandId: randomUUID(),
+        requireInformationReview: false,
+      } as typeof command),
+    ).rejects.toThrow();
+    expect((await f.service.confirm(f.a, command.commandId, draft.planHash!)).status).toBe(
+      'submitted',
+    );
+    expect(f.fetcher).not.toHaveBeenCalled();
+  });
+
+  it('keeps a meeting plan valid across unrelated reminder changes and connection mute while still checking operation authority', async () => {
+    const f = await fixture();
+    f.fetcher.mockImplementationOnce(async () => {
+      const policy = await f.coordinator.policy(f.a);
+      await f.coordinator.savePolicy(
+        f.a,
+        { ...input(policy), reminderMinutes: [5] },
+        policy.version,
+      );
+      const connection = (await f.coordinator.connections(f.a))[0];
+      await f.coordinator.updateConnection(f.a, connection.id, {
+        action: 'mute',
+        version: connection.version,
+      });
+      return new Response(
+        JSON.stringify({
+          status: 'completed',
+          output: [
+            {
+              type: 'message',
+              content: [{ type: 'output_text', text: JSON.stringify({ result: f.plan }) }],
+            },
+          ],
+        }),
+      );
+    });
+    const result = await f.service.execute(f.a, {
+      commandId: randomUUID(),
+      text: 'Schedule a routine meeting with Fictional Jordan tomorrow.',
+    });
+    expect(result.status).toBe('submitted');
+    await f.coordinator.tick();
+    expect((await f.coordinator.inbox(f.a)).conversations[0].state).toBe('agreed');
+  });
   it('clarifies shadowing display names rather than allowing a short-name impersonator to receive a message', async () => {
     const f = await fixture();
     const impostor = (

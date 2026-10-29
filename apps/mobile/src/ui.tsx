@@ -7,9 +7,20 @@ import { Icon, IconName } from './components/Icon';
 import { StatusLabel } from './components/primitives';
 export { useDesign, useUI } from './design/ThemeProvider';
 export { a11yState } from './components/accessibility';
+export {
+  SwitchControl,
+  CheckboxControl,
+  ChoiceChip,
+  WeekdayChips,
+  LoadingState,
+  EmptyState,
+  ErrorState,
+} from './components/choices';
 export { Icon, IconName } from './components/Icon';
 export {
   ActionButton as Button,
+  AppText,
+  AppScreen,
   TextField as Field,
   IconButton,
   Notice,
@@ -33,15 +44,24 @@ export function Badge({
   tone = 'neutral',
 }: {
   text: string;
-  tone?: 'green' | 'amber' | 'red' | 'blue' | 'neutral';
+  tone?:
+    'green' | 'amber' | 'red' | 'blue' | 'neutral' | 'success' | 'warning' | 'danger' | 'accent';
 }) {
   return (
     <StatusLabel
       text={text}
       tone={
-        { green: 'success', amber: 'warning', red: 'danger', blue: 'accent', neutral: 'neutral' }[
-          tone
-        ] as 'success' | 'warning' | 'danger' | 'accent' | 'neutral'
+        {
+          green: 'success',
+          amber: 'warning',
+          red: 'danger',
+          blue: 'accent',
+          neutral: 'neutral',
+          success: 'success',
+          warning: 'warning',
+          danger: 'danger',
+          accent: 'accent',
+        }[tone] as 'success' | 'warning' | 'danger' | 'accent' | 'neutral'
       }
     />
   );

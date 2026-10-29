@@ -5,6 +5,7 @@ import WebSocket from 'ws';
 import { z } from 'zod';
 import type { Config } from './config.js';
 import { HttpError } from './errors.js';
+import { hashToken } from './auth.js';
 import {
   ApplicationToolNameSchema,
   applicationToolDefinitions,
@@ -75,6 +76,27 @@ function localOnly(config: Config, request: FastifyRequest, mutation = false) {
       'Open the demo from this server before starting a conversation.',
     );
   }
+}
+
+/** Authenticated owner voice is a product capability, independent of the legacy
+ * loopback demo. A native client may omit Origin; browser origins stay exact. */
+export function ownerVoiceAllowed(config: Config, request: FastifyRequest, mutation = false) {
+  if (!request.ownerId) throw new HttpError(401, 'unauthorized', 'Sign in before starting voice.');
+  if (config.production && request.protocol !== 'https')
+    throw new HttpError(426, 'secure_voice_required', 'Owner voice requires HTTPS in production.');
+  const origin = request.headers.origin;
+  const localSameOrigin =
+    !config.production &&
+    ['127.0.0.1', '::1', '::ffff:127.0.0.1'].includes(request.ip) &&
+    origin === `http://${request.headers.host}`;
+  if (origin && !localSameOrigin && !config.origins.includes(origin))
+    throw new HttpError(
+      403,
+      'unexpected_origin',
+      'This application origin is not allowed to use owner voice.',
+    );
+  if (mutation && origin === 'null')
+    throw new HttpError(403, 'unexpected_origin', 'Use the configured application to start voice.');
 }
 
 export interface LiveSocket {
@@ -346,8 +368,8 @@ export class OpenAILive {
   }
 
   async create(ownerId: string, body: unknown, authorization?: string) {
-    if (this.config.production || !this.config.demoEnabled)
-      throw new HttpError(404, 'not_found', 'Demo unavailable.');
+    if (this.config.production && !authorization?.startsWith('Bearer '))
+      throw new HttpError(401, 'unauthorized', 'Sign in before starting voice.');
     const { sdp, requestId, authorizedMissionId } = z
       .object({
         requestId: z.uuid(),
@@ -398,7 +420,11 @@ export class OpenAILive {
       );
     const definitions = applicationToolDefinitions([...new Set(access?.tools ?? [])]),
       toolsEnabled = definitions.length > 0;
-    const reservation = await this.storage().reserve(ownerId, requestId);
+    const reservation = await this.storage().reserve(
+      ownerId,
+      requestId,
+      authorization?.startsWith('Bearer ') ? hashToken(authorization.slice(7)) : undefined,
+    );
     if (!reservation.created)
       throw new HttpError(
         409,
@@ -859,6 +885,10 @@ export function registerOpenAILive(
     reply.header('Cache-Control', 'no-store');
     return live.status();
   });
+  app.get('/voice/live/status', async (request, reply) => {
+    ownerVoiceAllowed(config, request);
+    return reply.header('Cache-Control', 'no-store').send(live.status());
+  });
   app.post(
     '/voice/live/session',
     {
@@ -872,7 +902,7 @@ export function registerOpenAILive(
       },
     },
     async (request, reply) => {
-      localOnly(config, request, true);
+      ownerVoiceAllowed(config, request, true);
       let disconnected = request.raw.aborted || reply.raw.destroyed;
       const onClose = () => {
         if (!reply.raw.writableEnded) disconnected = true;
@@ -898,22 +928,22 @@ export function registerOpenAILive(
     },
   );
   app.post('/voice/live/session/:id/close', async (request, reply) => {
-    localOnly(config, request, true);
+    ownerVoiceAllowed(config, request, true);
     reply.header('Cache-Control', 'no-store');
     return live.close(request.ownerId!, (request.params as { id: string }).id);
   });
   app.get('/voice/live/requests/:requestId', async (request, reply) => {
-    localOnly(config, request);
+    ownerVoiceAllowed(config, request);
     reply.header('Cache-Control', 'no-store');
     return live.readRequest(request.ownerId!, (request.params as { requestId: string }).requestId);
   });
   app.get('/voice/live/recovery', async (request, reply) => {
-    localOnly(config, request);
+    ownerVoiceAllowed(config, request);
     reply.header('Cache-Control', 'no-store');
     return live.readRecovery(request.ownerId!);
   });
   app.get('/voice/live/session/:id', async (request, reply) => {
-    localOnly(config, request);
+    ownerVoiceAllowed(config, request);
     reply.header('Cache-Control', 'no-store');
     return live.read(request.ownerId!, (request.params as { id: string }).id);
   });

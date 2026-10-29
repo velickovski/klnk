@@ -39,6 +39,22 @@ const credentials = {
   name: 'Fictional QA Runtime Owner',
   password: 'Fictional QA runtime password 123',
 };
+async function registerOwner(service: Awaited<ReturnType<typeof createApp>>, input = credentials) {
+  const registered = await service.app.inject({
+    method: 'POST',
+    url: '/auth/register',
+    payload: input,
+  });
+  expect(registered.statusCode).toBe(202);
+  expect(registered.json()).not.toHaveProperty('token');
+  const login = await service.app.inject({
+    method: 'POST',
+    url: '/auth/login',
+    payload: { email: input.email, password: input.password },
+  });
+  expect(login.statusCode).toBe(200);
+  return login.json<{ token: string; user: { id: string } }>();
+}
 
 describe('independent DATA-01 / VOICE-04 account-runtime adversaries', () => {
   it('rechecks a no-ID Live receipt inserted after deletion preflight before tombstoning', async () => {
@@ -53,9 +69,7 @@ describe('independent DATA-01 / VOICE-04 account-runtime adversaries', () => {
     const entered = deferred(),
       resume = deferred();
     try {
-      const owner = (
-        await service.app.inject({ method: 'POST', url: '/auth/register', payload: credentials })
-      ).json();
+      const owner = await registerOwner(service);
       const list = service.repo.list.bind(service.repo);
       let held = false;
       vi.spyOn(service.repo, 'list').mockImplementation(
@@ -116,9 +130,7 @@ describe('independent DATA-01 / VOICE-04 account-runtime adversaries', () => {
     });
     const local = { host: 'localhost:4000', origin: 'http://localhost:4000' };
     try {
-      const account = (
-        await service.app.inject({ method: 'POST', url: '/auth/register', payload: credentials })
-      ).json();
+      const account = await registerOwner(service);
       const headers = { ...local, authorization: `Bearer ${account.token}` };
       const requestId = randomUUID(),
         sdp = 'v=0\r\nm=audio 9 UDP/TLS/RTP/SAVPF 111\r\n';
@@ -165,13 +177,10 @@ describe('independent DATA-01 / VOICE-04 account-runtime adversaries', () => {
       expect(recovered.statusCode).toBe(200);
       expect(recovered.json()).toMatchObject({ requestId, status: 'unconfirmed' });
       expect(recovered.json()).not.toHaveProperty('sessionId');
-      const other = (
-        await service.app.inject({
-          method: 'POST',
-          url: '/auth/register',
-          payload: { ...credentials, email: 'qa-runtime-other@example.invalid' },
-        })
-      ).json();
+      const other = await registerOwner(service, {
+        ...credentials,
+        email: 'qa-runtime-other@example.invalid',
+      });
       expect(
         (
           await service.app.inject({

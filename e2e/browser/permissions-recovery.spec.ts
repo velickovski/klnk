@@ -193,8 +193,10 @@ for (const terminal of [false, true]) {
         ).toHaveCount(0);
       }
       await page.getByRole('button', { name: 'Open workspace', exact: true }).click();
-      await expect(page.getByRole('tab', { name: 'Home', exact: true })).toBeVisible();
-      await expect(await chooseType(page)).toBeEditable();
+      await expect(page.getByRole('tab', { name: 'Inbox', exact: true })).toBeVisible();
+      await expect(
+        page.getByRole('textbox', { name: 'Instruction to your agent', exact: true }),
+      ).toBeEditable();
       expect(creations).toBe(0);
       await expectNoCapture(page);
     } finally {

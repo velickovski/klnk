@@ -103,6 +103,37 @@ describe.skipIf(!connectionFile)('opt-in isolated PostgreSQL multiprocess QA', (
     }
     return { schema, address, db: db!, key: privateConnection.key };
   }
+  async function registeredAccount(
+    service: Awaited<ReturnType<typeof createApp>>,
+    email: string,
+    name: string,
+    password: string,
+  ): Promise<{ token: string; user: { id: string } }> {
+    const registration = await service.app.inject({
+      method: 'POST',
+      url: '/auth/register',
+      payload: { email, name, password },
+    });
+    expect(registration.statusCode).toBe(202);
+    expect(registration.json()).toMatchObject({ accepted: true, status: 'pending' });
+    expect(registration.json()).not.toHaveProperty('token');
+    // Explicit fictional non-production sign-in; registration itself grants no session.
+    const signedIn = await service.app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password },
+    });
+    expect(signedIn.statusCode).toBe(200);
+    const account = signedIn.json<{ token: string; user: { id: string } }>();
+    const reauthenticated = await service.app.inject({
+      method: 'POST',
+      url: '/account/reauth',
+      headers: { authorization: `Bearer ${account.token}` },
+      payload: { password },
+    });
+    expect(reauthenticated.statusCode).toBe(200);
+    return account;
+  }
   function task(input: Record<string, unknown>) {
     const first = deferred();
     let finish!: (result: ChildResult) => void;
@@ -282,17 +313,12 @@ describe.skipIf(!connectionFile)('opt-in isolated PostgreSQL multiprocess QA', (
     const entered = deferred(),
       resume = deferred();
     try {
-      const account = (
-        await service.app.inject({
-          method: 'POST',
-          url: '/auth/register',
-          payload: {
-            email: 'qa-pg-delete@example.invalid',
-            name: 'Fictional PG Owner',
-            password: 'Fictional PostgreSQL password',
-          },
-        })
-      ).json();
+      const account = await registeredAccount(
+        service,
+        'qa-pg-delete@example.invalid',
+        'Fictional PG Owner',
+        'Fictional PostgreSQL password',
+      );
       const list = service.repo.list.bind(service.repo);
       let held = false;
       vi.spyOn(service.repo, 'list').mockImplementation(
@@ -340,17 +366,12 @@ describe.skipIf(!connectionFile)('opt-in isolated PostgreSQL multiprocess QA', (
       resume = deferred();
     let writing: Promise<unknown> | undefined;
     try {
-      const account = (
-        await service.app.inject({
-          method: 'POST',
-          url: '/auth/register',
-          payload: {
-            email: 'qa-pg-latewrite@example.invalid',
-            name: 'Fictional PG Writer',
-            password: 'Fictional PG writer password',
-          },
-        })
-      ).json();
+      const account = await registeredAccount(
+        service,
+        'qa-pg-latewrite@example.invalid',
+        'Fictional PG Writer',
+        'Fictional PG writer password',
+      );
       writing = f.db.transaction(async (sql) => {
         await sql.query('SELECT id FROM users WHERE id=$1 FOR UPDATE', [account.user.id]);
         entered.resolve();

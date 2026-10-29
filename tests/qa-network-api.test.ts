@@ -13,7 +13,7 @@ import { createSession } from '../apps/server/src/auth.js';
 describe('independent authenticated internal-network adversaries', () => {
   let service: Awaited<ReturnType<typeof createApp>>;
   let registration = 0;
-  type Account = { token: string; user: { id: string } };
+  type Account = { token: string; user: { id: string }; email: string };
   const call = (
     who: Account,
     url: string,
@@ -57,21 +57,34 @@ describe('independent authenticated internal-network adversaries', () => {
     await service.db.close();
   });
   async function register(name: string): Promise<Account> {
+    const email = `${randomUUID()}@example.invalid`,
+      password = 'fictional-network-qa-password';
     const r = await service.app.inject({
       url: '/auth/register',
       method: 'POST',
       remoteAddress: '10.24.0.' + ++registration,
       payload: {
         name,
-        email: `${randomUUID()}@example.invalid`,
-        password: 'fictional-network-qa-password',
+        email,
+        password,
       },
     });
-    expect(r.statusCode).toBe(201);
-    return r.json();
+    expect(r.statusCode).toBe(202);
+    expect(r.json()).not.toHaveProperty('token');
+    const login = await service.app.inject({
+      url: '/auth/login',
+      method: 'POST',
+      remoteAddress: '10.24.0.' + registration,
+      payload: { email, password },
+    });
+    expect(login.statusCode).toBe(200);
+    const authenticated = login.json<{ token: string; user: { id: string } }>();
+    return { ...authenticated, email };
   }
   async function save(who: Account, patch: Partial<NetworkPolicyInput>) {
-    const { ownerId, version, updatedAt, ...policy } = (await call(who, '/network/policy')).json();
+    const { ownerId, version, updatedAt, authorityVersions, ...policy } = (
+      await call(who, '/network/policy')
+    ).json();
     const r = await call(who, '/network/policy', 'PUT', {
       expectedVersion: version,
       policy: { ...policy, ...patch },
@@ -96,7 +109,7 @@ describe('independent authenticated internal-network adversaries', () => {
     for (const [owner, peer] of [
       [alice, jordan],
       [jordan, alice],
-    ])
+    ]) {
       await save(owner, {
         enabled: true,
         trustedMemberIds: [peer.user.id],
@@ -111,6 +124,10 @@ describe('independent authenticated internal-network adversaries', () => {
         weekdays: [0, 1, 2, 3, 4, 5, 6],
         expiresAt: new Date(Date.now() + 7 * 86400000).toISOString(),
       });
+      await service.internalCalendar.confirmAvailability(owner.user.id, {
+        confirmedThrough: new Date(Date.now() + 7 * 86400000).toISOString(),
+      });
+    }
     const input = (kind: NetworkRequestInput['kind'] = 'meeting'): NetworkRequestInput => ({
       requestId: randomUUID(),
       connectionId: connection.id,
@@ -249,12 +266,12 @@ describe('independent authenticated internal-network adversaries', () => {
       (await call(f.jordan, `/network/conversations/${c.id}/decision`, 'POST', approve)).statusCode,
     ).toBe(409);
   });
-  it.each(['revoke', 'block', 'deny_inbound', 'mute'] as const)(
+  it.each(['message_opt_out', 'block', 'deny_inbound'] as const)(
     'rechecks %s after queueing and before any shared disclosure',
     async (action) => {
       const f = await fixture(),
         c = await f.submit(f.input('inform'));
-      if (action === 'revoke') await save(f.jordan, { enabled: false });
+      if (action === 'message_opt_out') await save(f.jordan, { allowMessages: false });
       else
         expect(
           (
@@ -269,9 +286,9 @@ describe('independent authenticated internal-network adversaries', () => {
       expect(result.state).toBe('paused');
       expect(result.messages).toEqual([]);
       expect((await f.calendar()).events).toEqual([]);
-      expect((await call(f.alice, '/network/conversations', 'POST', f.input())).statusCode).toBe(
-        409,
-      );
+      expect(
+        (await call(f.alice, '/network/conversations', 'POST', f.input('inform'))).statusCode,
+      ).toBe(409);
     },
   );
   it('scope denial still holds when the exact owner permits an unusual meeting time', async () => {
@@ -340,11 +357,11 @@ describe('independent authenticated internal-network adversaries', () => {
     expect(outsider.statusCode).toBe(404);
     expect(outsider.headers['cache-control']).toBe('no-store');
   });
-  it('returns an unresolved factual summary when no permitted answer or no free candidate exists', async () => {
+  it('asks the recipient for a personal answer when memory is unavailable and reports no free candidate honestly', async () => {
     const f = await fixture();
     const ask = await f.submit(f.input('ask'));
     await service.network.tick();
-    expect((await f.detail(ask.id)).state).toBe('unresolved');
+    expect((await f.detail(ask.id)).state).toBe('awaiting_approval');
     const body = f.input(),
       first = await f.submit(body);
     await service.network.tick();
@@ -365,6 +382,17 @@ describe('independent authenticated internal-network adversaries', () => {
     try {
       vi.spyOn(Date, 'now').mockReturnValue(Date.parse(body.expiresAt) + 1);
       await service.network.tick();
+      // Advancing the embedded database clock also expires idle bearers. Prove
+      // the same fixture passwords again so this test reaches request expiry.
+      for (const account of [f.alice, f.jordan]) {
+        const login = await service.app.inject({
+          method: 'POST',
+          url: '/auth/login',
+          payload: { email: account.email, password: 'fictional-network-qa-password' },
+        });
+        expect(login.statusCode).toBe(200);
+        account.token = login.json().token;
+      }
       expect((await f.detail(c.id)).state).toBe('expired');
       expect(
         (
@@ -526,6 +554,9 @@ describe('independent authenticated internal-network adversaries', () => {
       },
     ];
     input.expiresAt = new Date(Date.now() + 25 * 86400000).toISOString();
+    await service.internalCalendar.confirmAvailability(f.jordan.user.id, {
+      confirmedThrough: new Date(Date.now() + 25 * 86400000).toISOString(),
+    });
     const c = await f.submit(input);
     await service.network.tick();
     expect((await f.detail(c.id)).state).toBe('agreed');

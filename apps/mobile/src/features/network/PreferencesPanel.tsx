@@ -1,26 +1,33 @@
-import React, { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { Linking, View } from 'react-native';
+import { AppText as Text } from '../../components/primitives';
 import type { NetworkPreferences } from '@personal-agent/domain';
 import { Button, Card, Choice, Notice, useUI } from '../../ui';
-import { networkApi } from './api';
+import { useNetworkClient, useNetworkQuery, useSessionState } from './data-provider';
 import { usePanelTask } from './panel-hooks';
+import { useDeviceReminders } from './device-reminders';
 
 export function PreferencesPanel({ ownerId }: { ownerId: string }) {
   const { styles } = useUI(),
     task = usePanelTask(),
-    [saved, setSaved] = useState<NetworkPreferences>(),
-    [draft, setDraft] = useState<NetworkPreferences>();
-  const refresh = () =>
-    task.run(
-      () => networkApi.request<NetworkPreferences>('/network/preferences'),
-      (p) => {
-        setSaved(p);
-        setDraft(p);
-      },
+    deviceReminders = useDeviceReminders(),
+    networkApi = useNetworkClient(),
+    query = useNetworkQuery<NetworkPreferences>('/network/preferences'),
+    [saved, setSaved] = useSessionState<NetworkPreferences | undefined>(
+      `${ownerId}:preferences:saved`,
+      undefined,
+    ),
+    [draft, setDraft] = useSessionState<NetworkPreferences | undefined>(
+      `${ownerId}:preferences:draft`,
+      undefined,
     );
+  const refresh = () => task.run(query.refetch, () => undefined);
   useEffect(() => {
-    void refresh();
-  }, [ownerId]);
+    if (query.data && (!draft || JSON.stringify(draft) === JSON.stringify(saved))) {
+      setSaved(query.data);
+      setDraft(query.data);
+    }
+  }, [query.data]);
   return (
     <Card>
       <Text accessibilityRole="header" style={styles.h2}>
@@ -56,9 +63,10 @@ export function PreferencesPanel({ ownerId }: { ownerId: string }) {
             onChange={(notificationMode) => setDraft({ ...draft, notificationMode })}
           />
           <Text style={styles.small}>
-            These are notices inside klnk. Quiet mode keeps the Inbox available. No closed-app
-            alert, APNs, SMS or email is enabled. Retention removes server shared records, including
-            the other participant’s copy; it cannot erase information already read or copied.
+            These choices control notices inside klnk. Quiet and Decisions only also suppress
+            on-device meeting reminders. The Inbox stays available. Retention removes server shared
+            records, including the other participant’s copy; it cannot erase information already
+            read or copied.
           </Text>
           <Button
             label="Save privacy preferences"
@@ -86,9 +94,72 @@ export function PreferencesPanel({ ownerId }: { ownerId: string }) {
           />
         </View>
       ) : (
-        <Text style={styles.small}>Loading saved preferences…</Text>
+        <Text style={styles.small}>
+          {query.loading
+            ? 'Loading saved preferences…'
+            : 'Preferences unavailable. Use Refresh privacy preferences to retry.'}
+        </Text>
       )}
-      {task.error ? <Notice tone="error">{task.error}</Notice> : null}
+      {deviceReminders.supported ? (
+        <View style={{ gap: 12 }}>
+          <Text accessibilityRole="header" style={styles.h2}>
+            On-device meeting reminders
+          </Text>
+          <Text style={styles.small}>
+            Optional local alerts for upcoming confirmed klnk meetings. Permission is requested only
+            when you enable them. Alerts use generic text, with no private meeting details. This
+            uses this device only; no APNs, SMS or email is registered.
+          </Text>
+          <Text style={styles.small} accessibilityLiveRegion="polite">
+            {!deviceReminders.ready
+              ? 'Connect and sign in to check reminder settings.'
+              : deviceReminders.permission === 'denied'
+                ? 'Notifications are denied in device Settings.'
+                : deviceReminders.enabled
+                  ? deviceReminders.quiet
+                    ? 'Enabled on this device, paused by your saved notification preference.'
+                    : `${deviceReminders.scheduled} future reminders scheduled on this device.`
+                  : 'On-device reminders are off.'}
+          </Text>
+          <Text style={styles.small}>
+            Reminders update while klnk is open and when you return. Changes made while it is closed
+            cannot cancel an existing local alert until the next sync. Device settings, Focus and
+            operating-system limits may delay or suppress alerts.
+          </Text>
+          <Button
+            label={
+              deviceReminders.enabled ? 'Turn off device reminders' : 'Enable device reminders'
+            }
+            loading={deviceReminders.busy}
+            disabled={!deviceReminders.ready}
+            onPress={() =>
+              void task.run(
+                deviceReminders.enabled ? deviceReminders.disable : deviceReminders.enable,
+                () => undefined,
+              )
+            }
+          />
+          {deviceReminders.permission === 'denied' ? (
+            <Button
+              label="Open device notification settings"
+              secondary
+              onPress={() => void Linking.openSettings()}
+            />
+          ) : null}
+          <Button
+            label="Refresh device reminders"
+            secondary
+            loading={deviceReminders.busy}
+            onPress={() => void task.run(deviceReminders.refresh, () => undefined)}
+          />
+          {deviceReminders.error ? <Notice tone="warning">{deviceReminders.error}</Notice> : null}
+        </View>
+      ) : (
+        <Text style={styles.small}>
+          On-device reminders are available in the native app. This browser uses in-app notices.
+        </Text>
+      )}
+      {task.error || query.error ? <Notice tone="error">{task.error || query.error}</Notice> : null}
       {task.notice ? <Notice>{task.notice}</Notice> : null}
       <Button
         label="Refresh privacy preferences"

@@ -3,6 +3,7 @@ import {
   type NetworkConversation,
   type NetworkEvent,
   type NetworkPreferences,
+  type NetworkConnection,
 } from '../../../../packages/domain/src/network.js';
 import { createHash } from 'node:crypto';
 import { Database, type SQL } from '../db.js';
@@ -72,7 +73,9 @@ export async function publishNetworkNotification(
 ) {
   const prefs = await networkPreferences(store, owner),
     id = notificationId(`${c.id}:${owner}:${c.version}:${kind}`);
+  const connection = await store.get<NetworkConnection>('connection', c.connectionId);
   const silent =
+    connection?.value.mutedBy.includes(owner) ||
     prefs.notificationMode === 'quiet' ||
     (prefs.notificationMode === 'decisions_only' && kind !== 'decision');
   await store.put({
@@ -98,6 +101,16 @@ export async function networkNotifications(db: Database, owner: string) {
     const store = new NetworkStore(db, sql),
       prefs = await networkPreferences(store, owner),
       records = await store.list<any>(owner, 'outbox');
+    const mutedConnections = new Set(
+      (await store.list<NetworkConnection>(owner, 'connection'))
+        .filter((record) => record.value.mutedBy.includes(owner))
+        .map((record) => record.id),
+    );
+    const mutedConversations = new Set(
+      (await store.list<NetworkConversation>(owner, 'conversation'))
+        .filter((record) => mutedConnections.has(record.value.connectionId))
+        .map((record) => record.id),
+    );
     return {
       items: records
         .filter(
@@ -105,6 +118,7 @@ export async function networkNotifications(db: Database, owner: string) {
             r.ownerA === owner &&
             !r.ownerB &&
             r.status === 'pending' &&
+            !mutedConversations.has(r.value.conversationId) &&
             prefs.notificationMode !== 'quiet' &&
             (prefs.notificationMode !== 'decisions_only' || r.value.kind === 'decision'),
         )

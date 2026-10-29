@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 import {
   Image,
+  FlatList,
   Platform,
   ScrollView,
   StyleSheet,
@@ -13,25 +14,40 @@ import { StatusBar } from 'expo-status-bar';
 import { ActionButton, AppText } from '../../components';
 import { brand, typeRoles } from '../../design/tokens';
 import { ThemeProvider } from '../../design/ThemeProvider';
-import type { LiveConversation } from '../live/types';
+import type { LiveTurn, LiveConversation } from '../live/types';
+import { useDesign } from '../../design/ThemeProvider';
 
 /** Only an explicit owner gesture starts capture. Telephone actions are a separate workspace. */
 export function LaunchScreen({
   onWorkspace,
   live,
+  onCall,
+  recordedAvailable = false,
 }: {
   onWorkspace: () => void;
   live: LiveConversation;
+  onCall?: () => void;
+  recordedAvailable?: boolean;
 }) {
+  const { reducedMotion } = useDesign();
+  const captionsRef = useRef<FlatList<LiveTurn>>(null);
   const [attempted, setAttempted] = useState(live.state !== 'idle'),
     { width, height } = useWindowDimensions(),
     [availableHeight, setAvailableHeight] = useState(height);
   const active =
     live.state === 'connecting' || live.state === 'connected' || live.state === 'ending';
-  const canExplore = (attempted || live.closureUnconfirmed || live.state === 'ended') && !active;
+  const canExplore =
+    ((!live.supported && !recordedAvailable) ||
+      !!live.error ||
+      attempted ||
+      live.closureUnconfirmed ||
+      live.state === 'ended') &&
+    !active &&
+    live.state !== 'checking';
   const call = () => {
     setAttempted(true);
-    void live.start();
+    if (onCall) onCall();
+    else void live.start();
   };
   const artSize = Math.min(240, width - 80, Math.max(140, availableHeight * 0.24));
   return (
@@ -70,7 +86,9 @@ export function LaunchScreen({
               />
             </View>
             <Text accessibilityLiveRegion="polite" style={s.status}>
-              {live.statusText}
+              {recordedAvailable && live.state === 'idle'
+                ? 'Voice turns, at your pace.'
+                : live.statusText}
             </Text>
           </View>
           <ThemeProvider colorScheme="light">
@@ -93,8 +111,8 @@ export function LaunchScreen({
                     ? 'Speak naturally. klnk will reply out loud.'
                     : live.state === 'ended'
                       ? 'Your microphone is off. You can talk again whenever you’re ready.'
-                      : !live.supported
-                        ? 'Live voice is not available in this native build. The browser uses a supported WebRTC connection.'
+                      : !live.supported && !recordedAvailable
+                        ? 'Live voice is not available here. Open your workspace to continue.'
                         : 'Talk with your personal agent, and hear a reply. No typing needed.'}
               </Text>
               {live.error ? (
@@ -175,15 +193,25 @@ export function LaunchScreen({
               {live.captionsOpen && live.state === 'connected' ? (
                 <View style={s.captions}>
                   <AppText role="action" style={{ color: brand.ink }}>
-                    Captions
+                    Recent captions
                   </AppText>
                   {live.turns.length ? (
-                    live.turns.map((turn) => (
-                      <View key={turn.id} style={{ gap: 4 }}>
-                        <Text style={s.captionSpeaker}>{turn.speaker}</Text>
-                        <Text style={s.caption}>{turn.text}</Text>
-                      </View>
-                    ))
+                    <FlatList
+                      ref={captionsRef}
+                      style={{ maxHeight: 240 }}
+                      nestedScrollEnabled
+                      data={live.turns}
+                      keyExtractor={(turn) => turn.id}
+                      onContentSizeChange={() =>
+                        captionsRef.current?.scrollToEnd({ animated: !reducedMotion })
+                      }
+                      renderItem={({ item: turn }) => (
+                        <View style={{ gap: 4, paddingBottom: 12 }}>
+                          <Text style={s.captionSpeaker}>{turn.speaker}</Text>
+                          <Text style={s.caption}>{turn.text}</Text>
+                        </View>
+                      )}
+                    />
                   ) : (
                     <Text style={s.caption}>Captions will appear as you speak.</Text>
                   )}
@@ -206,7 +234,9 @@ export function LaunchScreen({
                       ? 'AI conversation ended · No telephone call was placed.'
                       : Platform.OS === 'web'
                         ? 'Up to five minutes per conversation. Audio is sent to OpenAI. Your microphone starts after you call.'
-                        : 'Native live audio requires a compatible transport.'}
+                        : recordedAvailable
+                          ? 'Up to five minutes of recorded turns. OpenAI transcribes; this device speaks the reply.'
+                          : 'Native live audio requires a compatible transport.'}
               </Text>
             </View>
           </ThemeProvider>

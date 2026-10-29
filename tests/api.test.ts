@@ -207,8 +207,15 @@ describe('authenticated owner API and signed provider-event boundary', () => {
       url: '/auth/register',
       payload: { email, name: 'New owner', password },
     });
-    expect(registered.statusCode).toBe(201);
-    const account = registered.json();
+    expect(registered.statusCode).toBe(202);
+    expect(registered.json()).not.toHaveProperty('token');
+    const signedIn = await service.app.inject({
+      method: 'POST',
+      url: '/auth/login',
+      payload: { email, password },
+    });
+    expect(signedIn.statusCode).toBe(200);
+    const account = signedIn.json();
     const boot = (
       await service.app.inject({ url: '/bootstrap', headers: headers(account.token) })
     ).json();

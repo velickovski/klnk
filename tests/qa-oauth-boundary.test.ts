@@ -80,6 +80,7 @@ async function fixture() {
     googleClientSecret: 'fictional-qa-client-secret',
     googleRedirectUri: 'https://api.klnk.example/integrations/google-calendar/callback',
     origins: ['https://app.klnk.example'],
+    trustProxy: ['127.0.0.1/32'],
   };
   const service = await createApp({
     db,
@@ -88,6 +89,7 @@ async function fixture() {
     googleDependencies: { fetch: provider },
   });
   services.push(service);
+  const httpsHeaders = { host: 'api.klnk.example', 'x-forwarded-proto': 'https' };
   const account = async () => {
     const user = await newUser(
       db,
@@ -95,6 +97,15 @@ async function fixture() {
       'Independent fictional QA password',
     );
     const token = await createSession(db, user.id);
+    // Fictional accounts explicitly satisfy the new production prerequisite.
+    // Prove that forwarding HTTPS alone cannot bypass unverified-owner denial.
+    const denied = await service.app.inject({
+      url: '/profile',
+      headers: { ...httpsHeaders, authorization: `Bearer ${token}` },
+    });
+    expect(denied.statusCode).toBe(403);
+    expect(denied.json().error).toBe('email_verification_required');
+    await db.query('UPDATE users SET email_verified_at=clock_timestamp() WHERE id=$1', [user.id]);
     return { id: user.id, token };
   };
   const owner = await account(),
@@ -103,7 +114,7 @@ async function fixture() {
     const started = await service.app.inject({
       method: 'POST',
       url: '/integrations/google-calendar/connect',
-      headers: { authorization: `Bearer ${token}`, origin: config.origins[0] },
+      headers: { ...httpsHeaders, authorization: `Bearer ${token}`, origin: config.origins[0] },
       payload: {},
     });
     expect(started.statusCode).toBe(200);
@@ -123,9 +134,9 @@ async function fixture() {
   const callback = (state: string, cookie?: string, suffix = 'code=fictional-consent-code') =>
     service.app.inject({
       url: `/integrations/google-calendar/callback?state=${state}&${suffix}`,
-      ...(cookie ? { headers: { cookie } } : {}),
+      headers: { ...httpsHeaders, ...(cookie ? { cookie } : {}) },
     });
-  return { ...service, owner, other, provider, begin, callback };
+  return { ...service, owner, other, provider, begin, callback, httpsHeaders };
 }
 
 describe('independent HTTP OAuth browser boundary', () => {
@@ -187,8 +198,9 @@ describe('independent HTTP OAuth browser boundary', () => {
     expect(f.provider).toHaveBeenCalledTimes(calls);
     const peerStatus = await f.app.inject({
       url: '/integrations/google-calendar',
-      headers: { authorization: `Bearer ${f.other.token}` },
+      headers: { ...f.httpsHeaders, authorization: `Bearer ${f.other.token}` },
     });
+    expect(peerStatus.statusCode).toBe(200);
     expect(peerStatus.json()).not.toMatchObject({ status: 'connected' });
   });
 });
@@ -196,7 +208,7 @@ describe('independent HTTP OAuth browser boundary', () => {
 describe('independent HTTP profile input boundary', () => {
   it('rejects oversized, control and markup content without changing the saved profile', async () => {
     const f = await fixture();
-    const headers = { authorization: `Bearer ${f.owner.token}` };
+    const headers = { ...f.httpsHeaders, authorization: `Bearer ${f.owner.token}` };
     expect(
       (
         await f.app.inject({

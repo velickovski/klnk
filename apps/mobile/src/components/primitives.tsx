@@ -113,8 +113,8 @@ export function ActionButton({
                 : pressed
                   ? semantic.actionPressed
                   : semantic.action,
-          borderWidth: secondary || danger || inactive ? 1 : 0,
-          borderColor: semantic.borderStrong,
+          borderWidth: 1,
+          borderColor: pressed ? semantic.text : semantic.borderStrong,
           ...(compact ? { minHeight: 44, paddingVertical: 10 } : {}),
           ...(Platform.OS === 'web' && focused
             ? {
@@ -251,10 +251,6 @@ export function Notice({
         : tone === 'warning'
           ? colors.lightAmber
           : colors.lightGreen;
-  useEffect(() => {
-    if (tone === 'error' && typeof children === 'string' && Platform.OS !== 'web')
-      AccessibilityInfo.announceForAccessibility(children);
-  }, [children, tone]);
   return (
     <View
       accessibilityRole={tone === 'error' ? 'alert' : undefined}
@@ -358,24 +354,38 @@ export function DetailSheet({
   onClose,
   children,
   revealTop = false,
+  returnFocusRef,
+  returnFocusId,
 }: {
   visible: boolean;
   title: string;
   onClose: () => void;
   children: React.ReactNode;
   revealTop?: boolean;
+  returnFocusRef?: React.RefObject<React.ElementRef<typeof View> | null>;
+  returnFocusId?: string;
 }) {
-  const { colors, styles } = useDesign(),
+  const { colors, styles, reducedTransparency } = useDesign(),
     closeRef = useRef<React.ElementRef<typeof View>>(null),
     onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
   const scrollRef = useRef<React.ElementRef<typeof ScrollView>>(null);
+  const previousFocus = useRef<HTMLElement | null>(null);
+  const mounted = useRef(true);
+  const openRef = useRef(visible);
+  openRef.current = visible;
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+    };
+  }, []);
   useEffect(() => {
     if (revealTop) scrollRef.current?.scrollTo({ y: 0, animated: false });
   }, [revealTop]);
   useEffect(() => {
     if (!visible) return;
-    const previous = Platform.OS === 'web' ? (document.activeElement as HTMLElement | null) : null;
+    if (Platform.OS === 'web') previousFocus.current = document.activeElement as HTMLElement | null;
     const frame = requestAnimationFrame(() => {
       if (Platform.OS === 'web') {
         const element = closeRef.current as unknown as HTMLElement | null;
@@ -396,7 +406,6 @@ export function DetailSheet({
       cancelAnimationFrame(frame);
       if (Platform.OS === 'web') {
         document.removeEventListener('keydown', keyboard);
-        previous?.focus?.();
       }
     };
   }, [visible]);
@@ -404,8 +413,25 @@ export function DetailSheet({
     <Modal
       visible={visible}
       animationType="none"
-      presentationStyle="pageSheet"
+      presentationStyle={reducedTransparency ? 'fullScreen' : 'pageSheet'}
       onRequestClose={onClose}
+      onDismiss={() => {
+        if (Platform.OS === 'web') {
+          // RN Web removes its active focus trap before onDismiss. Resolve the
+          // current trigger after that lifecycle, including virtualized row reuse.
+          requestAnimationFrame(() => {
+            if (!mounted.current || openRef.current) return;
+            const currentNode = returnFocusId ? document.getElementById(returnFocusId) : null;
+            const requested =
+              currentNode ?? (returnFocusRef?.current as unknown as HTMLElement | null);
+            const target = requested?.isConnected ? requested : previousFocus.current;
+            if (target?.isConnected) target.focus({ preventScroll: true });
+          });
+        } else if (mounted.current && !openRef.current && returnFocusRef?.current) {
+          const handle = findNodeHandle(returnFocusRef.current);
+          if (handle) AccessibilityInfo.setAccessibilityFocus(handle);
+        }
+      }}
     >
       <SafeAreaView
         accessibilityViewIsModal

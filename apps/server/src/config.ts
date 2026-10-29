@@ -44,6 +44,14 @@ const environment = z.object({
   GOOGLE_REDIRECT_URI: optional,
   TRUST_PROXY: z.string().default('false'),
   OPERATOR_TOKEN: optional,
+  PUBLIC_APP_URL: optional,
+  EMAIL_DELIVERY_ENABLED: boolean('false'),
+  SMTP_HOST: optional,
+  SMTP_PORT: z.coerce.number().int().min(1).max(65535).default(587),
+  SMTP_SECURE: boolean('false'),
+  SMTP_USER: optional,
+  SMTP_PASSWORD: optional,
+  SMTP_FROM: optional,
 });
 function proxy(value: string): false | string[] {
   if (value === 'false') return false;
@@ -78,6 +86,7 @@ export function getConfig(raw: NodeJS.ProcessEnv = process.env) {
   for (const [field, value, originOnly] of [
     ['PUBLIC_API_URL', e.PUBLIC_API_URL, true],
     ['GOOGLE_REDIRECT_URI', e.GOOGLE_REDIRECT_URI, false],
+    ['PUBLIC_APP_URL', e.PUBLIC_APP_URL, true],
   ] as const) {
     if (!value) continue;
     let url: URL;
@@ -121,6 +130,26 @@ export function getConfig(raw: NodeJS.ProcessEnv = process.env) {
   }
   if (production && e.OPERATOR_TOKEN && e.OPERATOR_TOKEN.length < 32)
     throw new Error('OPERATOR_TOKEN must contain at least 32 characters.');
+  if (
+    e.SMTP_HOST &&
+    !isIP(e.SMTP_HOST) &&
+    !/^(?=.{1,253}$)[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?$/.test(e.SMTP_HOST)
+  )
+    throw new Error('SMTP_HOST must be an IP address or hostname.');
+  if (e.SMTP_FROM && !z.email().max(254).safeParse(e.SMTP_FROM).success)
+    throw new Error('SMTP_FROM must be a valid sender email address.');
+  if (!!e.SMTP_USER !== !!e.SMTP_PASSWORD)
+    throw new Error('SMTP_USER and SMTP_PASSWORD must be configured together.');
+  if (
+    e.EMAIL_DELIVERY_ENABLED &&
+    (!e.PUBLIC_APP_URL ||
+      !e.SMTP_HOST ||
+      !e.SMTP_FROM ||
+      (production && (!e.SMTP_USER || !e.SMTP_PASSWORD)))
+  )
+    throw new Error(
+      'Enabled email delivery requires PUBLIC_APP_URL, SMTP_HOST, SMTP_FROM and production SMTP credentials.',
+    );
   return {
     production,
     port: e.PORT,
@@ -132,6 +161,14 @@ export function getConfig(raw: NodeJS.ProcessEnv = process.env) {
     legacyEnabled: e.LEGACY_ENABLED,
     trustProxy: proxy(e.TRUST_PROXY),
     operatorToken: e.OPERATOR_TOKEN,
+    publicAppUrl: e.PUBLIC_APP_URL,
+    mailEnabled: e.EMAIL_DELIVERY_ENABLED,
+    smtpHost: e.SMTP_HOST,
+    smtpPort: e.SMTP_PORT,
+    smtpSecure: e.SMTP_SECURE,
+    smtpUser: e.SMTP_USER,
+    smtpPassword: e.SMTP_PASSWORD,
+    mailFrom: e.SMTP_FROM,
     openaiKey: e.OPENAI_API_KEY,
     provider: e.CALL_PROVIDER,
     liveEnabled: e.LIVE_CALLS_ENABLED,
@@ -164,6 +201,14 @@ type OptionalConfig =
   | 'googleRedirectUri'
   | 'trustProxy'
   | 'operatorToken'
-  | 'legacyEnabled';
+  | 'legacyEnabled'
+  | 'publicAppUrl'
+  | 'mailEnabled'
+  | 'smtpHost'
+  | 'smtpPort'
+  | 'smtpSecure'
+  | 'smtpUser'
+  | 'smtpPassword'
+  | 'mailFrom';
 export type Config = Omit<ReturnType<typeof getConfig>, OptionalConfig> &
   Partial<Pick<ReturnType<typeof getConfig>, OptionalConfig>>;

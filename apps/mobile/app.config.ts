@@ -33,13 +33,17 @@ export default ({ config }: ConfigContext): ExpoConfig => {
   }
   return {
     ...config,
+    scheme: ['personal-agent', 'klnk'],
     name: config.name ?? 'Personal Voice Agent',
     slug: config.slug ?? 'personal-voice-agent',
     ...(owner ? { owner } : {}),
     ios: { ...config.ios, bundleIdentifier, infoPlist },
     plugins: [
       ...(config.plugins ?? []).filter(
-        (plugin) => (Array.isArray(plugin) ? plugin[0] : plugin) !== 'expo-audio',
+        (plugin) =>
+          !['expo-audio', 'expo-notifications'].some(
+            (name) => name === (Array.isArray(plugin) ? plugin[0] : plugin),
+          ),
       ),
       [
         'expo-audio',
@@ -48,6 +52,10 @@ export default ({ config }: ConfigContext): ExpoConfig => {
           enableBackgroundRecording: false,
           enableBackgroundPlayback: false,
         },
+      ],
+      [
+        'expo-notifications',
+        { enableRemoteNotifications: false, enableBackgroundRemoteNotifications: false },
       ],
     ],
     extra: {

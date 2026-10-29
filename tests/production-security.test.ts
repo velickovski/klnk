@@ -103,6 +103,6 @@ describe('production safety and shared authenticated rate limits', () => {
           headers: { authorization: 'Bearer test-operator-token-with-32-characters' },
         })
       ).json(),
-    ).toHaveProperty('migrations', 9);
+    ).toHaveProperty('migrations', 11);
   });
 });

@@ -143,6 +143,7 @@ describe('internal calendar authority and durable effects', () => {
       readBy: [a],
     };
     await persist();
+    await calendar.confirmAvailability(b, { confirmedThrough: expiry });
   });
   afterEach(async () => {
     await db.close();
@@ -487,6 +488,7 @@ describe('internal calendar authority and durable effects', () => {
       for (const kind of ['policy', 'connection', 'conversation'] as const)
         for (const row of await store.list(a, kind)) await target.put(row);
       for (const row of await store.list(b, 'policy')) await target.put(row);
+      for (const row of await store.list(b, 'availability')) await target.put(row);
       const event = await persistent.transaction((sql) =>
         new InternalCalendar(persistent!).commit(
           sql,

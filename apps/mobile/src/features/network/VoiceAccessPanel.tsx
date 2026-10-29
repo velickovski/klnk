@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { AppText as Text } from '../../components/primitives';
 import {
   NETWORK_VOICE_TOOLS,
   type ApplicationToolName,
@@ -9,6 +10,8 @@ import { api } from '../../api';
 import { Badge, Button, Card, Notice, useUI } from '../../ui';
 import type { ToolAccess } from '../settings/tool-access';
 import { usePanelTask } from './panel-hooks';
+import { useNetworkQuery, useSessionState } from './data-provider';
+import { formatDateTime } from './format';
 
 export function VoiceAccessPanel({ ownerId }: { ownerId: string }) {
   return <VoiceAccessContent key={ownerId} ownerId={ownerId} />;
@@ -17,8 +20,9 @@ function VoiceAccessContent({ ownerId }: { ownerId: string }) {
   const { styles } = useUI(),
     task = usePanelTask();
   const [access, setAccess] = useState<ToolAccess>(),
-    [policy, setPolicy] = useState<NetworkPolicy>(),
-    [uncertain, setUncertain] = useState(false);
+    [uncertain, setUncertain] = useSessionState(`${ownerId}:voice-access:uncertain`, false);
+  const policyQuery = useNetworkQuery<NetworkPolicy>('/network/policy'),
+    policy = policyQuery.data;
   const check = (access: ToolAccess) => {
     if (access.grant.ownerId !== ownerId || access.externalEffectsEnabled !== false)
       throw new Error(
@@ -29,15 +33,14 @@ function VoiceAccessContent({ ownerId }: { ownerId: string }) {
   const refresh = () =>
     task.run(
       async () => {
-        const [access, policy] = await Promise.all([
+        const [access] = await Promise.all([
           api<ToolAccess>('/tools/access'),
-          api<NetworkPolicy>('/network/policy'),
+          policyQuery.refetch(),
         ]);
-        return { access: check(access), policy };
+        return { access: check(access) };
       },
       (result) => {
         setAccess(result.access);
-        setPolicy(result.policy);
         setUncertain(false);
       },
     );
@@ -99,13 +102,13 @@ function VoiceAccessContent({ ownerId }: { ownerId: string }) {
           <>
             <Badge
               text={`${uncertain ? 'Last confirmed: ' : ''}${enabled ? 'Internal voice permissions on' : activeNames.length ? 'Some internal voice permissions on' : 'Internal voice permissions off'}`}
-              tone={uncertain ? 'amber' : enabled ? 'green' : 'neutral'}
+              tone={uncertain ? 'warning' : enabled ? 'success' : 'neutral'}
             />
             <Text style={styles.small}>
               Server voice runtime: {access.runtimeAvailable ? 'available' : 'unavailable'} ·
               current delegation:{' '}
               {ownPolicyActive ? 'enabled within saved limits' : 'off or expired'}. Saved{' '}
-              {access.grant.updatedAt}.
+              {formatDateTime(access.grant.updatedAt)}.
             </Text>
             {!ownPolicyActive ? (
               <Notice>

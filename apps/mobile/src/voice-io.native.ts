@@ -23,6 +23,7 @@ export function useVoiceIO(options: VoiceIOOptions): VoiceIO {
   const current = useRef(options);
   current.current = options;
   const active = useRef(false),
+    observedRecording = useRef(false),
     starting = useRef(false),
     mounted = useRef(true),
     generation = useRef(0),
@@ -125,6 +126,7 @@ export function useVoiceIO(options: VoiceIOOptions): VoiceIO {
         return;
       }
       recorder.record();
+      observedRecording.current = false;
       active.current = true;
       meter.current = { startedAtMs: 0 };
       setListening(true);
@@ -175,7 +177,27 @@ export function useVoiceIO(options: VoiceIOOptions): VoiceIO {
     }
   };
   useEffect(() => {
-    if (!active.current || !recorderState.isRecording || !meter.current) return;
+    if (!active.current) {
+      observedRecording.current = false;
+      return;
+    }
+    if (!recorderState.isRecording) {
+      if (observedRecording.current)
+        void cancel()
+          .then(() =>
+            current.current.onError(
+              'Recording was interrupted and discarded. Start again when you are ready.',
+            ),
+          )
+          .catch(() =>
+            current.current.onError(
+              'Recording was interrupted. Check microphone access before starting again.',
+            ),
+          );
+      return;
+    }
+    observedRecording.current = true;
+    if (!meter.current) return;
     const decision = advanceTurnMeter(
       meter.current,
       recorderState.durationMillis,

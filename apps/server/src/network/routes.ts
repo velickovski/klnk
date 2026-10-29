@@ -5,6 +5,10 @@ import {
   NetworkMemoryInputSchema,
   NetworkRequestInputSchema,
   NetworkDecisionSchema,
+  NetworkAnswerInputSchema,
+  NetworkCounterproposalInputSchema,
+  NetworkBusyInputSchema,
+  NetworkAvailabilityInputSchema,
 } from '../../../../packages/domain/src/network.js';
 import { NetworkCoordinator } from './coordination.js';
 import { InternalCalendar } from './calendar.js';
@@ -116,6 +120,8 @@ export function registerNetworkRoutes(
               'accept',
               'decline',
               'block',
+              'unblock',
+              'remove',
               'mute',
               'unmute',
               'allow_inbound',
@@ -177,6 +183,14 @@ export function registerNetworkRoutes(
   app.post('/network/conversations/:id/decision', (req) =>
     run(req, (o) => coordinator.decision(o, rid(req), NetworkDecisionSchema.parse(req.body))),
   );
+  app.post('/network/conversations/:id/answer', (req) =>
+    run(req, (o) => coordinator.answer(o, rid(req), NetworkAnswerInputSchema.parse(req.body))),
+  );
+  app.post('/network/conversations/:id/counterproposal', (req) =>
+    run(req, (o) =>
+      coordinator.counterpropose(o, rid(req), NetworkCounterproposalInputSchema.parse(req.body)),
+    ),
+  );
   app.post('/network/conversations/:id/control', (req) =>
     run(req, (o) =>
       coordinator.control(
@@ -193,6 +207,25 @@ export function registerNetworkRoutes(
     run(req, (o) => coordinator.markRead(o, rid(req))),
   );
   app.get('/network/calendar', (req) => run(req, (o) => calendar.list(o)));
+  app.post('/network/calendar/busy', (req) =>
+    run(req, (o) => calendar.saveBusy(o, NetworkBusyInputSchema.parse(req.body))),
+  );
+  app.delete('/network/calendar/busy/:id', (req) =>
+    run(req, (o) =>
+      calendar
+        .deleteBusy(
+          o,
+          rid(req),
+          z.object({ version: z.number().int().positive() }).strict().parse(req.body).version,
+        )
+        .then(() => ({ ok: true })),
+    ),
+  );
+  app.put('/network/calendar/availability', (req) =>
+    run(req, (o) =>
+      calendar.confirmAvailability(o, NetworkAvailabilityInputSchema.parse(req.body)),
+    ),
+  );
   app.post('/network/calendar/:id/cancel', (req) =>
     run(req, (o) =>
       calendar.cancel(

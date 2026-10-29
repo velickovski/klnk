@@ -614,7 +614,7 @@ describe('local voice demo HTTP boundary', () => {
     expect(fetcher).not.toHaveBeenCalled();
   });
 
-  it('allows configured loopback Expo origins, while rejecting missing and untrusted origins', async () => {
+  it('allows configured Expo origins and authenticated native requests without an Origin, while rejecting untrusted browser origins', async () => {
     const headers = {
       ...localHeaders,
       authorization: `Bearer ${token}`,
@@ -636,7 +636,7 @@ describe('local voice demo HTTP boundary', () => {
           headers: { host: localHeaders.host, authorization: `Bearer ${token}` },
         })
       ).statusCode,
-    ).toBe(403);
+    ).toBe(404);
     expect(
       (
         await service.app.inject({
@@ -646,7 +646,7 @@ describe('local voice demo HTTP boundary', () => {
       ).statusCode,
     ).toBe(403);
   });
-  it('protects durable request recovery with authentication, ownership and the existing local boundary', async () => {
+  it('protects durable request recovery with authentication and ownership beyond loopback', async () => {
     const requestId = randomUUID(),
       headers = { ...localHeaders, authorization: `Bearer ${token}` };
     expect(
@@ -664,29 +664,65 @@ describe('local voice demo HTTP boundary', () => {
       (
         await service.app.inject({
           url: `/voice/live/requests/${requestId}`,
-          headers,
+          headers: { ...headers, origin: 'http://localhost:8081' },
           remoteAddress: '192.168.1.8',
         })
       ).statusCode,
-    ).toBe(403);
+    ).toBe(404);
   });
 
-  it('disables public demo routes and session creation in production or when demos are disabled', async () => {
-    service.config.production = true;
-    expect(
-      (await service.app.inject({ url: '/demo/status', headers: localHeaders })).statusCode,
-    ).toBe(404);
-    expect((await service.app.inject({ url: '/demo', headers: localHeaders })).statusCode).toBe(
-      404,
-    );
-    service.config.production = false;
+  it('disables public demo routes without disabling authenticated product voice when demo mode is off', async () => {
+    const db = await openTestDatabase({ dataDir: 'memory://' });
+    const production = await createApp({
+      db,
+      worker: false,
+      config: {
+        ...config(),
+        production: true,
+        demoEnabled: false,
+        openaiKey: undefined,
+        origins: ['https://app.example.invalid'],
+        trustProxy: ['127.0.0.1'],
+      },
+    });
+    try {
+      const secureHeaders = {
+        host: 'api.example.invalid',
+        origin: 'https://app.example.invalid',
+        'x-forwarded-proto': 'https',
+      };
+      expect(
+        (
+          await production.app.inject({
+            url: '/demo/status',
+            remoteAddress: '127.0.0.1',
+            headers: secureHeaders,
+          })
+        ).statusCode,
+      ).toBe(404);
+      expect(
+        (
+          await production.app.inject({
+            url: '/demo',
+            remoteAddress: '127.0.0.1',
+            headers: secureHeaders,
+          })
+        ).statusCode,
+      ).toBe(404);
+      const plaintext = await production.app.inject({ url: '/demo/status', headers: localHeaders });
+      expect(plaintext.statusCode).toBe(403);
+      expect(plaintext.json().error).toBe('https_required');
+    } finally {
+      await production.app.close();
+      await db.close();
+    }
     service.config.demoEnabled = false;
     expect(
       (await service.app.inject({ url: '/demo/status', headers: localHeaders })).statusCode,
     ).toBe(404);
     await expect(
       service.openaiLive.create('alice', { sdp, requestId: randomUUID() }),
-    ).rejects.toMatchObject({ statusCode: 404 });
+    ).rejects.toMatchObject({ statusCode: 503 });
     expect(fetcher).not.toHaveBeenCalled();
     service.config.demoEnabled = true;
   });

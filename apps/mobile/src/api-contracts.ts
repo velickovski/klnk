@@ -11,6 +11,9 @@ import {
   NetworkReminderSchema,
   NetworkPreferencesSchema,
   OwnerIntentResultSchema,
+  NetworkBusySchema,
+  NetworkAvailabilitySchema,
+  NetworkVoiceTurnResultSchema,
 } from '@personal-agent/domain';
 import {
   ProfileSchema,
@@ -23,6 +26,10 @@ import {
   OutcomeSchema,
   TranscriptEntrySchema,
   ApplicationToolNameSchema,
+  AccountStatusSchema,
+  AccountRequestResultSchema,
+  AccountMutationResultSchema,
+  AccountReauthenticationSchema,
   ToolTraceSchema,
 } from '@personal-agent/domain';
 
@@ -149,6 +156,20 @@ export function validateApiPayload(path: string, method: string, payload: unknow
   let schema: z.ZodType = object;
   if (route === '/health') schema = HealthSchema;
   else if (route === '/network/identity') schema = NetworkIdentitySchema;
+  else if (route === '/network/voice/turn' || /^\/network\/voice\/turns\/[^/]+$/.test(route))
+    schema = NetworkVoiceTurnResultSchema;
+  else if (route === '/network/voice/status')
+    schema = z
+      .object({
+        available: z.boolean(),
+        recordedTurns: z.literal(true),
+        speechSource: z.literal('device'),
+        nativeLiveAvailable: z.literal(false),
+        maxCaptureSeconds: z.number().int().positive(),
+        maxAudioBytes: z.number().int().positive(),
+        maxTurnsPerDay: z.number().int().positive(),
+      })
+      .strict();
   else if (route === '/network/owner-intents' || route.startsWith('/network/owner-intents/'))
     schema = OwnerIntentResultSchema;
   else if (route === '/network/preferences') schema = NetworkPreferencesSchema;
@@ -182,15 +203,35 @@ export function validateApiPayload(path: string, method: string, payload: unknow
     schema = method === 'GET' ? NetworkInboxSchema : NetworkConversationSchema;
   else if (route.startsWith('/network/conversations/')) schema = NetworkConversationSchema;
   else if (route === '/network/calendar') schema = NetworkCalendarSchema;
+  else if (route === '/network/calendar/busy') schema = NetworkBusySchema;
+  else if (/^\/network\/calendar\/busy\/[^/]+$/.test(route)) schema = ok;
+  else if (route === '/network/calendar/availability') schema = NetworkAvailabilitySchema;
   else if (/^\/network\/calendar\/[^/]+\/cancel$/.test(route)) schema = NetworkEventSchema;
   else if (/^\/network\/reminders\/[^/]+\/dismiss$/.test(route)) schema = NetworkReminderSchema;
-  else if (route === '/demo/status')
+  else if (route === '/demo/status' || route === '/voice/live/status')
     schema = z.object({
       configured: z.boolean(),
       model: text,
       voice: text,
       startupUnconfirmed: z.boolean().optional(),
     });
+  else if (route === '/account/status') schema = AccountStatusSchema;
+  else if (
+    [
+      '/auth/register',
+      '/auth/reset-request',
+      '/account/email',
+      '/account/resend-verification',
+    ].includes(route)
+  )
+    schema = AccountRequestResultSchema;
+  else if (
+    ['/auth/verify-email', '/auth/reset', '/account/password', '/account/sign-out-all'].includes(
+      route,
+    )
+  )
+    schema = AccountMutationResultSchema;
+  else if (route === '/account/reauth') schema = AccountReauthenticationSchema;
   else if (route.startsWith('/auth/'))
     schema = z.object({
       token: text.max(4096).regex(/^\S+$/),

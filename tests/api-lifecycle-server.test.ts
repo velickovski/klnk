@@ -66,10 +66,17 @@ describe('NET-01 actual local server response contracts', () => {
     return body;
   }
   it('accepts fresh-account bootstrap templates before any contact exists', async () => {
-    const auth = await checked('/auth/register', 'POST', undefined, {
+    const credentials = {
       name: 'Fictional Owner',
       email: 'platform-wire@example.invalid',
       password: 'A fictional test password only',
+    };
+    const pending = await checked('/auth/register', 'POST', undefined, credentials);
+    expect(pending).toMatchObject({ accepted: true, status: 'pending' });
+    expect(pending).not.toHaveProperty('token');
+    const auth = await checked('/auth/login', 'POST', undefined, {
+      email: credentials.email,
+      password: credentials.password,
     });
     const data = await checked('/bootstrap', 'GET', auth.token);
     expect(data.contacts).toEqual([]);

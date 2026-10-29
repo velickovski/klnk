@@ -1,21 +1,47 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { Text, View } from 'react-native';
+import React, { useEffect } from 'react';
+import { View } from 'react-native';
+import { AppText as Text } from '../../components/primitives';
 import type { OwnerIntentResult } from '@personal-agent/domain';
 import { Badge, Button, Card, Disclosure, Field, Notice, useUI } from '../../ui';
-import { networkApi } from './api';
+import { useNetworkClient, useNetworkQuery, useSessionRef, useSessionState } from './data-provider';
+import { formatDateTime } from './format';
 import { usePanelTask } from './panel-hooks';
 import { requestId } from './panel-state';
 
 export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
   const { styles } = useUI(),
     task = usePanelTask(),
-    [text, setText] = useState(''),
-    [result, setResult] = useState<OwnerIntentResult>();
-  const pending = useRef<{ commandId: string; text: string } | undefined>(undefined),
-    [uncertain, setUncertain] = useState(false);
+    networkApi = useNetworkClient(),
+    [text, setText] = useSessionState(`${ownerId}:intent:text`, ''),
+    [result, setResult] = useSessionState<OwnerIntentResult | undefined>(
+      `${ownerId}:intent:result`,
+      undefined,
+    );
+  const pending = useSessionRef<{ commandId: string; text: string } | undefined>(
+      `${ownerId}:intent:pending`,
+      () => undefined,
+    ),
+    [uncertain, setUncertain] = useSessionState(`${ownerId}:intent:uncertain`, false);
+  const receiptQuery = useNetworkQuery<OwnerIntentResult>(
+    pending.current ? `/network/owner-intents/${pending.current.commandId}` : undefined,
+  );
   const adopt = (next: OwnerIntentResult) => {
     setResult(next);
     setUncertain(false);
+  };
+  useEffect(() => {
+    if (receiptQuery.data) adopt(receiptQuery.data);
+  }, [receiptQuery.data]);
+  const submit = async (command: { commandId: string; text: string }) => {
+    const next = await networkApi.request<OwnerIntentResult>(
+      '/network/owner-intents',
+      'POST',
+      command,
+    );
+    // These setters update session-owned RAM, so a result also survives leaving
+    // the panel while the request is in flight. Never mint another nonce on return.
+    adopt(next);
+    return next;
   };
   const send = () => {
     if (!text.trim() || task.busy || uncertain) return;
@@ -29,7 +55,7 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
     pending.current = command;
     setUncertain(true);
     void task.run(
-      () => networkApi.request<OwnerIntentResult>('/network/owner-intents', 'POST', command),
+      () => submit(command),
       adopt,
       'The response is unconfirmed. Check this same instruction before retrying. ',
     );
@@ -39,7 +65,7 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
     if (!command || task.busy) return;
     setUncertain(true);
     void task.run(
-      () => networkApi.request<OwnerIntentResult>('/network/owner-intents', 'POST', command),
+      () => submit(command),
       adopt,
       'The same instruction remains unconfirmed. No new identifier was created. ',
     );
@@ -48,19 +74,14 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
     if (pending.current)
       void task.run(
         () =>
-          networkApi.request<OwnerIntentResult>(
+          networkApi.read<OwnerIntentResult>(
             `/network/owner-intents/${pending.current!.commandId}`,
+            true,
           ),
         adopt,
         'Readback failed. Keep this instruction; no new model request was started. ',
       );
   };
-  useEffect(() => {
-    setText('');
-    setResult(undefined);
-    setUncertain(false);
-    pending.current = undefined;
-  }, [ownerId]);
   return (
     <Card>
       <Text accessibilityRole="header" style={styles.h2}>
@@ -121,7 +142,7 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
                         ? 'Could not prepare this instruction'
                         : 'Clarification needed'
             }
-            tone={['failed', 'uncertain'].includes(result.status) ? 'amber' : 'neutral'}
+            tone={['failed', 'uncertain'].includes(result.status) ? 'warning' : 'neutral'}
           />
           {result.clarification ? <Notice>{result.clarification}</Notice> : null}
           {result.conversation ? (
@@ -154,15 +175,16 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
                 <Text style={styles.text}>{result.plan.message}</Text>
                 {result.plan.candidateSlots.map((slot) => (
                   <Text key={slot.startAt} style={styles.text}>
-                    {slot.startAt} – {slot.endAt}
+                    {formatDateTime(slot.startAt, slot.timezone)} –{' '}
+                    {formatDateTime(slot.endAt, slot.timezone)}
                     {'\n'}
                     {slot.timezone}
                   </Text>
                 ))}
                 <Text style={styles.small}>
                   Location: {result.plan.location || 'Not specified'}. Deadline:{' '}
-                  {result.plan.expiresAt}. Confirming submits these exact terms; the other owner’s
-                  authority and calendar are checked separately.
+                  {formatDateTime(result.plan.expiresAt)}. Confirming submits these exact terms; the
+                  other owner’s authority and calendar are checked separately.
                 </Text>
               </View>
             </Disclosure>
@@ -204,7 +226,9 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
           ) : null}
         </View>
       ) : null}
-      {task.error ? <Notice tone="error">{task.error}</Notice> : null}
+      {task.error || receiptQuery.error ? (
+        <Notice tone="error">{task.error || receiptQuery.error}</Notice>
+      ) : null}
       <Text style={styles.small}>
         For natural-language planning, OpenAI receives this instruction, your limited delegation
         settings and accepted member identifiers. It receives no other member’s private rules,

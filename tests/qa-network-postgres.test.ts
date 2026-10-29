@@ -78,7 +78,8 @@ describe.skipIf(!connectionFile)(
         [a, b],
         [b, a],
       ]) {
-        const { ownerId, version, updatedAt, ...old } = await coordinator.policy(owner);
+        const { ownerId, version, updatedAt, authorityVersions, ...old } =
+          await coordinator.policy(owner);
         await coordinator.savePolicy(
           owner,
           {
@@ -96,6 +97,9 @@ describe.skipIf(!connectionFile)(
           },
           version,
         );
+        await calendar.confirmAvailability(owner, {
+          confirmedThrough: new Date(Date.now() + 7 * 86400000).toISOString(),
+        });
       }
       const input = (kind: NetworkRequestInput['kind'] = 'meeting'): NetworkRequestInput => ({
         requestId: randomUUID(),
@@ -247,7 +251,8 @@ describe.skipIf(!connectionFile)(
         [f.a, [f.b, third]],
         [third, [f.a]],
       ] as const) {
-        const { ownerId, version, updatedAt, ...old } = await f.coordinator.policy(owner);
+        const { ownerId, version, updatedAt, authorityVersions, ...old } =
+          await f.coordinator.policy(owner);
         await f.coordinator.savePolicy(
           owner,
           {
@@ -264,6 +269,9 @@ describe.skipIf(!connectionFile)(
           },
           version,
         );
+        await f.calendar.confirmAvailability(owner, {
+          confirmedThrough: new Date(Date.now() + 7 * 86400000).toISOString(),
+        });
       }
       const input = f.input(),
         first = await f.coordinator.submit(f.a, input),
@@ -283,6 +291,70 @@ describe.skipIf(!connectionFile)(
       expect(
         (await f.calendar.list(f.b)).events.length + (await f.calendar.list(third)).events.length,
       ).toBe(1);
+    });
+    it('a separate worker sees a manual busy block committed while it waits for owner locks', async () => {
+      const f = await fixture(),
+        input = f.input(),
+        c = await f.coordinator.submit(f.a, input);
+      const [heldOwner, busyOwner] = [f.a, f.b].sort();
+      const blocker = await admin.connect();
+      const worker = task(f.schema);
+      try {
+        await blocker.query('BEGIN');
+        await blocker.query(`SELECT id FROM "${f.schema}".users WHERE id=$1 FOR UPDATE`, [
+          heldOwner,
+        ]);
+        await worker.ready;
+        worker.continue();
+        await expect
+          .poll(
+            async () =>
+              (
+                await admin.query(
+                  "SELECT count(*)::int AS n FROM pg_stat_activity WHERE application_name=$1 AND wait_event_type='Lock'",
+                  [`network_child_${f.schema}`],
+                )
+              ).rows[0].n,
+            { timeout: 10000, interval: 20 },
+          )
+          .toBeGreaterThan(0);
+        await f.calendar.saveBusy(busyOwner, {
+          slot: input.candidateSlots[0],
+          label: 'Private actual-PG fixture block',
+        });
+        await blocker.query('COMMIT');
+        expect(await worker.done).toMatchObject({ ok: true });
+        expect((await f.coordinator.detail(f.a, c.id)).state).toBe('unresolved');
+        expect((await f.calendar.list(f.a)).events).toEqual([]);
+        expect((await f.calendar.list(heldOwner)).busyBlocks).toEqual([]);
+      } finally {
+        await blocker.query('ROLLBACK');
+        blocker.release();
+      }
+    });
+    it('two independent PostgreSQL transactions cannot publish different personal answers for the same question version', async () => {
+      const f = await fixture(),
+        c = await f.coordinator.submit(f.a, f.input('ask'));
+      await f.coordinator.tick();
+      const pending = await f.coordinator.detail(f.b, c.id),
+        other = new NetworkCoordinator(f.db, new InternalCalendar(f.db));
+      const results = await Promise.allSettled([
+        f.coordinator.answer(f.b, c.id, {
+          version: pending.version,
+          answer: 'Fictional answer one.',
+        }),
+        other.answer(f.b, c.id, { version: pending.version, answer: 'Fictional answer two.' }),
+      ]);
+      expect(results.filter((result) => result.status === 'fulfilled')).toHaveLength(1);
+      expect(results.filter((result) => result.status === 'rejected')).toHaveLength(1);
+      const result = await f.coordinator.detail(f.a, c.id);
+      expect(result.state).toBe('answered');
+      expect(
+        result.messages.filter(
+          (message) =>
+            message.role === 'owner' && message.actorId === f.b && message.kind === 'inform',
+        ),
+      ).toHaveLength(1);
     });
     it('process death after uncommitted event/reminder writes rolls back; restart commits exactly once', async () => {
       const f = await fixture(),
@@ -305,7 +377,7 @@ describe.skipIf(!connectionFile)(
       expect((await f.coordinator.detail(f.a, c.id)).state).toBe('agreed');
       expect(await counts(f.db)).toMatchObject({ event: 1, reminder: 2, outbox: 2 });
     });
-    it('a blocked worker rereads revoked policy after its database owner lock becomes available', async () => {
+    it('a blocked worker rereads an explicit message opt-out after its database owner lock becomes available', async () => {
       const f = await fixture(),
         c = await f.coordinator.submit(f.a, f.input('inform')),
         worker = task(f.schema);
@@ -329,7 +401,12 @@ describe.skipIf(!connectionFile)(
           ...record,
           status: 'disabled',
           version: record.version + 1,
-          value: { ...record.value, enabled: false, version: record.version + 1 },
+          value: {
+            ...record.value,
+            enabled: false,
+            allowMessages: false,
+            version: record.version + 1,
+          },
         });
       });
       expect((await worker.done).ok).toBe(true);

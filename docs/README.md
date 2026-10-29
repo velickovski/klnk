@@ -1,6 +1,6 @@
 # klnk documentation
 
-The application is implemented; the new visual direction is specified separately under `design/`. Start with the relevant group rather than reading every file on every task.
+Start with the [current review status](review/2026-10-28/STATUS.md), [architecture](ARCHITECTURE.md), [API](API.md), [capabilities](CAPABILITIES.md) and [compiled operations guide](OPERATIONS.md). The earlier design/production prompts and test archives describe historical candidates; they do not establish current release readiness. Retained telephone documentation is under [legacy](legacy/architecture-telephone.md).
 
 | Purpose | Documents |
 | --- | --- |

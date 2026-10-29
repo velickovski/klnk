@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import {
   NetworkAcceptanceSchema,
   NetworkConnectionSchema,
@@ -7,6 +7,12 @@ import {
   NetworkPolicySchema,
   NetworkProposalSchema,
   NetworkSlotSchema,
+  NetworkBusyInputSchema,
+  NetworkBusySchema,
+  NetworkAvailabilityInputSchema,
+  NetworkAvailabilitySchema,
+  type NetworkBusy,
+  type NetworkAvailability,
   type NetworkAcceptance,
   type NetworkConnection,
   type NetworkConversation,
@@ -23,6 +29,7 @@ import {
   canonicalProposalHash,
   meetingRuleAllows,
   networkReceiptId,
+  policyAuthorityVersion,
 } from './policy.js';
 import { lockNetworkOwners, NetworkStore, type NetworkRecord } from './store.js';
 import { networkPreferences } from './preferences.js';
@@ -70,6 +77,104 @@ function sameAcceptances(a: NetworkAcceptance[], b: NetworkAcceptance[]) {
 export class InternalCalendar {
   constructor(private db: Database) {}
 
+  async saveBusy(
+    owner: string,
+    input: unknown,
+    id: string = randomUUID(),
+    expectedVersion?: number,
+  ): Promise<NetworkBusy> {
+    const parsed = NetworkBusyInputSchema.parse(input);
+    if (Date.parse(parsed.slot.endAt) <= Date.now())
+      conflict('network_busy_expired', 'Choose a busy block that has not ended.');
+    return this.db.transaction(async (sql) => {
+      await lockNetworkOwners(sql, [owner]);
+      const store = new NetworkStore(this.db, sql),
+        old = await store.get<NetworkBusy>('busy', id);
+      if (old && (old.ownerA !== owner || old.ownerB)) notFound();
+      if (old && old.version !== expectedVersion)
+        conflict('network_busy_changed', 'The busy block changed. Refresh before editing.');
+      if (!old && expectedVersion !== undefined) notFound();
+      const at = new Date().toISOString();
+      const value: NetworkBusy = {
+        ...parsed,
+        id,
+        ownerId: owner,
+        version: (old?.version ?? 0) + 1,
+        createdAt: old?.value.createdAt ?? at,
+        updatedAt: at,
+      };
+      await store.put({
+        id,
+        kind: 'busy',
+        ownerA: owner,
+        status: 'active',
+        version: value.version,
+        value,
+      });
+      return value;
+    });
+  }
+
+  async deleteBusy(owner: string, id: string, expectedVersion: number) {
+    return this.db.transaction(async (sql) => {
+      await lockNetworkOwners(sql, [owner]);
+      const store = new NetworkStore(this.db, sql),
+        old = await store.get<NetworkBusy>('busy', id);
+      if (!old || old.ownerA !== owner || old.ownerB) notFound();
+      if (old.version !== expectedVersion)
+        conflict('network_busy_changed', 'The busy block changed. Refresh before removing it.');
+      await store.remove('busy', id);
+      return { ok: true as const };
+    });
+  }
+
+  async confirmAvailability(owner: string, input: unknown): Promise<NetworkAvailability> {
+    const parsed = NetworkAvailabilityInputSchema.parse(input),
+      through = Date.parse(parsed.confirmedThrough);
+    if (through <= Date.now() || through > Date.now() + 30 * 86400000)
+      conflict(
+        'network_availability_range',
+        'Confirm your maintained manual calendar for up to thirty days.',
+      );
+    return this.db.transaction(async (sql) => {
+      await lockNetworkOwners(sql, [owner]);
+      const store = new NetworkStore(this.db, sql),
+        id = stableId(`availability:${owner}`),
+        old = await store.get<NetworkAvailability>('availability', id);
+      const value: NetworkAvailability = {
+        ownerId: owner,
+        source: 'manual',
+        confirmedThrough: parsed.confirmedThrough,
+        updatedAt: new Date().toISOString(),
+      };
+      await store.put({
+        id,
+        kind: 'availability',
+        ownerA: owner,
+        status: 'confirmed',
+        version: (old?.version ?? 0) + 1,
+        value,
+      });
+      return value;
+    });
+  }
+
+  /** A source is an explicit owner acknowledgement, never inferred from an
+   * empty calendar. Peers receive neither its details nor private busy blocks. */
+  async hasAvailability(sql: SQL, owner: string, slot: NetworkTerms['slot']) {
+    const record = await new NetworkStore(this.db, sql).get<NetworkAvailability>(
+      'availability',
+      stableId(`availability:${owner}`),
+    );
+    if (!record || record.ownerA !== owner || record.ownerB) return false;
+    const value = NetworkAvailabilitySchema.parse(record.value);
+    return (
+      value.ownerId === owner &&
+      Date.parse(value.confirmedThrough) > Date.now() &&
+      Date.parse(value.confirmedThrough) >= Date.parse(slot.endAt)
+    );
+  }
+
   /** A read of current conflicts, not a reservation. Commit repeats it under owner row locks. */
   async available(
     sql: SQL,
@@ -81,6 +186,16 @@ export class InternalCalendar {
       store = new NetworkStore(this.db, sql),
       seen = new Set<string>();
     for (const owner of [...new Set(ownerIds)].sort()) {
+      for (const record of await store.list<NetworkBusy>(owner, 'busy')) {
+        if (record.ownerA !== owner || record.ownerB) continue;
+        const block = NetworkBusySchema.parse(record.value);
+        if (
+          block.ownerId === owner &&
+          Date.parse(block.slot.startAt) < Date.parse(slot.endAt) &&
+          Date.parse(block.slot.endAt) > Date.parse(slot.startAt)
+        )
+          return false;
+      }
       for (const record of await store.list<NetworkEvent>(owner, 'event')) {
         if (seen.has(record.id) || record.id === excludingEventId) continue;
         seen.add(record.id);
@@ -200,7 +315,8 @@ export class InternalCalendar {
       proposal.terms.purpose !== current.request.purpose ||
       proposal.terms.topic !== current.request.topic ||
       proposal.terms.location !== current.request.location ||
-      !current.request.candidateSlots.some((slot) => sameSlot(slot, proposal.terms.slot))
+      (!current.request.candidateSlots.some((slot) => sameSlot(slot, proposal.terms.slot)) &&
+        !acceptances.every((acceptance) => acceptance.source === 'owner_approval'))
     )
       conflict(
         'network_terms_out_of_scope',
@@ -215,7 +331,9 @@ export class InternalCalendar {
         !acceptance ||
         acceptance.proposalHash !== proposal.hash ||
         acceptance.proposalVersion !== proposal.version ||
-        acceptance.policyVersion !== policy.version ||
+        (acceptance.authorityVersion !== undefined
+          ? acceptance.authorityVersion !== policyAuthorityVersion(policy, 'meeting')
+          : acceptance.policyVersion !== policy.version) ||
         Date.parse(acceptance.at) > now ||
         Date.parse(acceptance.at) < Date.parse(current.createdAt) ||
         Date.parse(acceptance.at) >= Date.parse(proposal.expiresAt)
@@ -233,7 +351,8 @@ export class InternalCalendar {
       // Routine windows constrain delegated acceptance. The original exact request or an exact owner receipt is separate consent.
       if (
         acceptance.source === 'delegation_rule' &&
-        !meetingRuleAllows(policy, peer, proposal.terms.topic, proposal.terms.slot, now)
+        (!meetingRuleAllows(policy, peer, proposal.terms.topic, proposal.terms.slot, now) ||
+          !(await this.hasAvailability(sql, owner, proposal.terms.slot)))
       )
         conflict(
           'network_schedule_denied',
@@ -247,6 +366,7 @@ export class InternalCalendar {
           proposalHash: string;
           proposalVersion: number;
           policyVersion: number;
+          authorityVersion?: number;
           at: string;
         }>('receipt', networkReceiptId(current.id, owner, proposal.hash));
         const expected = {
@@ -255,7 +375,10 @@ export class InternalCalendar {
           conversationId: current.id,
           proposalHash: proposal.hash,
           proposalVersion: proposal.version,
-          policyVersion: policy.version,
+          policyVersion: acceptance.policyVersion,
+          ...(acceptance.authorityVersion === undefined
+            ? {}
+            : { authorityVersion: acceptance.authorityVersion }),
           at: acceptance.at,
         };
         if (
@@ -328,6 +451,7 @@ export class InternalCalendar {
       const events = (await store.list<NetworkEvent>(owner, 'event'))
         .map((record) => record.value)
         .filter((event) => event.terms.participants.includes(owner))
+        .map((event) => this.projectEvent(event, owner))
         .sort((a, b) => Date.parse(a.terms.slot.startAt) - Date.parse(b.terms.slot.startAt));
       const eventIds = new Set(events.map((event) => event.id));
       const reminders = (await store.list<NetworkReminder>(owner, 'reminder'))
@@ -346,7 +470,20 @@ export class InternalCalendar {
               : value.status,
         }))
         .sort((a, b) => Date.parse(a.dueAt) - Date.parse(b.dueAt));
-      return { events, reminders, scope: 'klnk_only' as const };
+      const busyBlocks = (await store.list<NetworkBusy>(owner, 'busy'))
+        .filter(
+          (record) => record.ownerA === owner && !record.ownerB && record.value.ownerId === owner,
+        )
+        .map((record) => NetworkBusySchema.parse(record.value));
+      const source = await store.get<NetworkAvailability>(
+        'availability',
+        stableId(`availability:${owner}`),
+      );
+      const availability =
+        source?.ownerA === owner && !source.ownerB
+          ? NetworkAvailabilitySchema.parse(source.value)
+          : null;
+      return { events, reminders, busyBlocks, availability, scope: 'klnk_only' as const };
     });
   }
 
@@ -368,7 +505,7 @@ export class InternalCalendar {
       const event = NetworkEventSchema.parse(record.value);
       if (!Number.isInteger(revision) || revision !== event.revision)
         conflict('network_event_changed', 'The meeting changed. Refresh before cancelling.');
-      if (event.status === 'cancelled') return event;
+      if (event.status === 'cancelled') return this.projectEvent(event, owner);
       const at = new Date().toISOString(),
         cancelled: NetworkEvent = {
           ...event,
@@ -431,7 +568,7 @@ export class InternalCalendar {
         ],
       };
       await store.put({ ...conversation, status: value.state, version: value.version, value });
-      return cancelled;
+      return this.projectEvent(cancelled, owner);
     });
   }
 
@@ -458,11 +595,19 @@ export class InternalCalendar {
   ) {
     const id = stableId(`outbox:${event.id}:${ownerId}:${kind}:${event.revision}`);
     const preferences = await networkPreferences(store, ownerId);
+    const conversation = await store.get<NetworkConversation>('conversation', event.conversationId);
+    const connection = conversation
+      ? await store.get<NetworkConnection>('connection', conversation.value.connectionId)
+      : undefined;
     await store.put({
       id,
       kind: 'outbox',
       ownerA: ownerId,
-      status: preferences.notificationMode === 'decisions_results' ? 'pending' : 'silent',
+      status:
+        preferences.notificationMode === 'decisions_results' &&
+        !connection?.value.mutedBy.includes(ownerId)
+          ? 'pending'
+          : 'silent',
       version: 1,
       value: {
         id,
@@ -474,5 +619,16 @@ export class InternalCalendar {
         at,
       },
     });
+  }
+
+  private projectEvent(event: NetworkEvent, owner: string): NetworkEvent {
+    return {
+      ...event,
+      acceptances: event.acceptances.map((acceptance) => {
+        if (acceptance.ownerId === owner) return acceptance;
+        const { authorityVersion, ...sharedProof } = acceptance;
+        return sharedProof;
+      }),
+    };
   }
 }

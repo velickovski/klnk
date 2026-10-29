@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { typeRoles, type UIColors } from './tokens';
+import { radii, typeRoles, type UIColors } from './tokens';
 export function createUIStyles(colors: UIColors, inset = 24) {
   return StyleSheet.create({
     page: { padding: inset, gap: 24, paddingBottom: 40 },
@@ -20,7 +20,7 @@ export function createUIStyles(colors: UIColors, inset = 24) {
     h3: { ...typeRoles.action, color: colors.ink },
     card: {
       backgroundColor: colors.white,
-      borderRadius: 24,
+      borderRadius: radii.group,
       padding: 20,
       borderWidth: 1,
       borderColor: colors.line,

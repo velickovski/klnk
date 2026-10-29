@@ -167,6 +167,7 @@ export class LiveSessionStore {
   async reserve(
     ownerId: string,
     requestId: string,
+    authSessionHash?: string,
   ): Promise<{ receipt: LiveReceipt; created: boolean }> {
     z.uuid().parse(requestId);
     return this.db.transaction(async (sql) => {
@@ -176,6 +177,16 @@ export class LiveSessionStore {
       ]);
       if (!owner || owner.deleted_at)
         throw new HttpError(401, 'unauthorized', 'Sign in to continue.');
+      if (
+        authSessionHash &&
+        !(
+          await sql.query(
+            'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp() AND last_used_at>clock_timestamp()-make_interval(mins=>30) FOR UPDATE',
+            [ownerId, authSessionHash],
+          )
+        ).length
+      )
+        throw new HttpError(401, 'unauthorized', 'Sign in again before starting voice.');
       const [existing] = await sql.query(
         'SELECT * FROM live_sessions WHERE owner_id=$1 AND request_id=$2',
         [ownerId, requestId],

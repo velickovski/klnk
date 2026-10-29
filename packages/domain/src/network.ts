@@ -51,11 +51,16 @@ export type NetworkPolicy = NetworkPolicyInput & {
   ownerId: string;
   version: number;
   updatedAt: string;
+  authorityVersions?: { ask: number; meeting: number };
 };
 export const NetworkPolicySchema = NetworkPolicyInputSchema.safeExtend({
   ownerId: id,
   version: z.number().int().positive(),
   updatedAt: instant,
+  authorityVersions: z
+    .object({ ask: z.number().int().positive(), meeting: z.number().int().positive() })
+    .strict()
+    .optional(),
 });
 export const NetworkMemberSchema = z
   .object({ id, name: z.string(), memberCode: z.string() })
@@ -66,8 +71,10 @@ export const NetworkConnectionSchema = z
     id,
     fromId: id,
     toId: id,
-    status: z.enum(['pending', 'accepted', 'declined', 'blocked']),
+    status: z.enum(['pending', 'accepted', 'declined', 'blocked', 'removed']),
     version: z.number().int().positive(),
+    authorityVersion: z.number().int().positive().optional(),
+    blockedBy: z.array(id).max(2).optional(),
     inbound: z.record(z.string(), z.boolean()),
     mutedBy: z.array(id),
     createdAt: instant,
@@ -153,6 +160,7 @@ export const NetworkAcceptanceSchema = z
     proposalVersion: z.number().int().positive(),
     source: z.enum(['owner_request', 'owner_approval', 'delegation_rule']),
     policyVersion: z.number().int().positive(),
+    authorityVersion: z.number().int().positive().optional(),
     at: instant,
   })
   .strict();
@@ -166,6 +174,7 @@ export const NetworkMessageSchema = z
     kind: z.enum([
       'inform',
       'ask',
+      'answer',
       'propose',
       'counterpropose',
       'accept',
@@ -202,7 +211,9 @@ export const NetworkConversationSchema = z
     ]),
     version: z.number().int().positive(),
     connectionVersion: z.number().int().positive(),
+    connectionAuthorityVersion: z.number().int().positive().optional(),
     policyVersions: z.record(z.string(), z.number().int().positive()),
+    authorityVersions: z.record(z.string(), z.number().int().positive()).optional(),
     messages: z.array(NetworkMessageSchema).max(30),
     proposal: NetworkProposalSchema.optional(),
     acceptances: z.array(NetworkAcceptanceSchema).max(2),
@@ -258,6 +269,11 @@ export const NetworkCalendarSchema = z
     events: z.array(NetworkEventSchema),
     reminders: z.array(NetworkReminderSchema),
     scope: z.literal('klnk_only'),
+    busyBlocks: z.array(z.lazy(() => NetworkBusySchema)).optional(),
+    availability: z
+      .lazy(() => NetworkAvailabilitySchema)
+      .nullable()
+      .optional(),
   })
   .strict();
 export const NetworkIdentitySchema = z
@@ -326,3 +342,73 @@ export const OwnerIntentResultSchema = z.discriminatedUnion('status', [
   z.object({ ...intentBase, status: z.literal('failed') }).strict(),
 ]);
 export type OwnerIntentResult = z.infer<typeof OwnerIntentResultSchema>;
+
+export const NetworkAnswerInputSchema = z
+  .object({ version: z.number().int().positive(), answer: z.string().trim().min(1).max(1500) })
+  .strict();
+export const NetworkCounterproposalInputSchema = z
+  .object({ version: z.number().int().positive(), slot: NetworkSlotSchema })
+  .strict();
+export const NetworkBusyInputSchema = z
+  .object({
+    slot: z
+      .object({ startAt: instant, endAt: instant, timezone: NetworkTimezoneSchema })
+      .strict()
+      .refine(
+        (slot) =>
+          Date.parse(slot.endAt) > Date.parse(slot.startAt) &&
+          Date.parse(slot.endAt) - Date.parse(slot.startAt) <= 90 * 86400000,
+        'Choose a busy interval of at most 90 days.',
+      ),
+    label: z.string().trim().max(120).default('Busy'),
+  })
+  .strict();
+export const NetworkBusySchema = NetworkBusyInputSchema.extend({
+  id,
+  ownerId: id,
+  version: z.number().int().positive(),
+  createdAt: instant,
+  updatedAt: instant,
+}).strict();
+export type NetworkBusy = z.infer<typeof NetworkBusySchema>;
+export const NetworkAvailabilitySchema = z
+  .object({
+    ownerId: id,
+    source: z.literal('manual'),
+    confirmedThrough: instant,
+    updatedAt: instant,
+  })
+  .strict();
+export type NetworkAvailability = z.infer<typeof NetworkAvailabilitySchema>;
+export const NetworkAvailabilityInputSchema = z.object({ confirmedThrough: instant }).strict();
+export const NetworkVoiceReviewSchema = z
+  .object({ commandId: id, planHash: z.string().regex(/^[a-f0-9]{64}$/) })
+  .strict();
+export const NetworkVoiceTurnInputSchema = z
+  .object({
+    turnId: id,
+    audioBase64: z
+      .string()
+      .min(4)
+      .max(2796204)
+      .regex(/^[A-Za-z0-9+/]*={0,2}$/),
+    mimeType: z.enum(['audio/mp4', 'audio/wav', 'audio/webm']),
+    review: NetworkVoiceReviewSchema.optional(),
+  })
+  .strict();
+export const NetworkVoiceTurnResultSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    turnId: id,
+    status: z.enum(['completed', 'processing', 'uncertain', 'failed']),
+    replyText: z.string().max(4000),
+    transcript: z.string().max(1500).optional(),
+    intent: OwnerIntentResultSchema.optional(),
+    review: NetworkVoiceReviewSchema.optional(),
+    reason: z.string().max(100).optional(),
+    speechSource: z.literal('device'),
+    audioStored: z.literal(false),
+  })
+  .strict();
+export type NetworkVoiceTurnInput = z.infer<typeof NetworkVoiceTurnInputSchema>;
+export type NetworkVoiceTurnResult = z.infer<typeof NetworkVoiceTurnResultSchema>;

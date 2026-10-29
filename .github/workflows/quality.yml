@@ -39,7 +39,12 @@ jobs:
       - run: npm run typecheck
       - run: npm run typecheck:e2e
       - run: npm test
+      - run: npm run test:components
       - run: npm run test:pg
+        env:
+          KLNK_TEST_POSTGRES_URL: postgresql://klnk_test:disposable-ci-only@127.0.0.1:5432/klnk_qa
+      - run: npm run build:server
+      - run: npm run test:compiled
         env:
           KLNK_TEST_POSTGRES_URL: postgresql://klnk_test:disposable-ci-only@127.0.0.1:5432/klnk_qa
       - run: npm run demo
@@ -47,4 +52,15 @@ jobs:
       - run: npm run e2e:build
       - run: npx playwright install --with-deps chromium
       - run: npm run e2e
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: browser-verification
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            playwright-report/
+            test-results/
+            docs/review/2026-10-28/evidence/
+            docs/agent-network/evidence/
     # No provider secrets, service accounts, deployment or paid smoke in this job.

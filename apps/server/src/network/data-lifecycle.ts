@@ -36,6 +36,8 @@ export async function lockNetworkDeletion(sql: SQL, owner: string) {
 /** Shared text is removed for both participants. Standalone peer reminders are
  * removed too; backup deletion reconciliation must apply this same closure. */
 export async function deleteNetworkAccount(db: Database, sql: SQL, owner: string) {
+  await sql.query('DELETE FROM account_mail_outbox WHERE owner_id=$1', [owner]);
+  await sql.query('DELETE FROM account_challenges WHERE owner_id=$1', [owner]);
   const store = new NetworkStore(db, sql),
     events = await store.list<any>(owner, 'event');
   for (const c of await store.list<NetworkConversation>(owner, 'conversation'))
@@ -53,8 +55,8 @@ export async function deleteNetworkAccount(db: Database, sql: SQL, owner: string
   }
   await sql.query('DELETE FROM network_records WHERE owner_a=$1 OR owner_b=$1', [owner]);
 }
-export async function exportNetworkAccount(db: Database, owner: string) {
-  const store = new NetworkStore(db),
+export async function exportNetworkAccount(db: Database, owner: string, sql: SQL = db) {
+  const store = new NetworkStore(db, sql),
     result: Record<string, unknown> = {
       scope: 'Internal klnk records; peer private context excluded',
     };
@@ -63,6 +65,8 @@ export async function exportNetworkAccount(db: Database, owner: string) {
     'connection',
     'policy',
     'memory',
+    'busy',
+    'availability',
     'conversation',
     'event',
     'reminder',
@@ -70,8 +74,25 @@ export async function exportNetworkAccount(db: Database, owner: string) {
   ] as const)
     result[kind] = (await store.list<any>(owner, kind)).map((r) =>
       kind === 'conversation'
-        ? { ...r.value, policyVersions: { [owner]: r.value.policyVersions[owner] } }
-        : r.value,
+        ? {
+            ...r.value,
+            policyVersions: { [owner]: r.value.policyVersions[owner] },
+            ...(r.value.authorityVersions
+              ? { authorityVersions: { [owner]: r.value.authorityVersions[owner] } }
+              : {}),
+            acceptances: projectAcceptances(r.value.acceptances, owner),
+          }
+        : kind === 'event'
+          ? { ...r.value, acceptances: projectAcceptances(r.value.acceptances, owner) }
+          : r.value,
     );
   return result;
+}
+function projectAcceptances(values: Record<string, unknown>[], owner: string) {
+  return values.map((value) => {
+    if (value.ownerId === owner) return value;
+    const { authorityVersion: omitted, ...shared } = value;
+    void omitted;
+    return shared;
+  });
 }

@@ -19,7 +19,7 @@ export interface SQL {
 }
 export type EncryptedBackup = { format: 'klnk-backup-v1'; createdAt: string; payload: string };
 const backupColumns = {
-  users: ['id', 'email', 'password_hash', 'created_at', 'deleted_at'],
+  users: ['id', 'email', 'password_hash', 'created_at', 'deleted_at', 'email_verified_at'],
   resources: [
     'id',
     'owner_id',

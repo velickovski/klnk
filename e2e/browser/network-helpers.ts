@@ -41,13 +41,16 @@ export async function separateContext(browser: Browser, testInfo: TestInfo) {
   await installNoCaptureProbe(page);
   return { context, page };
 }
-export async function registerNetwork(page: Page, name: string): Promise<NetworkAccount> {
+export async function registerNetwork(
+  page: Page,
+  name: string,
+  entry: 'workspace' | 'call' = 'workspace',
+): Promise<NetworkAccount> {
   const email = `${randomUUID()}@example.invalid`,
     password = 'Fictional network browser password';
-  await page.goto('/?workspace=1');
-  await page
-    .getByRole('button', { name: 'Sign in or create an account instead', exact: true })
-    .click();
+  await page.goto(entry === 'call' ? '/' : '/?workspace=1');
+  if (entry === 'call') await page.getByRole('button', { name: 'Call klnk', exact: true }).click();
+  await page.getByRole('button', { name: 'Create an account', exact: true }).click();
   await page.getByRole('textbox', { name: 'Your name', exact: true }).fill(name);
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(email);
   await page.getByRole('textbox', { name: 'Password', exact: true }).fill(password);
@@ -56,17 +59,24 @@ export async function registerNetwork(page: Page, name: string): Promise<Network
   );
   await page.getByRole('button', { name: 'Create your account', exact: true }).click();
   const response = await registered;
-  expect(response.status()).toBe(201);
-  const result = await response.json();
+  expect(response.status()).toBe(202);
+  // Development's explicit sign-in follows the same generic registration
+  // acknowledgement as production; registration never supplies a token.
+  expect(await response.json()).not.toHaveProperty('token');
+
+  const signedIn = page.waitForResponse(
+    (r) => r.url() === apiPath('/auth/login') && r.request().method() === 'POST',
+  );
+  await page.getByRole('button', { name: 'Sign in', exact: true }).click();
+  const login = await signedIn;
+  expect(login.status()).toBe(200);
+  const result = await login.json();
   await expect(page.getByRole('tab', { name: 'Inbox', exact: true })).toBeVisible();
   return { ...result, email, password, name };
 }
 export async function loginNetwork(page: Page, account: NetworkAccount) {
   await page.goto('/?workspace=1');
-  await page
-    .getByRole('button', { name: 'Sign in or create an account instead', exact: true })
-    .click();
-  await page.getByRole('button', { name: 'Already have an account? Sign in', exact: true }).click();
+
   await page.getByRole('textbox', { name: 'Email', exact: true }).fill(account.email);
   await page.getByRole('textbox', { name: 'Password', exact: true }).fill(account.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).click();
@@ -116,11 +126,15 @@ export async function seedRule(
   peer: NetworkAccount,
   patch: Record<string, unknown> = {},
 ) {
-  const { ownerId, version, updatedAt, ...policy } = await networkCall(
+  const { ownerId, version, updatedAt, authorityVersions, ...policy } = await networkCall(
     context,
     account,
     '/network/policy',
   );
+  // This is an explicit manual-availability fixture, not inferred free time.
+  await networkCall(context, account, '/network/calendar/availability', 'PUT', {
+    confirmedThrough: new Date(Date.now() + 7 * 86400000).toISOString(),
+  });
   return networkCall(context, account, '/network/policy', 'PUT', {
     expectedVersion: version,
     policy: {

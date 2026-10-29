@@ -63,10 +63,9 @@ export class RecipientSuppression {
     if (after?.optedOut) await this.suppress(owner, after.phone, 'owner_marked_opt_out', sql);
     return after ? this.isSuppressed(owner, after.phone, sql) : false;
   }
-  async list(owner: string): Promise<Suppression[]> {
-    return this.db.transaction(async (sql) => {
-      await this.migrateLegacy(owner, sql);
-      return new Repository(this.db, sql).list<Suppression>(owner, 'optout');
-    });
+  async list(owner: string, sql?: SQL): Promise<Suppression[]> {
+    if (!sql) return this.db.transaction((transaction) => this.list(owner, transaction));
+    await this.migrateLegacy(owner, sql);
+    return new Repository(this.db, sql).list<Suppression>(owner, 'optout');
   }
 }

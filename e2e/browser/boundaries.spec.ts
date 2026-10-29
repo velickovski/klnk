@@ -6,6 +6,7 @@ import {
   expectNoCapture,
   installNoCaptureProbe,
   settingsProfile,
+  startSimulation,
 } from './helpers';
 
 test.beforeEach(async ({ page, context }, testInfo) => {
@@ -20,13 +21,14 @@ test('VOICE-01 malformed Live readiness never requests microphone or paid sessio
   page.on('request', (request) => {
     if (request.url() === apiPath('/voice/live/session')) starts++;
   });
-  await page.route(apiPath('/demo/status'), (route) =>
+  await page.route(apiPath('/voice/live/status'), (route) =>
     route.fulfill({
       status: 200,
       json: { configured: 'true', model: 'gpt-live-1', voice: 'marin' },
     }),
   );
-  await page.goto('/?legacy=1');
+  await enterSimulation(page);
+  await page.getByRole('button', { name: 'Back to voice home', exact: true }).click();
   await page.getByRole('button', { name: 'Call klnk', exact: true }).click();
   await expect(page.getByRole('button', { name: 'Open workspace', exact: true })).toBeVisible();
   await expect(page.getByRole('alert').first()).toBeVisible();
@@ -41,14 +43,19 @@ test('VOICE-01 microphone denial reaches a functional separate typed workspace',
   page.on('request', (request) => {
     if (request.url() === apiPath('/voice/live/session')) starts++;
   });
-  await page.route(apiPath('/demo/status'), (route) =>
+  await page.route(apiPath('/voice/live/status'), (route) =>
     route.fulfill({ status: 200, json: { configured: true, model: 'gpt-live-1', voice: 'marin' } }),
   );
-  await page.goto('/?legacy=1');
+  await enterSimulation(page);
+  await page.getByRole('button', { name: 'Back to voice home', exact: true }).click();
   await page.getByRole('button', { name: 'Call klnk', exact: true }).click();
   await page.getByRole('button', { name: 'Open workspace', exact: true }).click();
-  await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
-  await expect(await chooseType(page)).toBeEditable();
+  const typed = page.getByRole('textbox', { name: 'Instruction to your agent', exact: true });
+  await expect(typed).toBeEditable();
+  await typed.fill('Fictional typed fallback remains available after microphone denial.');
+  await expect(typed).toHaveValue(
+    'Fictional typed fallback remains available after microphone denial.',
+  );
   expect(
     await page.evaluate(
       () => (window as unknown as { __klnkQaMedia: { attempts: number } }).__klnkQaMedia.attempts,
@@ -64,7 +71,7 @@ test('API-01 malformed successful auth stays signed out with a recoverable error
     route.fulfill({ status: 201, json: { user: { id: 'qa-invalid-auth' } } }),
   );
   await page.goto('/?workspace=1&legacy=1');
-  await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
+  await startSimulation(page);
   await expect(page.getByRole('alert').first()).toBeVisible();
   await expect(page.getByRole('tab', { name: 'Home', exact: true })).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Try the simulation', exact: true })).toBeEnabled();
@@ -79,7 +86,7 @@ test('API-01 malformed successful bootstrap shows recovery instead of crashing',
     route.fulfill({ status: 200, json: { profile: null, missions: 'invalid' } }),
   );
   await page.goto('/?workspace=1&legacy=1');
-  await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
+  await startSimulation(page);
   await expect(page.getByRole('alert').first()).toBeVisible();
   await expect(page.getByRole('button', { name: 'Try again', exact: true })).toBeVisible();
   expect(errors).toEqual([]);
@@ -120,7 +127,7 @@ test('AUTH-01 late owner A unauthorized response cannot sign owner B out', async
     await page.getByRole('tab', { name: 'Settings', exact: true }).click();
     await firstRequest;
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
-    await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
+    await startSimulation(page);
     await expect(page.getByRole('tab', { name: 'Home', exact: true })).toBeVisible();
     release();
     await deliveryFinished;
@@ -178,7 +185,7 @@ test('AUTH-01 late successful owner A bootstrap cannot populate owner B profile'
     await page.evaluate(() => document.dispatchEvent(new Event('visibilitychange')));
     await snapshotReady;
     await page.getByRole('button', { name: 'Sign out', exact: true }).click();
-    await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
+    await startSimulation(page);
     await expect(page.getByRole('tab', { name: 'Home', exact: true })).toBeVisible();
     release();
     await deliveryFinished;

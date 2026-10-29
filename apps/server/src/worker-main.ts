@@ -13,15 +13,16 @@ const db = await new Database({
   key: config.key,
   production: config.production,
 }).open();
-const { engine, network } = createRuntime(db, config);
+const { engine, network, mailWorker } = createRuntime(db, config);
 engine.start();
 network.start();
+mailWorker.start();
 logger.info({ event: 'worker_started' });
 // Keep standalone process alive (the embedded interval intentionally unrefs).
 const keepAlive = setInterval(() => {}, 60000);
 for (const signal of ['SIGINT', 'SIGTERM'] as const)
   process.once(signal, () => {
-    void Promise.all([engine.stop(), network.stop()])
+    void Promise.all([engine.stop(), network.stop(), mailWorker.stop()])
       .then(() => db.close())
       .then(() => {
         clearInterval(keepAlive);

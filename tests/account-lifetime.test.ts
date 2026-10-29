@@ -69,17 +69,25 @@ describe('DATA-01 delayed authenticated writers cannot resurrect deleted account
           await resume.promise;
         }
       });
-      const auth = (
-        await service.app.inject({
-          method: 'POST',
-          url: '/auth/register',
-          payload: {
-            email: `${kind}-lifetime@example.invalid`,
-            name: 'Fictional Lifetime Owner',
-            password: 'A fictional lifetime test password',
-          },
-        })
-      ).json();
+      const credentials = {
+        email: `${kind}-lifetime@example.invalid`,
+        name: 'Fictional Lifetime Owner',
+        password: 'A fictional lifetime test password',
+      };
+      const registered = await service.app.inject({
+        method: 'POST',
+        url: '/auth/register',
+        payload: credentials,
+      });
+      expect(registered.statusCode).toBe(202);
+      expect(registered.json()).not.toHaveProperty('token');
+      const login = await service.app.inject({
+        method: 'POST',
+        url: '/auth/login',
+        payload: { email: credentials.email, password: credentials.password },
+      });
+      expect(login.statusCode).toBe(200);
+      const auth = login.json();
       const headers = { authorization: `Bearer ${auth.token}` };
       const pending = service.app.inject({
         method: kind === 'profile' ? 'PUT' : 'POST',

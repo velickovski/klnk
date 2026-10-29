@@ -6,8 +6,17 @@ export const apiPath = (path: string) => `${apiOrigin}${path}`;
 /** Fixture accounts are created by the actual local API; no provider is contacted. */
 export async function enterSimulation(page: Page) {
   await page.goto('/?workspace=1&legacy=1');
-  await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
+  await startSimulation(page);
   await expect(page.getByRole('tab', { name: 'Home', exact: true })).toBeVisible();
+}
+export async function showLocalDemo(page: Page) {
+  const disclosure = page.getByRole('button', { name: 'Local demo', exact: true });
+  await expect(disclosure).toBeVisible();
+  if ((await disclosure.getAttribute('aria-expanded')) !== 'true') await disclosure.click();
+}
+export async function startSimulation(page: Page) {
+  await showLocalDemo(page);
+  await page.getByRole('button', { name: 'Try the simulation', exact: true }).click();
 }
 
 export async function chooseType(page: Page) {

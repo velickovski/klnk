@@ -57,7 +57,7 @@ function fixture() {
     authorization: string | undefined = 'Bearer owner-fixture',
     epoch = 0;
   const request = vi.fn(async (path: string): Promise<unknown> =>
-    path === '/demo/status'
+    path === '/voice/live/status'
       ? { configured: true }
       : path === '/voice/live/recovery'
         ? { requests: [] }
@@ -532,46 +532,28 @@ describe('Expo browser live transport without a microphone or provider', () => {
     });
     expect(f.peer.setRemoteDescription).not.toHaveBeenCalled();
   });
-  it('adopts its own anonymous demo sign-in without cancelling capture', async () => {
+  it('requires explicit sign-in without creating an anonymous account or capturing audio', async () => {
     const f = fixture();
     f.setIdentity(null);
     await f.controller.start();
-    expect(f.env.saveToken).toHaveBeenCalledWith('fixture-token');
-    expect(f.capture).toHaveBeenCalledTimes(1);
-    expect(f.track.stop).not.toHaveBeenCalled();
-    expect(f.fetcher.mock.calls[0][1]?.headers).toMatchObject({
-      Authorization: 'Bearer fixture-token',
-    });
-    await f.controller.end();
-  });
-  it('does not overwrite an account selected while anonymous authorization was pending', async () => {
-    const f = fixture(),
-      auth = deferred<{ token: string }>();
-    f.setIdentity(null);
-    f.request.mockImplementation(async (path) =>
-      path === '/auth/demo' ? auth.promise : { configured: true },
-    );
-    const starting = f.controller.start();
-    await vi.waitFor(() => expect(f.request).toHaveBeenCalledWith('/auth/demo', 'POST', {}));
-    f.setIdentity('owner-B');
-    auth.resolve({ token: 'stale-demo-token' });
-    await starting;
+    expect(f.capture).not.toHaveBeenCalled();
+    expect(f.request).not.toHaveBeenCalled();
     expect(f.env.saveToken).not.toHaveBeenCalled();
     expect(f.fetcher).not.toHaveBeenCalled();
-    expect(f.track.stop).toHaveBeenCalled();
+    expect(f.controller.getSnapshot()).toMatchObject({
+      state: 'error',
+      error: expect.stringContaining('Sign in'),
+    });
   });
-  it('rejects a competing epoch during its own demo credential save', async () => {
-    const f = fixture(),
-      saved = deferred<void>();
+  it('uses the account explicitly selected after a signed-out start was rejected', async () => {
+    const f = fixture();
     f.setIdentity(null);
-    f.env.saveToken = vi.fn(() => saved.promise);
-    const starting = f.controller.start();
-    await vi.waitFor(() => expect(f.env.saveToken).toHaveBeenCalled());
+    await f.controller.start();
     f.setIdentity('owner-B');
-    saved.resolve();
-    await starting;
-    expect(f.fetcher).not.toHaveBeenCalled();
-    expect(f.track.stop).toHaveBeenCalled();
+    await f.controller.start();
+    expect(f.env.saveToken).not.toHaveBeenCalled();
+    expect(f.fetcher.mock.calls[0][1]?.headers).toMatchObject({ Authorization: 'Bearer owner-B' });
+    await f.controller.end();
   });
   it('rejects invalid JSON success without creating a replacement session', async () => {
     const f = fixture();
@@ -691,7 +673,7 @@ describe('Expo browser live transport without a microphone or provider', () => {
     f.setIdentity(null);
     f.request.mockClear();
     await f.controller.refresh();
-    expect(f.request.mock.calls.map((call) => call[0])).toEqual(['/demo/status']);
+    expect(f.request.mock.calls.map((call) => call[0])).toEqual(['/voice/live/status']);
     expect(f.capture).not.toHaveBeenCalled();
   });
   it.each(['same origin', 'different origin'])(
@@ -739,7 +721,7 @@ describe('Expo browser live transport without a microphone or provider', () => {
     });
     f.request.mockClear();
     await f.controller.refresh();
-    expect(f.request.mock.calls.map((call) => call[0])).toEqual(['/demo/status']);
+    expect(f.request.mock.calls.map((call) => call[0])).toEqual(['/voice/live/status']);
     expect(f.controller.getSnapshot()).toMatchObject({
       state: 'connected',
       closureUnconfirmed: false,

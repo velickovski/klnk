@@ -4,7 +4,21 @@
 
 This is the user's selected opening experience. Render the navy/lavender curved composition, original hero illustration, short invitation and exactly one visible button: **Call klnk**. The button requests capture and establishes an OpenAI session. It changes into an appropriate connecting/cancel or end-call state. Connected controls and captions appear only when relevant. Text delegation remains in the separate Expo workspace. Show genuine connection errors and setup needs. Never play fixture audio or synthesize a success state to hide a connection failure. See [the current brief](00-current-brief.md) and [live-demo guide](09-live-demo.md).
 
-Sections S01–S09 below specify the separate advanced Expo workspace, not extra content to place on S00.
+The default subsequent workspace is the internal member network described below. S01–S09 retain historical telephone-screen specifications for flagged compatibility code; they must not govern new network UI.
+
+## Current network workspace
+
+The five destinations are Inbox, Calendar, People, Memory and Settings, with React Navigation URLs/deep links and lazy active-panel mounting. A session-scoped cache/draft store preserves safe edits between destinations, clears them on account/origin change, refreshes on foreground and invalidates queries after mutations. Each list owns its scroll container; collection screens use virtualized FlatList rows. The one-button opening has no navigation bar.
+
+Inbox contains the optional typed owner instruction, scoped request composer, linked notices and current conversation rows. Question detail offers an actual human answer; meeting detail supports a new time/counterproposal and current canonical approvals. Details use the shared modal with explicit Close, Escape dismissal on web and return to the originating row. Errors preserve drafts and ambiguous writes reconcile their original request identity.
+
+Calendar displays internal agreements, own reminders and private manual busy blocks. It explains the maintained-availability horizon needed for automatic acceptance; absence of an external calendar is not described as free time. Meeting rows open their conversation. Date/time fields use platform pickers and a shared Intl formatter, with device timezone and searchable override; proposal hashes stay out of presentation.
+
+People presents real member connections, share/deep links and explicit acceptance. Re-invite, remove, mute and block states remain distinct; received links never auto-accept. Memory preserves ownership, confirmation and disclosure fields. Settings contains scoped delegation, permission expiry/renewal, retention/notices, voice permissions and account proof/password/export/delete controls. Registration is generic, sign-in explicit and unavailable email delivery is stated honestly.
+
+On native iPhone, Call klnk reaches the bounded recorded-turn flow in the network workspace while continuous native Live remains gated. The flow reads all proposed terms, binds owner confirmation to the current plan, stops capture on background and never substitutes simulated audio after failure. Browser Live retains its separate transport and safe inform/ask review gate. Device behavior remains unverified on this Windows host.
+
+Loading, empty, error and populated states have rendered component coverage. Color token checks alone do not establish accessibility conformance. Large-text navigation and real browser focus must pass their retained journey assertions; physical VoiceOver, switch input, keyboard and audio testing remain release gaps.
 
 Use the tokens and component contracts in [03](03-design-system.md). The reference renders representative states; this file defines the complete build. Every screen supports loading, empty, error, long content, both themes and large text. State text comes from actual data.
 

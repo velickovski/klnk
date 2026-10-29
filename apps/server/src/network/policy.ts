@@ -3,6 +3,7 @@ import type {
   NetworkConnection,
   NetworkConversation,
   NetworkPolicy,
+  NetworkPolicyInput,
   NetworkTerms,
 } from '../../../../packages/domain/src/network.js';
 import { HttpError } from '../errors.js';
@@ -62,6 +63,56 @@ export function defaultNetworkPolicy(ownerId: string): NetworkPolicy {
     reminderMinutes: [15],
   };
 }
+/** Edit revisions protect optimistic forms; operation epochs fence delegated
+ * authority without revoking meetings when an unrelated preference changes. */
+export function policyAuthorityVersion(policy: NetworkPolicy, operation: 'ask' | 'meeting') {
+  return policy.authorityVersions?.[operation] ?? policy.version;
+}
+export function connectionAuthorityVersion(connection: NetworkConnection) {
+  return connection.authorityVersion ?? connection.version;
+}
+export function nextPolicyAuthorityVersions(previous: NetworkPolicy, input: NetworkPolicyInput) {
+  const common = ['enabled', 'trustedMemberIds', 'topics', 'expiresAt'] as const;
+  const fields = {
+    ask: [...common, 'allowQuestions', 'sharedMemoryIds'],
+    meeting: [
+      ...common,
+      'allowMeetings',
+      'autoAcceptMeetings',
+      'timezone',
+      'weekdays',
+      'workStartMinute',
+      'workEndMinute',
+      'maxDurationMinutes',
+      'minNoticeMinutes',
+      'schedulingWindowDays',
+    ],
+  } as const;
+  const normalized = (value: unknown) =>
+    JSON.stringify(Array.isArray(value) ? [...value].sort() : value);
+  return {
+    ask:
+      policyAuthorityVersion(previous, 'ask') +
+      Number(fields.ask.some((key) => normalized(previous[key]) !== normalized(input[key]))),
+    meeting:
+      policyAuthorityVersion(previous, 'meeting') +
+      Number(fields.meeting.some((key) => normalized(previous[key]) !== normalized(input[key]))),
+  };
+}
+export function automaticAnswerAllowed(
+  policy: NetworkPolicy,
+  peerId: string,
+  topic: string,
+  now = Date.now(),
+) {
+  return (
+    policy.enabled &&
+    policy.allowQuestions &&
+    Date.parse(policy.expiresAt) > now &&
+    policy.trustedMemberIds.includes(peerId) &&
+    policy.topics.includes(topic)
+  );
+}
 export function assertNetworkAuthority(
   conversation: NetworkConversation,
   policies: NetworkPolicy[],
@@ -76,29 +127,34 @@ export function assertNetworkAuthority(
   if (
     connection.id !== conversation.connectionId ||
     connection.status !== 'accepted' ||
-    connection.version !== conversation.connectionVersion ||
+    (connection.authorityVersion ?? connection.version) !==
+      (conversation.connectionAuthorityVersion ?? conversation.connectionVersion) ||
     !(
       [connection.fromId, connection.toId].includes(conversation.initiatorId) &&
       [connection.fromId, connection.toId].includes(conversation.recipientId)
     ) ||
-    !connection.inbound[conversation.recipientId] ||
-    connection.mutedBy.includes(conversation.recipientId)
+    !connection.inbound[conversation.recipientId]
   )
     deny('network_connection_changed', 'The connection no longer permits this request.');
-  if (
-    conversation.request.kind !== 'inform' &&
-    (!connection.inbound[conversation.initiatorId] ||
-      connection.mutedBy.includes(conversation.initiatorId))
-  )
+  if (conversation.request.kind !== 'inform' && !connection.inbound[conversation.initiatorId])
     deny('network_connection_changed', 'This connection does not permit a reply or negotiation.');
   for (const ownerId of [conversation.initiatorId, conversation.recipientId]) {
     const policy = policies.find((p) => p.ownerId === ownerId),
       peerId =
         ownerId === conversation.initiatorId ? conversation.recipientId : conversation.initiatorId;
+    if (conversation.request.kind === 'inform') {
+      if (!policy?.allowMessages)
+        deny('network_scope_denied', 'This owner has opted out of messages.');
+      continue;
+    }
+    // A question can reach its recipient owner even when memory disclosure is
+    // disabled. Automatic answers have a separate scoped check in the worker.
+    if (conversation.request.kind === 'ask') continue;
     if (
       !policy ||
       !policy.enabled ||
-      policy.version !== conversation.policyVersions[ownerId] ||
+      policyAuthorityVersion(policy, 'meeting') !==
+        (conversation.authorityVersions?.[ownerId] ?? conversation.policyVersions[ownerId]) ||
       Date.parse(policy.expiresAt) <= now
     )
       deny(
@@ -110,12 +166,7 @@ export function assertNetworkAuthority(
       !policy!.topics.includes(conversation.request.topic)
     )
       deny('network_scope_denied', 'This request is outside granted scope.');
-    const allowed =
-      conversation.request.kind === 'inform'
-        ? policy!.allowMessages
-        : conversation.request.kind === 'ask'
-          ? policy!.allowQuestions
-          : policy!.allowMeetings;
+    const allowed = policy!.allowMeetings;
     if (!allowed) deny('network_scope_denied', 'This operation has not been authorized.');
   }
 }

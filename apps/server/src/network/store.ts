@@ -22,7 +22,9 @@ export type NetworkKind =
   | 'reminder'
   | 'outbox'
   | 'receipt'
-  | 'preferences';
+  | 'preferences'
+  | 'busy'
+  | 'availability';
 export interface NetworkRecord<T = unknown> {
   id: string;
   kind: NetworkKind;
@@ -46,7 +48,7 @@ export async function lockNetworkOwners(sql: SQL, owners: readonly string[]) {
     if (!owners.includes(actor.ownerId))
       throw new HttpError(403, 'actor_mismatch', 'The authenticated owner is not a participant.');
     const rows = await sql.query(
-      'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp()',
+      'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp() AND last_used_at>clock_timestamp()-make_interval(mins=>30)',
       [actor.ownerId, actor.sessionHash],
     );
     if (!rows.length)

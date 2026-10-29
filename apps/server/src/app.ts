@@ -49,7 +49,9 @@ import {
 } from './network/data-lifecycle.js';
 import { NetworkStore } from './network/store.js';
 import { NetworkVoiceTools } from './network/voice-tools.js';
-import { OwnerIntentService } from './network/owner-intent.js';
+import { registerRecordedVoiceRoutes } from './network/recorded-voice-routes.js';
+import { registerAccountRoutes } from './account/routes.js';
+import type { AccountMailer } from './account/mail.js';
 declare module 'fastify' {
   interface FastifyRequest {
     ownerId?: string;
@@ -73,6 +75,8 @@ export async function createApp(
     openaiLiveDependencies?: LiveDependencies;
     googleDependencies?: { fetch?: typeof fetch };
     networkIntentDependencies?: { fetch?: typeof fetch };
+    recordedVoiceDependencies?: { fetch?: typeof fetch };
+    accountDependencies?: { mailer?: AccountMailer };
     rateLimitKey?: (request: FastifyRequest) => string;
   } = {},
 ) {
@@ -95,10 +99,30 @@ export async function createApp(
     gateway,
     internalCalendar,
     network,
+    ownerIntents,
+    recordedVoice,
+    accounts,
+    mailWorker,
   } = createRuntime(db, config, {
     googleDependencies: options.googleDependencies,
     liveSessions: options.openaiLiveDependencies?.store,
     logger,
+    networkIntentDependencies: options.networkIntentDependencies,
+    recordedVoiceDependencies: options.recordedVoiceDependencies,
+    accountDependencies: {
+      ...options.accountDependencies,
+      onSessionsRevoked: async (ownerId) => {
+        for (const receipt of await liveSessions.listUnresolved(ownerId)) {
+          if (receipt.providerSessionId)
+            await openaiLive.close(ownerId, receipt.providerSessionId).catch(() => {
+              app.log.error({
+                event: 'credential_voice_cleanup_pending',
+                reasonCode: 'closure_unconfirmed',
+              });
+            });
+        }
+      },
+    },
   });
   const app = Fastify({
     loggerInstance: logger as FastifyBaseLogger,
@@ -107,10 +131,7 @@ export async function createApp(
     bodyLimit: 256 * 1024,
     requestTimeout: 30000,
   });
-  const ownerIntents = new OwnerIntentService(db, network, {
-    apiKey: config.openaiKey,
-    ...options.networkIntentDependencies,
-  });
+
   await app.register(cors, {
     origin: (origin, cb) => cb(null, !origin || config.origins.includes(origin)),
     methods: ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
@@ -118,6 +139,15 @@ export async function createApp(
     credentials: true,
   });
   app.addHook('onRequest', async (req) => {
+    const path = req.url.split('?')[0],
+      publicProbe = ['/health', '/livez', '/ready'].includes(path) && !req.headers.authorization;
+    if (config.production && !publicProbe) {
+      if (req.protocol !== 'https')
+        throw new HttpError(403, 'https_required', 'Use HTTPS for this service.');
+      if (req.headers.origin && !config.origins.includes(req.headers.origin))
+        throw new HttpError(403, 'origin_not_allowed', 'This app origin is not allowed.');
+    }
+
     if (req.method === 'OPTIONS' || ['/health', '/livez', '/ready'].includes(req.url.split('?')[0]))
       return;
     const identity = options.rateLimitKey?.(req) ?? req.ip;
@@ -174,6 +204,22 @@ export async function createApp(
         );
       throw new HttpError(401, 'unauthorized', 'Sign in to continue.');
     }
+    if (
+      config.production &&
+      !['/logout', '/export', '/account'].includes(req.url.split('?')[0]) &&
+      !req.url.startsWith('/account/')
+    ) {
+      const [user] = await db.query(
+        'SELECT email_verified_at FROM users WHERE id=$1 AND deleted_at IS NULL',
+        [req.ownerId],
+      );
+      if (!user?.email_verified_at)
+        throw new HttpError(
+          403,
+          'email_verification_required',
+          'Verify your email before using your agent.',
+        );
+    }
   });
   app.addHook('preHandler', async (req) => {
     const path = req.url.split('?')[0];
@@ -216,6 +262,11 @@ export async function createApp(
       statusCode: reply.statusCode,
     });
   });
+  app.addHook('onSend', async (req, reply, payload) => {
+    if (req.url.startsWith('/auth/') || req.url.startsWith('/account') || req.url === '/export')
+      reply.header('Cache-Control', 'no-store').header('Referrer-Policy', 'no-referrer');
+    return payload;
+  });
   app.setErrorHandler((error, req, reply) => {
     if (error instanceof ZodError)
       return reply.status(400).send({
@@ -243,6 +294,8 @@ export async function createApp(
   app.get('/health', async () => ({ status: 'ok' }));
   app.get('/livez', async () => ({ status: 'ok' }));
   registerNetworkRoutes(app, network, internalCalendar, db, ownerIntents);
+  registerRecordedVoiceRoutes(app, recordedVoice, config);
+  registerAccountRoutes(app, accounts);
   app.get('/ready', async (_request, reply) => {
     const readiness = await runtimeReadiness(db);
     return reply
@@ -259,8 +312,7 @@ export async function createApp(
 
   // Local in-app delivery passed the protocol and independent gateway checks.
   // Public/native delivery and external effects remain separately gated.
-  const toolRuntimeAvailable = () =>
-    !config.production && config.demoEnabled && !!config.openaiKey?.trim();
+  const toolRuntimeAvailable = () => !!config.openaiKey?.trim();
   async function resolveToolAccess(
     o: string,
     authorization?: string,
@@ -277,7 +329,7 @@ export async function createApp(
       if (
         !(
           await sql.query(
-            'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp() FOR UPDATE',
+            'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp() AND last_used_at>clock_timestamp()-make_interval(mins=>30) FOR UPDATE',
             [o, authSessionHash],
           )
         ).length
@@ -307,14 +359,14 @@ export async function createApp(
             'Only an existing authorized request can be bound to voice.',
           );
       }
-      const ownPolicy = (await new NetworkStore(db, sql).list<any>(o, 'policy')).find(
-        (record) => record.ownerA === o && !record.ownerB,
-      )?.value;
       const tools = parsed.data.tools.filter((name) =>
         name.startsWith('network_')
-          ? ownPolicy?.enabled === true && Date.parse(ownPolicy.expiresAt) > Date.now()
-          : !['request_dispatch', 'request_cancel', 'calendar_update_existing'].includes(name) ||
-            (!!mission && (name === 'request_cancel' || mission.executionProvider === 'simulator')),
+          ? true
+          : !config.production &&
+            config.legacyEnabled !== false &&
+            (!['request_dispatch', 'request_cancel', 'calendar_update_existing'].includes(name) ||
+              (!!mission &&
+                (name === 'request_cancel' || mission.executionProvider === 'simulator'))),
       );
       return tools.length
         ? { authSessionHash, tools, ...(mission ? { authorizedMissionId: mission.id } : {}) }
@@ -332,9 +384,7 @@ export async function createApp(
     { config: { rateLimit: { max: 5, timeWindow: '1 minute' } } },
     async (req, reply) => {
       const c = credentials.extend({ name: ProfileSchema.shape.name }).parse(req.body);
-      const user = await newUser(db, c.email, c.password);
-      await seedOwner(repo, user.id, c.name, false);
-      return reply.status(201).send({ token: await createSession(db, user.id), user });
+      return reply.status(202).send(await accounts.register(c));
     },
   );
   app.post(
@@ -352,6 +402,12 @@ export async function createApp(
       }
       if (!(await checkPassword(c.password, u.password_hash)))
         throw new HttpError(401, 'invalid_credentials', 'Email or password is incorrect.');
+      if (config.production && !u.email_verified_at)
+        throw new HttpError(
+          403,
+          'email_verification_required',
+          'Verify your email before signing in.',
+        );
       return { token: await createSession(db, u.id), user: { id: u.id, email: u.email } };
     },
   );
@@ -454,7 +510,7 @@ export async function createApp(
       if (
         !(
           await sql.query(
-            'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp() FOR UPDATE',
+            'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp() AND last_used_at>clock_timestamp()-make_interval(mins=>30) FOR UPDATE',
             [o, hashToken(req.headers.authorization!.slice(7))],
           )
         ).length
@@ -957,41 +1013,40 @@ export async function createApp(
   });
   app.get('/export', async (req, reply) => {
     const o = owner(req),
-      result: any = { exportedAt: new Date().toISOString() };
-    for (const k of [
-      'profile',
-      'contact',
-      'memory',
-      'mission',
-      'attempt',
-      'action',
-      'voice',
-      'calendar',
-      'voice_session',
-      'voice_turn',
-    ])
-      result[k] = await repo.list(o, k);
-    result.recipientSuppression = await suppression.list(o);
-    result.integrations = await google.list(o);
-    result.toolActivity = await gateway.traces(o);
-    result.toolPermissions =
-      (await repo.get(o, 'tool_access', `tool-access:${o}`)) ?? defaultToolAccess(o);
-    result.draftSubmissions = (await repo.list<any>(o, 'mission_submission')).map(
-      ({ requestId, missionId, createdAt, purpose, retention }) => ({
-        requestId,
-        missionId,
-        createdAt,
-        purpose,
-        retention,
-      }),
-    );
-    result.agentNetwork = await exportNetworkAccount(db, o);
+      sessionHash = hashToken(req.headers.authorization!.slice(7));
+    const integrations = await google.list(o);
+    const result = await db.transaction(async (sql) => {
+      await activeOwner(sql, o);
+      await accounts.requireReauthentication(o, sessionHash, sql);
+      const r = repo.in(sql),
+        result: Record<string, unknown> = { exportedAt: new Date().toISOString() };
+      for (const kind of [
+        'profile',
+        'contact',
+        'memory',
+        'mission',
+        'attempt',
+        'action',
+        'voice',
+        'calendar',
+        'voice_session',
+        'voice_turn',
+      ])
+        result[kind] = await r.list(o, kind);
+      result.integrations = integrations;
+      result.recipientSuppression = await suppression.list(o, sql);
+      result.agentNetwork = await exportNetworkAccount(db, o, sql);
+      return result;
+    });
     return reply
-      .header('Content-Disposition', 'attachment; filename="personal-agent-export.json"')
+      .header('Cache-Control', 'no-store')
+      .header('Content-Disposition', 'attachment; filename="klnk-export.json"')
       .send(result);
   });
   app.delete('/account', async (req) => {
-    const o = owner(req);
+    const o = owner(req),
+      sessionHash = hashToken(req.headers.authorization!.slice(7));
+    await accounts.requireReauthentication(o, sessionHash);
     const live = await liveSessions.listUnresolved(o);
     for (const receipt of live)
       if (receipt.providerSessionId)
@@ -1015,6 +1070,7 @@ export async function createApp(
     // Tombstone preserves a cleanup job owner until provider deletion can be retried.
     await db.transaction(async (sql) => {
       await lockNetworkDeletion(sql, o);
+      await accounts.requireReauthentication(o, sessionHash, sql);
       const r = repo.in(sql);
       // Reserve/authorize/personal writes all lock the owner first. Recheck
       // after acquiring it: the earlier graceful-close pass is not atomic.
@@ -1122,6 +1178,7 @@ export async function createApp(
     });
   });
   app.addHook('onClose', async () => {
+    await mailWorker.stop();
     await openaiLive.dispose();
     await network.stop();
     await engine.stop();
@@ -1130,8 +1187,23 @@ export async function createApp(
   if (options.worker ?? config.embeddedWorker) {
     engine.start();
     network.start();
+    mailWorker.start();
   }
-  return { app, db, repo, engine, config, voice, openaiLive, gateway, network, internalCalendar };
+  return {
+    app,
+    db,
+    repo,
+    engine,
+    config,
+    voice,
+    openaiLive,
+    gateway,
+    network,
+    internalCalendar,
+    accounts,
+    mailWorker,
+    recordedVoice,
+  };
 }
 
 function operatorAuthorized(header: string | undefined, token: string | undefined) {

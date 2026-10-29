@@ -95,19 +95,20 @@ test('NETWORK two separate authenticated owners coordinate while Jordan is offli
       .getByRole('textbox', { name: 'Exact message and permitted details', exact: true })
       .fill(input.message);
     await a.page.getByRole('button', { name: 'Add candidate time', exact: true }).click();
+    await a.page.getByRole('button', { name: /^Candidate 1 timezone:/ }).click();
     await a.page
-      .getByRole('textbox', { name: 'Candidate 1 starts at', exact: true })
-      .fill(input.candidateSlots[0].startAt);
+      .getByRole('textbox', { name: 'Search candidate 1 timezone', exact: true })
+      .fill('UTC');
+    await a.page.getByRole('radio', { name: 'UTC', exact: true }).click();
     await a.page
-      .getByRole('textbox', { name: 'Candidate 1 ends at', exact: true })
-      .fill(input.candidateSlots[0].endAt);
-    await a.page.getByRole('textbox', { name: 'Candidate 1 timezone', exact: true }).fill('UTC');
+      .getByLabel('Candidate 1 starts at', { exact: true })
+      .fill(input.candidateSlots[0].startAt.slice(0, 16));
+    await a.page
+      .getByLabel('Candidate 1 ends at', { exact: true })
+      .fill(input.candidateSlots[0].endAt.slice(0, 16));
     await a.page
       .getByRole('textbox', { name: 'Meeting location', exact: true })
       .fill(input.location);
-    await a.page
-      .getByRole('textbox', { name: 'Request expires at', exact: true })
-      .fill(input.expiresAt);
     await a.page.getByRole('button', { name: 'Send internal request', exact: true }).click();
     await expect
       .poll(async () => {
@@ -120,7 +121,7 @@ test('NETWORK two separate authenticated owners coordinate while Jordan is offli
     expect(shared.readBy).not.toContain(jordan.account.user.id);
     expect(
       shared.acceptances.every(
-        (r: any) =>
+        (r: { proposalHash: string; proposalVersion: number }) =>
           r.proposalHash === shared.proposal.hash && r.proposalVersion === shared.proposal.version,
       ),
     ).toBe(true);
@@ -223,7 +224,6 @@ test('NETWORK only Jordan can approve exact terms; UI reading is distinct from o
             .state,
       )
       .toBe('agreed');
-    await b.page.getByRole('button', { name: 'Refresh Inbox', exact: true }).click();
     await expect(b.page.getByText(/owner explicitly approved this proposal/)).toBeVisible();
   } finally {
     await a.context.close();
@@ -242,7 +242,9 @@ test('NETWORK failed memory save retains typed draft; navigation preserves it an
   await text.fill('FICTIONAL PRIVATE OWNER A DRAFT');
   await page.getByRole('textbox', { name: 'Memory topic', exact: true }).fill('routine');
   await expect(page.getByRole('radio', { name: 'Private to me', exact: true })).toBeChecked();
-  await expect(page.getByRole('radio', { name: 'Needs my review', exact: true })).toBeChecked();
+  await expect(
+    page.getByRole('checkbox', { name: 'Confirmed by me', exact: true }),
+  ).not.toBeChecked();
   await page.route(apiPath('/network/memories'), async (route) =>
     route.request().method() === 'POST'
       ? route.fulfill({

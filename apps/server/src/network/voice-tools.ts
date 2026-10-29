@@ -99,7 +99,7 @@ export class NetworkVoiceTools implements OwnerToolGateway {
     if (
       !(
         await sql.query(
-          'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp() FOR UPDATE',
+          'SELECT token_hash FROM sessions WHERE owner_id=$1 AND token_hash=$2 AND expires_at>clock_timestamp() AND last_used_at>clock_timestamp()-make_interval(mins=>30) FOR UPDATE',
           [context.ownerId, context.authSessionHash],
         )
       ).length

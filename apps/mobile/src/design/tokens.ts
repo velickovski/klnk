@@ -7,7 +7,7 @@ export const brand = {
   cream: '#FFFDF9',
   onNavyMuted: '#C2C6E3',
   coral: '#FF899A',
-  coralPressed: '#FF9CAA',
+  coralPressed: '#FFC2CC',
   edge: '#717B9E',
 } as const;
 export const spacing = {
@@ -35,9 +35,9 @@ const light = {
   background: '#F5F6FA',
   surface: '#FFFFFF',
   surfaceRaised: '#E9EDF5',
-  text: '#202440',
+  text: '#151924',
   textSecondary: '#414864',
-  accent: '#713042',
+  accent: '#203D87',
   onAccent: '#FFFFFF',
   action: brand.coral,
   onAction: brand.navy,

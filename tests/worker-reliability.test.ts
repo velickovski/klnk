@@ -72,7 +72,7 @@ async function networkFixture() {
     [b, a],
   ]) {
     const policy = await coordinator.policy(owner);
-    const { ownerId, version, updatedAt, ...input } = policy;
+    const { ownerId, version, updatedAt, authorityVersions, ...input } = policy;
     const rules: NetworkPolicyInput = {
       ...input,
       enabled: true,

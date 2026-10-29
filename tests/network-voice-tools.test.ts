@@ -45,7 +45,8 @@ async function fixture() {
     receipt.version,
     `fictional-live-${randomUUID()}`,
   );
-  const coordinator = new NetworkCoordinator(db, new InternalCalendar(db));
+  const calendar = new InternalCalendar(db);
+  const coordinator = new NetworkCoordinator(db, calendar);
   await coordinator.identity(owner);
   const identity = await coordinator.identity(peer);
   let connection: NetworkConnection = await coordinator.invite(owner, identity.member.memberCode);
@@ -58,7 +59,13 @@ async function fixture() {
     [peer, owner],
   ]) {
     const current = await coordinator.policy(id),
-      { ownerId: _owner, updatedAt: _updated, version: _version, ...input } = current;
+      {
+        ownerId: _owner,
+        updatedAt: _updated,
+        version: _version,
+        authorityVersions: _epochs,
+        ...input
+      } = current;
     await coordinator.savePolicy(
       id,
       {
@@ -78,6 +85,10 @@ async function fixture() {
       },
       current.version,
     );
+    // Automatic scheduling requires the owner's explicitly maintained manual calendar.
+    await calendar.confirmAvailability(id, {
+      confirmedThrough: new Date(Date.now() + 7 * 86400000).toISOString(),
+    });
   }
   const grant = {
     id: `tool-access:${owner}`,
@@ -430,7 +441,7 @@ describe('strict internal owner voice tools', () => {
     });
     await f.repo.put(f.owner, 'tool_access', f.grant);
     const policy = await f.coordinator.policy(f.owner),
-      { ownerId: _o, version: _v, updatedAt: _u, ...input } = policy;
+      { ownerId: _o, version: _v, updatedAt: _u, authorityVersions: _epochs, ...input } = policy;
     await f.coordinator.savePolicy(f.owner, { ...input, enabled: false }, policy.version);
     expect(await f.invoke('network_request_submit', f.input)).toMatchObject({
       status: 'blocked',
@@ -454,7 +465,7 @@ describe('strict internal owner voice tools', () => {
     });
     expect(await f.records()).toHaveLength(0);
     const current = await f.coordinator.policy(f.owner),
-      { ownerId: _o, version: _v, updatedAt: _u, ...policy } = current;
+      { ownerId: _o, version: _v, updatedAt: _u, authorityVersions: _epochs, ...policy } = current;
     await f.coordinator.savePolicy(
       f.owner,
       { ...policy, autoAcceptMeetings: false },
@@ -512,7 +523,13 @@ describe('strict internal owner voice tools', () => {
             );
           if (kind === 'policy') {
             const current = await f.coordinator.policy(f.owner),
-              { ownerId: _o, version: _v, updatedAt: _u, ...input } = current;
+              {
+                ownerId: _o,
+                version: _v,
+                updatedAt: _u,
+                authorityVersions: _epochs,
+                ...input
+              } = current;
             await f.coordinator.savePolicy(f.owner, { ...input, enabled: false }, current.version);
           }
           if (kind === 'block')

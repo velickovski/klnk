@@ -29,7 +29,13 @@
     "lint": "eslint .",
     "format:check": "prettier --check .",
     "format": "prettier --write .",
-    "test:pg": "tsx scripts/test-postgres.ts"
+    "test:pg": "tsx scripts/test-postgres.ts",
+    "test:components": "jest --config apps/mobile/component-test/jest.config.cjs",
+    "build:server": "tsx scripts/build-server.ts",
+    "start:server": "node dist/server/src/main.js",
+    "start:worker": "node dist/server/src/worker-main.js",
+    "db:migrate:compiled": "node dist/server/src/migrate.js",
+    "test:compiled": "tsx scripts/compiled-smoke.ts"
   },
   "dependencies": {
     "@electric-sql/pglite": "0.5.12",
@@ -37,6 +43,7 @@
     "@fastify/rate-limit": "11.2.1",
     "dotenv": "^17.2.3",
     "fastify": "5.12.7",
+    "nodemailer": "10.2.1",
     "pg": "8.23.1",
     "pino": "10.4.0",
     "ws": "^8.22.0",
@@ -47,6 +54,7 @@
     "@types/node": "^24.10.0",
     "@types/pg": "^8.15.6",
     "@types/ws": "^8.18.2",
+    "esbuild": "0.28.2",
     "eslint": "10.13.0",
     "prettier": "3.9.10",
     "tsx": "4.23.15",

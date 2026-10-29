@@ -27,14 +27,16 @@ The following paired themes are the detailed workspace specification. When unify
 
 | Semantic token | Light | Dark | Use |
 | --- | --- | --- | --- |
-| `background` | `#F5F6FA` | `#0B0D12` | App canvas |
-| `surface` | `#FFFFFF` | `#141821` | Content groups and sheets |
-| `surfaceRaised` | `#E9EDF5` | `#1D2330` | Selected rows, input grouping |
-| `text` | `#151924` | `#F5F7FB` | Primary content |
-| `textSecondary` | `#424C60` | `#B3BDCC` | Supporting text and placeholders |
-| `accent` | `#203D87` | `#B9CBFF` | Primary controls, links, selected state |
-| `onAccent` | `#FFFFFF` | `#111B33` | Content on solid accent |
-| `borderStrong` | `#66738A` | `#69768B` | Required control edges |
+| `background` | `#F5F6FA` | `#0E1228` | App canvas |
+| `surface` | `#FFFFFF` | `#191D3A` | Content groups and sheets |
+| `surfaceRaised` | `#E9EDF5` | `#252B47` | Selected rows, input grouping |
+| `text` | `#151924` | `#FFFDF9` | Primary content |
+| `textSecondary` | `#414864` | `#C2C6E3` | Supporting text and placeholders |
+| `accent` | `#203D87` | `#FFD2DA` | Links and selected state |
+| `onAccent` | `#FFFFFF` | `#191D3A` | Content on solid accent |
+| `action` / `onAction` | `#FF899A` / `#191D3A` | Same | Coral primary action; strong control border |
+| `actionPressed` | `#FFC2CC` | Same | Visible pressed fill; label/edge stay opaque |
+| `borderStrong` | `#66738A` | `#8893B2` | Required control edges |
 | `success` | `#135437` | `#A6DEC4` | Verified successful state label |
 | `warning` | `#704200` | `#FFD699` | Needs attention label |
 | `danger` | `#8E2035` | `#FFB4BE` | Destructive action/error label |
@@ -43,18 +45,7 @@ Use semantic status colors as foregrounds on the three opaque surfaces. Do not a
 
 ### Verified token contrast
 
-Calculated using the WCAG sRGB formula on 2026-10-26. Values below are the **lowest** contrast against `background`, `surface` and `surfaceRaised`, except the button row. They are rounded for display only. All specified normal-text pairs exceed 7:1; required borders exceed 3:1.
-
-| Pair | Light | Dark |
-| --- | ---: | ---: |
-| Text / surfaces | 14.96:1 | 14.66:1 |
-| Secondary text / surfaces | 7.35:1 | 8.29:1 |
-| Accent text / surfaces | 8.61:1 | 9.77:1 |
-| Success text / surfaces | 7.61:1 | 10.38:1 |
-| Warning text / surfaces | 7.25:1 | 11.48:1 |
-| Danger text / surfaces | 7.43:1 | 9.38:1 |
-| Strong border / surfaces | 4.08:1 | 3.42:1 |
-| On-accent / accent button | 10.10:1 | 10.62:1 |
+Current palette pairs are checked by `apps/mobile/test/design-contrast.test.ts` using the WCAG sRGB formula. It covers normal text/status foregrounds against opaque surfaces, coral action labels, and required/pressed control edges. Use these current executable checks rather than numerical tables from the earlier palette.
 
 These calculations do not verify the rendered app, alpha blends, disabled/pressed states or full accessibility conformance. Keep status and explanatory text at full opacity. Use background changes for presses; avoid fading whole controls and their labels.
 

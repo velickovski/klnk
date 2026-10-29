@@ -47,6 +47,9 @@ async function fixture() {
       },
       old.version,
     );
+    await calendar.confirmAvailability(owner, {
+      confirmedThrough: new Date(Date.now() + 7 * 86400000).toISOString(),
+    });
   }
   const request = (kind: NetworkRequestInput['kind'] = 'inform'): NetworkRequestInput => ({
     requestId: randomUUID(),
@@ -71,9 +74,14 @@ async function fixture() {
   return { db, a, b, calendar, coordinator, connection, request };
 }
 function policyInput(
-  policy: NetworkPolicyInput & { ownerId?: string; version?: number; updatedAt?: string },
+  policy: NetworkPolicyInput & {
+    ownerId?: string;
+    version?: number;
+    updatedAt?: string;
+    authorityVersions?: { ask: number; meeting: number };
+  },
 ): NetworkPolicyInput {
-  const { ownerId, version, updatedAt, ...input } = policy;
+  const { ownerId, version, updatedAt, authorityVersions, ...input } = policy;
   return input;
 }
 describe('internal durable coordination', () => {
@@ -101,7 +109,7 @@ describe('internal durable coordination', () => {
       code: 'member_not_found',
     });
   });
-  it('I1 denies unconnected, blocked, muted and foreign-owner access', async () => {
+  it('I1 denies unconnected, blocked and foreign-owner access while mute only silences notifications', async () => {
     const { db, a, b, coordinator, request, connection } = await fixture();
     await expect(
       coordinator.submit(a, { ...request(), connectionId: randomUUID() }),
@@ -118,7 +126,7 @@ describe('internal durable coordination', () => {
       expectedVersion: c.version,
     });
     await coordinator.tick();
-    expect((await coordinator.detail(a, submitted.id)).state).toBe('paused');
+    expect((await coordinator.detail(a, submitted.id)).state).toBe('delivered');
     const muted = (await coordinator.connections(b))[0];
     await coordinator.updateConnection(b, connection.id, {
       action: 'block',
@@ -138,7 +146,7 @@ describe('internal durable coordination', () => {
     expect(stopped.state).toBe('paused');
     expect(stopped.messages).toEqual([]);
     await expect(coordinator.control(b, pending.id, 'resume')).rejects.toMatchObject({
-      code: 'network_policy_changed',
+      code: 'network_scope_denied',
     });
     await expect(
       coordinator.submit(a, { ...request(), expiresAt: new Date(Date.now() - 1000).toISOString() }),

@@ -119,17 +119,26 @@ async function fixture(enabled = true) {
     authToken: config.twilioToken,
     fetch: twilioFetch,
   });
+  const email = `${randomUUID()}@example.invalid`,
+    password = 'A mock-only account password 2026';
   const register = await service.app.inject({
     method: 'POST',
     url: '/auth/register',
     payload: {
-      email: `${randomUUID()}@example.invalid`,
-      password: 'A mock-only account password 2026',
+      email,
+      password,
       name: 'Test owner',
     },
   });
-  expect(register.statusCode).toBe(201);
-  const { token, user } = register.json(),
+  expect(register.statusCode).toBe(202);
+  expect(register.json()).not.toHaveProperty('token');
+  const login = await service.app.inject({
+    method: 'POST',
+    url: '/auth/login',
+    payload: { email, password },
+  });
+  expect(login.statusCode).toBe(200);
+  const { token, user } = login.json(),
     headers = { authorization: `Bearer ${token}` };
   // Only this non-demo owner may arm the private live pilot. No actual network is available.
   Object.assign(service.engine.config, { liveOwnerId: user.id });
