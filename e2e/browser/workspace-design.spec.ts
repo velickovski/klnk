@@ -86,6 +86,10 @@ for (const width of [320, 390, 430]) {
     await page.setViewportSize({ width, height: 740 });
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await registerNetwork(page, `Fictional design ${width}`, 'call');
+    if (width === 320)
+      await page.addStyleTag({
+        content: '[id^="network-heading-"] { font-family: Arial, sans-serif !important; }',
+      });
     await mkdir('.data/workspace-style-qa', { recursive: true });
     const naturalTitleFonts = new Map<string, number>();
     for (const enlarged of [false, true]) {

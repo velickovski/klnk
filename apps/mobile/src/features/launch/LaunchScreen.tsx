@@ -77,7 +77,7 @@ export function LaunchScreen({
                 <Icon name="sparkles-outline" color={brand.coral} size={22} />
               </View>
             </View>
-            <Text accessibilityRole="header" style={s.headline}>
+            <Text accessibilityRole="header" style={[s.headline, width < 360 && typeRoles.title]}>
               Your day.{'\n'}One conversation.
             </Text>
             <LaunchArtwork size={artSize} resting={opening} />

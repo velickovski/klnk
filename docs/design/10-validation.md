@@ -1,5 +1,13 @@
 # Implementation and validation evidence
 
+## Linux font fallback follow-up — 29 October 2026
+
+The design push `c208d5f` passed local gates but [GitHub run 40904771798](https://github.com/velickovski/klnk/actions/runs/40904771798) finished with 65 browser passes and two genuine 320-wide font-fit failures. CI artifacts show an extra opening-headline line leaving only 92.1% of the call target in the initial 568-high viewport, and an enlarged Calendar title splitting its final letter. Other remote gates passed. These failures supersede any implication that Windows-only layout evidence establishes Linux or native correctness.
+
+Narrow layouts now use a 28-unit opening title and 26-unit workspace title, preserving scaling. The two existing 320-wide cases additionally exercise Arial heading metrics on Windows while all viewport, clipping, whole-word, keyboard and no-capture assertions remain intact. Independent QA passed all 11 focused home/workspace cases on fixture export `8f1fc52b8660bba13270516f1a068874`, including the wider fallback and actual 200% text. This proxy is not Linux verification; the follow-up remote workflow must pass. Saved CI failures and local evidence remain under ignored `.data/design-ci-40904771798/` and `.data/workspace-style-qa/`.
+
+Follow-up local gates: all 67 browser journeys passed; 25 actual PostgreSQL cases and 68 rendered component cases passed, plus TypeScript/lint/format. A heavily concurrent first unit run produced 837 passes and one existing engine-test timeout; its isolated 15-case engine suite passed without changes. A subsequent complete run with two workers passed all 838 unit cases with 25 explicit PG-only skips. No timeout or assertion was relaxed. The refreshed phone export is `index-843a83ce79c883e708ab64a34854ac46.js`, SHA256 `6efe85692daa2e2ee7bbeb2ce74e9d2daafe7f9a330834c6ed0b45c862151902`, 2,417,606 bytes, with the configured key absent. No physical-device result is implied.
+
 ## Workspace design follow-through — 29 October 2026
 
 The sign-in screen, all five network destinations, optional setup, native recorded-turn panel and shared detail sheets now carry the home design. Implemented: navy full-width titles, system type, lavender/system canvas, continuous opaque groups, icon-led feature headings, coral capsule actions, concise introductory copy and grouped Settings. Setup and availability disclose on intent; mounted editors and canonical receipt/draft state survive collapse. Request reviews, sharing/retention/permission warnings and actual recovery states remain explicit. No new dependency, API/schema, provider permission or external action was added.

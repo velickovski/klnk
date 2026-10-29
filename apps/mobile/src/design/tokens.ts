@@ -28,6 +28,7 @@ export const radii = { control: 16, group: 24, sheet: 32, capsule: 999 } as cons
 export const typeRoles = {
   hero: { fontSize: 34, lineHeight: 40, fontWeight: '600' },
   title: { fontSize: 28, lineHeight: 34, fontWeight: '600' },
+  compactTitle: { fontSize: 26, lineHeight: 32, fontWeight: '600' },
   section: { fontSize: 21, lineHeight: 28, fontWeight: '600' },
   body: { fontSize: 17, lineHeight: 25, fontWeight: '400' },
   action: { fontSize: 17, lineHeight: 24, fontWeight: '600' },

@@ -122,6 +122,7 @@ function WorkspaceNavigator(props: NavigatorProps) {
   const keyboardTab = useRef(false);
   const navigationStrip = useRef<React.ElementRef<typeof ScrollView>>(null);
   const tabOffsets = useRef(new Map<Panel, number>());
+  const { width } = useWindowDimensions();
   const { onVoiceHome, ownerId } = useWorkspace(),
     { colors, styles, reducedMotion } = useUI();
   const title = useRef<React.ElementRef<typeof Text>>(null);
@@ -208,7 +209,11 @@ function WorkspaceNavigator(props: NavigatorProps) {
             accessibilityRole="header"
             nativeID={`network-heading-${name}`}
             {...(Platform.OS === 'web' ? { tabIndex: -1 } : {})}
-            style={{ ...typeRoles.title, color: brand.cream, letterSpacing: -0.8 }}
+            style={{
+              ...(width < 360 ? typeRoles.compactTitle : typeRoles.title),
+              color: brand.cream,
+              letterSpacing: -0.8,
+            }}
           >
             {name}
           </Text>

@@ -11,6 +11,11 @@ for (const width of [320, 390, 430]) {
     await page.goto('/');
     const call = page.getByRole('button', { name: 'Call klnk', exact: true });
     await expect(call).toBeVisible();
+    if (width === 320)
+      // Exercise a wider system fallback on Windows as well as the native CI font stack.
+      await page.addStyleTag({
+        content: '[role="heading"] { font-family: Arial, sans-serif !important; }',
+      });
     await expect(page.getByRole('button')).toHaveCount(1);
     await expect(call).toBeInViewport({ ratio: 1 });
     await enlargeTextAndSpacing(page);
