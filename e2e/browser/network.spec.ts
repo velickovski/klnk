@@ -631,7 +631,10 @@ for (const colorScheme of ['light', 'dark'] as const)
       });
       await page.getByRole('tab', { name: 'Memory', exact: true }).focus();
       await page.keyboard.press('Enter');
-      await page.getByRole('button', { name: 'Add network memory', exact: true }).focus();
+      const addMemory = page.getByRole('button', { name: 'Add network memory', exact: true });
+      await expect(addMemory).toBeEnabled();
+      await addMemory.focus();
+      await expect(addMemory).toBeFocused();
       await page.keyboard.press('Enter');
       await enlargeTextAndSpacing(page);
       const field = page.getByRole('textbox', { name: 'Memory text', exact: true });

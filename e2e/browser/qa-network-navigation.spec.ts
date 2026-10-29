@@ -374,11 +374,35 @@ test('independent unsaved controls expose checked markup and real tab keyboard n
   await expect(page.getByRole('tab', { name: 'People', exact: true })).toBeFocused();
   // Move directly to a control after keyboard navigation. A deferred heading
   // announcement must not steal focus between the user's focus and Enter.
-  await page.getByRole('tab', { name: 'Memory', exact: true }).focus();
-  await page.keyboard.press('Enter');
-  await page.getByRole('button', { name: 'Add network memory', exact: true }).focus();
-  await page.keyboard.press('Enter');
-  await expect(page.getByRole('textbox', { name: 'Memory text', exact: true })).toBeVisible();
+  let releaseMemoryRead = () => {};
+  let memoryReadPending = false;
+  const heldMemoryRead = new Promise<void>((resolve) => {
+    releaseMemoryRead = resolve;
+  });
+  await page.route(apiPath('/network/memories'), async (route) => {
+    if (route.request().method() !== 'GET') return route.continue();
+    const response = await route.fetch();
+    memoryReadPending = true;
+    await heldMemoryRead;
+    await route.fulfill({ response });
+  });
+  try {
+    await page.getByRole('tab', { name: 'Memory', exact: true }).focus();
+    await page.keyboard.press('Enter');
+    const addMemory = page.getByRole('button', { name: 'Add network memory', exact: true });
+    // Lazy collection loading is a real disabled state. Locator.focus() does
+    // not wait for enabled controls, so require readiness before focusing.
+    await expect.poll(() => memoryReadPending).toBe(true);
+    await expect(addMemory).toBeDisabled();
+    releaseMemoryRead();
+    await expect(addMemory).toBeEnabled();
+    await addMemory.focus();
+    await expect(addMemory).toBeFocused();
+    await page.keyboard.press('Enter');
+    await expect(page.getByRole('textbox', { name: 'Memory text', exact: true })).toBeVisible();
+  } finally {
+    releaseMemoryRead();
+  }
   await page.getByRole('tab', { name: 'Settings', exact: true }).click();
   const toggle = page.getByRole('switch', { name: 'Enable background delegation', exact: true });
   await expect(toggle).not.toBeChecked();

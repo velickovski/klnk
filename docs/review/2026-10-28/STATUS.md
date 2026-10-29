@@ -6,6 +6,8 @@ Updated 29 October 2026. Reviews were located on `origin/claude/awesome-bohr-uiv
 
 **PostgreSQL follow-up:** `226d597` passed the earlier checks but hit a23/24 database result in [GitHub run40803792246](https://github.com/velickovski/klnk/actions/runs/40803792246). Container SQL context and a separate unsafe catalog/drop proof identified a teardown race with immutable migration002. [Cleanup now shares the migration fence](../2026-10-29/ci-postgres-cleanup.md); applied SQL files remain byte-for-byte unchanged. The expanded actual PostgreSQL gate is **25/25**, including a deterministic coupled-cleanup/real-migration lock test, independently rerun. Bundled Chromium was repeated against the unchanged frontend: **56/56**,114.383s. The repaired preview bundle is unchanged. Remote CI must verify this follow-up too.
 
+**Keyboard fixture readiness:** `e672754` passed all remote gates except one of56 browser cases. [The saved trace](../2026-10-29/ci-keyboard-readiness.md) proves the test focused a disabled Add-memory button while lazy data was loading, then sent Enter. The fixture now requires actual enabled/focused state, with a held-response proof; no product code, timeout, keyboard or font assertion was weakened. Latest local repeat: **838 unit passes/25 PG-only skips**,109.615s; **25/25 actual PostgreSQL**,26.36s; **56/56 bundled Chromium**,129.125s, zero retries/skips/flakes. Existing66 component cases and all type/lint/format checks remain green. This test-only follow-up leaves the running preview bundle unchanged; its remote CI result must be checked for the new commit.
+
 ## Milestone board
 
 | Card | Owner and files | Current state / actual evidence |
