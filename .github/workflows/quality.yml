@@ -58,9 +58,11 @@ jobs:
           name: browser-verification
           retention-days: 7
           if-no-files-found: ignore
+          include-hidden-files: true
           path: |
             playwright-report/
             test-results/
+            .data/e2e-results/
             docs/review/2026-10-28/evidence/
             docs/agent-network/evidence/
     # No provider secrets, service accounts, deployment or paid smoke in this job.

@@ -1,6 +1,6 @@
 import React from 'react';
 import { beforeEach, describe, expect, it, jest } from '@jest/globals';
-import { fireEvent, render, screen } from '@testing-library/react-native';
+import { act, fireEvent, render, screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
 import { api } from '../src/api';
 import { ThemeProvider } from '../src/design/ThemeProvider';
@@ -9,6 +9,7 @@ import { NetworkWorkspace } from '../src/features/network/Workspace';
 import { MemoryPanel } from '../src/features/network/MemoryPanel';
 import { PeoplePanel } from '../src/features/network/PeoplePanel';
 import { AutonomyPanel } from '../src/features/network/AutonomyPanel';
+import { InboxPanel } from '../src/features/network/InboxPanel';
 import {
   connection,
   conversation,
@@ -37,6 +38,36 @@ function PolicyReadback() {
 }
 
 describe('independent rendered workspace state and cache boundaries', () => {
+  it('keeps the originating row focusable while a detail refresh is pending and never reopens on its late completion', async () => {
+    values['/network/connections'] = { connections: [connection] };
+    values['/network/conversations'] = { conversations: [conversation], unread: 1 };
+    let complete!: (value: unknown) => void;
+    mockedApi.mockImplementation(async <T,>(path: string): Promise<T> =>
+      path === `/network/conversations/${conversation.id}`
+        ? new Promise((resolve) => {
+            complete = resolve as (value: unknown) => void;
+          })
+        : (values[path] as T),
+    );
+    await render(wrap(<InboxPanel ownerId={ownerId} />));
+    const trigger = await screen.findByRole('button', {
+      name: `Open request: ${conversation.request.purpose}`,
+    });
+    await fireEvent.press(trigger);
+    expect(trigger).not.toBeDisabled();
+    const close = screen.getByRole('button', { name: `Close ${conversation.request.purpose}` });
+    await fireEvent.press(close);
+    expect(
+      screen.queryByRole('button', { name: `Close ${conversation.request.purpose}` }),
+    ).not.toBeOnTheScreen();
+    await act(async () => complete(conversation));
+    expect(
+      screen.queryByRole('button', { name: `Close ${conversation.request.purpose}` }),
+    ).not.toBeOnTheScreen();
+    expect(
+      screen.getByRole('button', { name: `Open request: ${conversation.request.purpose}` }),
+    ).not.toBeDisabled();
+  });
   it.each(['different-owner:same-origin', 'same-owner:different-origin'])(
     'clears cached private content and drafts when session scope changes to %s',
     async (scope) => {

@@ -15,9 +15,9 @@ export default defineConfig({
       : {}),
     baseURL: 'http://127.0.0.1:8083',
     viewport: { width: 390, height: 844 },
-    trace: 'off',
+    trace: 'retain-on-failure',
     video: 'off',
-    screenshot: 'off',
+    screenshot: 'only-on-failure',
     ...(process.env.KLNK_E2E_CHANNEL ? { channel: process.env.KLNK_E2E_CHANNEL } : {}),
   },
   webServer: {

@@ -2,10 +2,11 @@ import { test, expect } from '@playwright/test';
 import { createHash } from 'node:crypto';
 import { readFile, mkdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { apiPath, enlargeTextAndSpacing, expectNoCapture, installNoCaptureProbe } from './helpers';
+import { apiPath, expectNoCapture, installNoCaptureProbe } from './helpers';
 import {
   connectMembers,
   egressProbes,
+  enlargeTextAndSpacing,
   expectNoNetworkOverflow,
   guardContext,
   loginNetwork,
@@ -31,6 +32,53 @@ test.afterEach(async ({}, testInfo) => {
     contentType: 'application/json',
   });
   expect(egressProbes.map((p) => p.external)).toEqual(egressProbes.map(() => 0));
+});
+
+test('NETWORK text fixture enlarges replacement inputs and inherited text without compounding', async ({
+  page,
+}) => {
+  await page.goto('/');
+  await page.evaluate(() => {
+    const shortTransitions = document.createElement('style');
+    shortTransitions.textContent = '*{transition-duration:.01ms!important}';
+    document.head.append(shortTransitions);
+    const fixture = document.createElement('section');
+    fixture.id = 'qa-text-fixture';
+    fixture.style.fontSize = '17px';
+    fixture.append(document.createTextNode('Fictional font fixture'));
+    const input = document.createElement('input');
+    input.id = 'qa-font-input';
+    input.style.fontSize = '17px';
+    fixture.append(input);
+    document.body.append(fixture);
+  });
+  await enlargeTextAndSpacing(page);
+  await expect(page.locator('#qa-font-input')).toHaveCSS('font-size', '34px');
+  await page.evaluate(() => {
+    const replacement = document.createElement('input');
+    replacement.id = 'qa-font-input';
+    replacement.style.fontSize = '17px';
+    document.getElementById('qa-font-input')!.replaceWith(replacement);
+    const child = document.createElement('span');
+    child.id = 'qa-font-inherited';
+    child.textContent = 'Later mounted inherited text';
+    document.getElementById('qa-text-fixture')!.append(child);
+  });
+  await expect(page.locator('#qa-font-input')).toHaveCSS('font-size', '34px');
+  await expect(page.locator('#qa-font-inherited')).toHaveCSS('font-size', '34px');
+  await page.locator('#qa-font-input').evaluate((element) => {
+    (element as HTMLElement).style.fontSize = '20px';
+  });
+  await expect(page.locator('#qa-font-input')).toHaveCSS('font-size', '40px');
+  for (let index = 1; index <= 8; index++) {
+    await page.locator('#qa-font-input').evaluate((element, index) => {
+      (element as HTMLElement).style.borderWidth = `${index}px`;
+    }, index);
+    await expect(page.locator('#qa-font-input')).toHaveCSS('font-size', '40px');
+    await expect(page.locator('#qa-font-inherited')).toHaveCSS('font-size', '34px');
+    await expect(page.getByText('Call klnk', { exact: true })).toHaveCSS('font-size', '34px');
+  }
+  await expectNoCapture(page);
 });
 
 test('NETWORK opening keeps exactly one Call klnk action and loaded bytes match the exported source', async ({
@@ -531,6 +579,33 @@ for (const colorScheme of ['light', 'dark'] as const)
           }),
         );
         panelMetrics.push({ panel: name, navigation: metrics });
+        if (metrics.some((metric) => metric.bottom > 845)) {
+          const fontSource = await page.evaluate(() => {
+            const sheets = Array.from(
+              document.querySelectorAll<HTMLStyleElement>('style[data-klnk-qa-text-accommodation]'),
+            );
+            const targets = Array.from(
+              document.querySelectorAll<HTMLElement>('[data-klnk-qa-base-font]'),
+            ).slice(0, 35);
+            const before = targets.map((element) => ({
+              text: element.textContent?.slice(0, 50),
+              tag: element.tagName,
+              id: element.id,
+              base: element.dataset.klnkQaBaseFont,
+              font: getComputedStyle(element).fontSize,
+              inline: element.style.cssText,
+              className: element.className,
+            }));
+            sheets.forEach((sheet) => sheet.remove());
+            const natural = targets.map((element) => getComputedStyle(element).fontSize);
+            sheets.forEach((sheet) => document.head.append(sheet));
+            return { sheetCount: sheets.length, before, natural };
+          });
+          await testInfo.attach('unexpected-font-source', {
+            body: JSON.stringify({ panel: name, fontSource }),
+            contentType: 'application/json',
+          });
+        }
         for (const metric of metrics) {
           expect(metric.width).toBeGreaterThanOrEqual(44);
           expect(metric.height).toBeGreaterThanOrEqual(44);
@@ -566,6 +641,36 @@ for (const colorScheme of ['light', 'dark'] as const)
       await field.focus();
       await page.keyboard.type('Keyboard fictional draft');
       await expect(field).toHaveValue('Keyboard fictional draft');
+      expect(
+        await field.evaluate((element) => parseFloat(getComputedStyle(element).fontSize)),
+      ).toBeGreaterThanOrEqual(34);
+      // Replace the editor after scaling is enabled. The accommodation must
+      // survive React's new DOM input and later focus/typing style updates.
+      await page.getByRole('button', { name: 'Discard memory draft', exact: true }).click();
+      await page.getByRole('button', { name: 'Add network memory', exact: true }).click();
+      await expect(field).toHaveValue('');
+      expect(
+        await field.evaluate((element) => parseFloat(getComputedStyle(element).fontSize)),
+      ).toBeGreaterThanOrEqual(34);
+      await field.fill('Keyboard fictional draft');
+      expect(
+        await field.evaluate((element) => parseFloat(getComputedStyle(element).fontSize)),
+      ).toBeGreaterThanOrEqual(34);
+      await testInfo.attach('network-input-font-metrics', {
+        body: JSON.stringify(
+          await field.evaluate((element) => {
+            const style = getComputedStyle(element);
+            return {
+              baseFontPx: Number((element as HTMLElement).dataset.klnkQaBaseFont),
+              fontSize: style.fontSize,
+              lineHeight: style.lineHeight,
+              letterSpacing: style.letterSpacing,
+              wordSpacing: style.wordSpacing,
+            };
+          }),
+        ),
+        contentType: 'application/json',
+      });
       await page
         .getByRole('button', { name: 'Discard memory draft', exact: true })
         .scrollIntoViewIfNeeded();

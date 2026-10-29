@@ -2,6 +2,8 @@
 
 Updated 29 October 2026. Reviews were located on `origin/claude/awesome-bohr-uivxw4` and fast-forwarded at `40053a2`. Their original citations are historical. Mechanical formatting commit `dd9e4a7` precedes behavioral work; an independent AST check found no semantic differences in 182 code/six JSON files after JSX text normalization.
 
+**Latest follow-up:** the first M2/M3 push `0be2bbd` passed every GitHub gate except browser tests (46passed/9failed). [The CI repair](../2026-10-29/browser-ci-repair.md) fixes disabled-row focus and delayed heading focus, and corrects persistent text-size/virtualized-scroll fixtures. Its latest local gates are **838unit +66component +24actualPG +56bundled-Chromium passes**, with TypeScript/lint/format and a repaired phone export. These supersede the initial Chrome55/55/65component checkpoint below. The preview has been reloaded to bundle `0bd23ace8949f52f9889660fb7aeda24`, SHA256 `489cb6d166e8675bec9ee1619cf00e53f4111c08f1ef1374bf3719929e43a0c7`; no real audio/device evidence is claimed. Check GitHub for the follow-up commit's remote result.
+
 ## Milestone board
 
 | Card | Owner and files | Current state / actual evidence |
@@ -24,7 +26,7 @@ The initial combined M2/M3 run failed: **763 passed, 51 failed, 24 pending**, 15
 
 Platform's resumed four-suite group passed **14/14**, earlier five HTTP fixture suites **41/41**, retained browser group **32/32**. Security's corrected voice group passed **58/58**. Quality's OAuth/storage group passed **8/8**, and actual root-App incoming proof regressions **2/2** cover clearing an old password and rejecting late completions. Two caption regressions verify bounded history/turn size and immutable prior snapshots.
 
-## Final local gate — 29 October
+## Initial M2/M3 local gate — 29 October
 
 | Command/check | Actual result |
 | --- | --- |

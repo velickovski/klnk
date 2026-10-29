@@ -1,9 +1,10 @@
 import { test, expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { mkdir } from 'node:fs/promises';
-import { apiPath, enlargeTextAndSpacing, expectNoCapture, installNoCaptureProbe } from './helpers';
+import { apiPath, expectNoCapture, installNoCaptureProbe } from './helpers';
 import {
   guardContext,
+  enlargeTextAndSpacing,
   registerNetwork,
   networkCall,
   connectMembers,
@@ -100,7 +101,7 @@ test('M3 a long Memory collection renders in bounded batches and scrolls to the 
         });
         return page.getByText('Fictional collection record 80', { exact: true }).isVisible();
       },
-      { intervals: [100, 200, 250] },
+      { intervals: [16, 32, 50] },
     )
     .toBe(true);
   // The final batch may have mounted after the poll's last scaling pass.

@@ -143,10 +143,12 @@ function InboxContent({
     // but it must never select/reopen a conversation after its sheet was closed.
     setSelected(conversation);
     setCompose(false);
-    void task.run(
-      () => networkApi.read<NetworkConversation>(`/network/conversations/${conversation.id}`, true),
-      () => undefined,
-    );
+    // Reading a detail is independent of mutation ownership. In particular the
+    // originating row must remain focusable if the owner dismisses this sheet
+    // before its refresh finishes. The query publishes loading/errors itself.
+    void networkApi
+      .read<NetworkConversation>(`/network/conversations/${conversation.id}`, true)
+      .catch(() => undefined);
   };
   const send = () => {
     try {

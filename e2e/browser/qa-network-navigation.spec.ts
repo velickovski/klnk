@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { randomUUID } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
-import { apiPath, enlargeTextAndSpacing, expectNoCapture, installNoCaptureProbe } from './helpers';
+import { apiPath, expectNoCapture, installNoCaptureProbe } from './helpers';
 import {
   guardContext,
   registerNetwork,
@@ -11,6 +11,7 @@ import {
   seedRule,
   meetingInput,
   expectNoNetworkOverflow,
+  enlargeTextAndSpacing,
 } from './network-helpers';
 
 test.beforeEach(async ({ context, page }, info) => {
@@ -120,7 +121,7 @@ test('independent real eighty-row Memory collection scrolls at large text and re
         );
         return page.getByText('Independent private row 80', { exact: true }).isVisible();
       },
-      { intervals: [100, 200, 250] },
+      { intervals: [16, 32, 50] },
     )
     .toBe(true)
     .catch(async (error) => {
@@ -131,14 +132,42 @@ test('independent real eighty-row Memory collection scrolls at large text and re
       throw error;
     });
   // A virtualized final batch may mount after the poll's last scaling pass.
-  await enlargeTextAndSpacing(page);
   const finalRow = page.getByText('Independent private row 80', { exact: true });
-  await finalRow.scrollIntoViewIfNeeded();
+  let finalFont = { actual: 0, base: 0 };
+  await expect
+    .poll(async () => {
+      await enlargeTextAndSpacing(page);
+      // Reacquire and scroll in one DOM operation: a virtualized row can be
+      // replaced between Playwright's actionability checks and scroll action.
+      const measured = await collection.evaluate((container) => {
+        const row = Array.from(container.querySelectorAll<HTMLElement>('*')).find(
+          (element) => element.textContent === 'Independent private row 80',
+        );
+        if (!row) {
+          container.scrollTop = container.scrollHeight;
+          return null;
+        }
+        row.scrollIntoView({ block: 'nearest' });
+        const bounds = row.getBoundingClientRect(),
+          viewport = container.getBoundingClientRect();
+        return {
+          actual: parseFloat(getComputedStyle(row).fontSize),
+          base: Number(row.dataset.klnkQaBaseFont),
+          visible:
+            bounds.bottom > viewport.top &&
+            bounds.top < viewport.bottom &&
+            bounds.bottom > 0 &&
+            bounds.top < innerHeight,
+        };
+      });
+      if (!measured) return false;
+      finalFont = measured;
+      return (
+        measured.visible && measured.base > 0 && Math.abs(measured.actual - measured.base * 2) < 0.1
+      );
+    })
+    .toBe(true);
   await expect(finalRow).toBeInViewport();
-  const finalFont = await finalRow.evaluate((element) => ({
-    actual: parseFloat(getComputedStyle(element).fontSize),
-    base: Number((element as HTMLElement).dataset.klnkQaBaseFont),
-  }));
   expect(finalFont.base).toBeGreaterThan(0);
   expect(finalFont.actual).toBeCloseTo(finalFont.base * 2, 1);
   await mkdir('docs/review/2026-10-28/evidence', { recursive: true });
@@ -223,6 +252,7 @@ test('independent Calendar opens its actual agreed request and returns focus aft
 }, info) => {
   const a = await separateContext(browser, info),
     b = await separateContext(browser, info);
+  let releaseRead = () => {};
   try {
     const alice = {
       ...a,
@@ -262,6 +292,16 @@ test('independent Calendar opens its actual agreed request and returns focus aft
       name: `Open request: ${input.purpose}`,
       exact: true,
     });
+    let readPending = false;
+    const pendingRead = new Promise<void>((resolve) => {
+      releaseRead = resolve;
+    });
+    await a.page.route(apiPath(`/network/conversations/${conversation.id}`), async (route) => {
+      const response = await route.fetch();
+      readPending = true;
+      await pendingRead;
+      await route.fulfill({ response }).catch(() => undefined);
+    });
     await trigger.click();
     await a.page.keyboard.press('Escape');
     await expect(a.page.getByRole('dialog')).toHaveCount(0);
@@ -293,14 +333,8 @@ test('independent Calendar opens its actual agreed request and returns focus aft
           const before = describe(document.activeElement);
           const ownsFocus = Object.hasOwn(row, 'focus');
           const usesPrototypeFocus = row.focus === HTMLElement.prototype.focus;
-          row.focus();
-          const instanceFocus = describe(document.activeElement);
-          HTMLElement.prototype.focus.call(row);
-          const prototypeFocus = describe(document.activeElement);
           return {
             before,
-            instanceFocus,
-            prototypeFocus,
             ownsFocus,
             usesPrototypeFocus,
             connected: row.isConnected,
@@ -316,9 +350,13 @@ test('independent Calendar opens its actual agreed request and returns focus aft
         });
         throw error;
       });
+    // Keep the GET pending through dismissal: focus cannot rely on network speed.
+    await expect.poll(() => readPending).toBe(true);
+    releaseRead();
     await expectNoCapture(a.page);
     await expectNoCapture(b.page);
   } finally {
+    releaseRead();
     await a.context.close();
     await b.context.close();
   }
@@ -334,6 +372,13 @@ test('independent unsaved controls expose checked markup and real tab keyboard n
   await expect(page.getByRole('tab', { name: 'Calendar', exact: true })).toBeFocused();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'People', exact: true })).toBeFocused();
+  // Move directly to a control after keyboard navigation. A deferred heading
+  // announcement must not steal focus between the user's focus and Enter.
+  await page.getByRole('tab', { name: 'Memory', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await page.getByRole('button', { name: 'Add network memory', exact: true }).focus();
+  await page.keyboard.press('Enter');
+  await expect(page.getByRole('textbox', { name: 'Memory text', exact: true })).toBeVisible();
   await page.getByRole('tab', { name: 'Settings', exact: true }).click();
   const toggle = page.getByRole('switch', { name: 'Enable background delegation', exact: true });
   await expect(toggle).not.toBeChecked();

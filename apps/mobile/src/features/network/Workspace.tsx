@@ -130,6 +130,12 @@ function WorkspaceNavigator(props: NavigatorProps) {
         animated: !reducedMotion,
       });
       if (Platform.OS === 'web') {
+        // A keyboard user may already have moved into the newly mounted panel
+        // before this frame. Announce the heading only if that would not steal
+        // focus from the control they chose.
+        const panel = document.getElementById(`network-screen-${name.toLowerCase()}`);
+        const active = document.activeElement;
+        if (panel?.contains(active) || active?.closest('[role="dialog"]')) return;
         const target = arrow
           ? document.getElementById(`network-tab-${name}`)
           : (title.current as unknown as HTMLElement | null);

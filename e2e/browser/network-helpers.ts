@@ -8,6 +8,96 @@ import {
 import { randomUUID } from 'node:crypto';
 import { apiPath, installNoCaptureProbe } from './helpers';
 
+/** Persistent test-only text accommodation. React can replace fields and virtual
+ * rows after the initial pass; CSS overrides survive style updates, and an
+ * observer measures new nodes with the accommodation sheet disabled first. */
+export async function enlargeTextAndSpacing(page: Page, paragraphs: string[] = []) {
+  await page.evaluate((paragraphs) => {
+    type Fixture = { refresh: (paragraphs: string[]) => void };
+    const fixtureWindow = window as unknown as { klnkQaTextFixture?: Fixture };
+    if (fixtureWindow.klnkQaTextFixture) {
+      fixtureWindow.klnkQaTextFixture.refresh(paragraphs);
+      return;
+    }
+    const sheet = document.createElement('style');
+    const stableMeasurement = document.createElement('style');
+    stableMeasurement.dataset.klnkQaFontMeasurement = 'true';
+    stableMeasurement.textContent =
+      '*,*::before,*::after{transition-property:none!important;animation-name:none!important}';
+    document.head.append(stableMeasurement);
+    sheet.dataset.klnkQaTextAccommodation = 'true';
+    document.head.append(sheet);
+    const identifiers = new WeakMap<HTMLElement, number>();
+    const paragraphTexts = new Set(paragraphs);
+    let nextId = 0;
+    let queued = false;
+    const observer = new MutationObserver(() => {
+      if (queued) return;
+      queued = true;
+      queueMicrotask(() => {
+        queued = false;
+        apply();
+      });
+    });
+    function apply() {
+      observer.disconnect();
+      // Keep the measurement rule active while removing font overrides. Even a
+      // reduced-motion .01ms transition otherwise exposes its old computed size
+      // during this synchronous measurement and would compound the next pass.
+      sheet.remove();
+      // Measuring without this stylesheet avoids doubling inherited,
+      // already-enlarged text when a descendant is mounted in a later batch.
+      const targets = Array.from(document.querySelectorAll<HTMLElement>('*')).filter(
+        (element) =>
+          !element.matches('script,style,noscript') &&
+          !element.closest('[aria-hidden="true"]') &&
+          (element.matches('input,textarea,select') ||
+            Array.from(element.childNodes).some(
+              (child) => child.nodeType === Node.TEXT_NODE && !!child.textContent?.trim(),
+            )),
+      );
+      const naturalSizes = targets.map((element) => parseFloat(getComputedStyle(element).fontSize));
+      const rules: string[] = [];
+      targets.forEach((element, index) => {
+        const natural = naturalSizes[index];
+        if (!Number.isFinite(natural) || natural <= 0) return;
+        let id = identifiers.get(element);
+        if (id === undefined) {
+          id = ++nextId;
+          identifiers.set(element, id);
+        }
+        element.dataset.klnkQaTextId = String(id);
+        element.dataset.klnkQaBaseFont = String(natural);
+        rules.push(
+          `[data-klnk-qa-text-id="${id}"]{font-size:${natural * 2}px!important;line-height:1.5!important;letter-spacing:.12em!important;word-spacing:.16em!important;${paragraphTexts.has(element.textContent?.trim() ?? '') ? 'margin-bottom:2em!important;' : ''}}`,
+        );
+      });
+      sheet.textContent = rules.join('\n');
+      document.head.append(sheet);
+      observer.observe(document.documentElement, {
+        subtree: true,
+        childList: true,
+        characterData: true,
+        attributes: true,
+        attributeFilter: ['style', 'class', 'aria-hidden'],
+      });
+    }
+    fixtureWindow.klnkQaTextFixture = {
+      refresh: (texts) => {
+        let changed = false;
+        texts.forEach((text) => {
+          if (!paragraphTexts.has(text)) {
+            paragraphTexts.add(text);
+            changed = true;
+          }
+        });
+        if (changed) apply();
+      },
+    };
+    apply();
+  }, paragraphs);
+}
+
 export type NetworkAccount = {
   token: string;
   user: { id: string };
