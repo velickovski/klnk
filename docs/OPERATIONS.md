@@ -24,6 +24,8 @@ npm run build:server
 
 The migration directory deliberately sits one level above the bundled entrypoints. The existing `new URL('../migrations/', import.meta.url)` therefore resolves inside the artifact, independently of the process working directory. The build rejects escaped workspace imports and TypeScript runtime imports. Npm dependencies remain external; include compatible production `node_modules` from the same lockfile. Do not copy the JavaScript directory alone and assume dependencies are embedded. Source maps are server artifacts; do not publish them as browser assets.
 
+Migrations share the transaction advisory fence defined in `apps/server/src/migration-lock.ts`. Coordinate administrative schema DDL with that same fence, especially in a shared database: historical migration002 deparses matching constraints across schemas. Uncoordinated schema deletion can invalidate its catalog lookup. Disposable test teardown now uses that fence; it does not rewrite the checksummed migration or guarantee isolation from arbitrary outside administration. See [the reproduced cleanup race](review/2026-10-29/ci-postgres-cleanup.md). Never use an application database for QA.
+
 Runtime commands use Node directly:
 
 ```sh

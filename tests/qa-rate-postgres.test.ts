@@ -9,6 +9,7 @@ import { getConfig } from '../apps/server/src/config.js';
 import { Database } from '../apps/server/src/db.js';
 import { consumeLimit } from '../apps/server/src/request-limits.js';
 import { guardedPostgresFixture } from './support/postgres-fixture.js';
+import { dropFixtureSchema } from './support/postgres-schema.js';
 
 const connectionFile = process.env.KLNK_POSTGRES_TEST_CONNECTION_FILE;
 
@@ -26,8 +27,7 @@ describe.skipIf(!connectionFile)('independent shared rate limits on real Postgre
     for (const app of apps) await app.close();
     await Promise.all(databases.map((db) => db.close()));
     for (const schema of schemas) {
-      if (!/^qa_[a-f0-9]{32}$/.test(schema)) throw new Error('Unsafe rate-limit fixture cleanup.');
-      await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
+      await dropFixtureSchema(admin, schema);
     }
     await admin?.end();
   });

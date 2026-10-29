@@ -12,6 +12,7 @@ import { mkdir, readFile, writeFile, readdir } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { HttpError } from './errors.js';
 import { removedOwnerIntent } from './network/redaction.js';
+import { MIGRATION_LOCK_SQL } from './migration-lock.js';
 
 export type Row = Record<string, any>;
 export interface SQL {
@@ -178,7 +179,7 @@ export class Database implements SQL {
       try {
         await client.query('BEGIN');
         // All migration statements and this transaction-level lock use one connection.
-        await client.query('SELECT pg_advisory_xact_lock(1263291981)');
+        await client.query(MIGRATION_LOCK_SQL);
         await apply(
           { query: async (source, params = []) => (await client.query(source, params)).rows },
           (source) => client.query(source),

@@ -12,6 +12,7 @@ import { LiveSessionStore } from '../apps/server/src/live-session-store.js';
 import { ApplicationToolGateway } from '../apps/server/src/integrations/gateway.js';
 import { GoogleCalendarConnections } from '../apps/server/src/integrations/google-calendar.js';
 import { guardedPostgresFixture } from './support/postgres-fixture.js';
+import { dropFixtureSchema } from './support/postgres-schema.js';
 
 const connectionFile = process.env.KLNK_POSTGRES_TEST_CONNECTION_FILE;
 const config: Config = {
@@ -71,9 +72,7 @@ describe.skipIf(!connectionFile)(
         await pool.end();
       }
       for (const { schema } of fixtures) {
-        if (!/^qa_[a-f0-9]{32}$/.test(schema))
-          throw new Error('Unsafe credential fixture cleanup.');
-        await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
+        await dropFixtureSchema(admin, schema);
       }
       await admin?.end();
     });

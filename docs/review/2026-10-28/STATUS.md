@@ -4,6 +4,8 @@ Updated 29 October 2026. Reviews were located on `origin/claude/awesome-bohr-uiv
 
 **Latest follow-up:** the first M2/M3 push `0be2bbd` passed every GitHub gate except browser tests (46passed/9failed). [The CI repair](../2026-10-29/browser-ci-repair.md) fixes disabled-row focus and delayed heading focus, and corrects persistent text-size/virtualized-scroll fixtures. Its latest local gates are **838unit +66component +24actualPG +56bundled-Chromium passes**, with TypeScript/lint/format and a repaired phone export. These supersede the initial Chrome55/55/65component checkpoint below. The preview has been reloaded to bundle `0bd23ace8949f52f9889660fb7aeda24`, SHA256 `489cb6d166e8675bec9ee1619cf00e53f4111c08f1ef1374bf3719929e43a0c7`; no real audio/device evidence is claimed. Check GitHub for the follow-up commit's remote result.
 
+**PostgreSQL follow-up:** `226d597` passed the earlier checks but hit a23/24 database result in [GitHub run40803792246](https://github.com/velickovski/klnk/actions/runs/40803792246). Container SQL context and a separate unsafe catalog/drop proof identified a teardown race with immutable migration002. [Cleanup now shares the migration fence](../2026-10-29/ci-postgres-cleanup.md); applied SQL files remain byte-for-byte unchanged. The expanded actual PostgreSQL gate is **25/25**, including a deterministic coupled-cleanup/real-migration lock test, independently rerun. Bundled Chromium was repeated against the unchanged frontend: **56/56**,114.383s. The repaired preview bundle is unchanged. Remote CI must verify this follow-up too.
+
 ## Milestone board
 
 | Card | Owner and files | Current state / actual evidence |

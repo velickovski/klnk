@@ -1,4 +1,5 @@
 import { guardedPostgresFixture } from './support/postgres-fixture.js';
+import { dropFixtureSchema } from './support/postgres-schema.js';
 import { fork, type ChildProcess } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
@@ -79,8 +80,7 @@ describe.skipIf(!connectionFile)('opt-in isolated PostgreSQL multiprocess QA', (
     for (const child of children) if (child.exitCode === null) child.kill();
     await Promise.all(databases.splice(0).map((db) => db.close()));
     for (const schema of schemas) {
-      if (!/^qa_[a-f0-9]{32}$/.test(schema)) throw new Error('Unsafe cleanup namespace.');
-      await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
+      await dropFixtureSchema(admin, schema);
     }
     await admin?.end();
   });

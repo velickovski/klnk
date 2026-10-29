@@ -1,4 +1,5 @@
 import { guardedPostgresFixture } from './support/postgres-fixture.js';
+import { dropFixtureSchema } from './support/postgres-schema.js';
 import { fork, type ChildProcess } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -7,6 +8,7 @@ import { resolve } from 'node:path';
 import pg from 'pg';
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 import { Database } from '../apps/server/src/db.js';
+import { MIGRATION_LOCK_SQL } from '../apps/server/src/migration-lock.js';
 import { newUser, createSession } from '../apps/server/src/auth.js';
 import { createApp } from '../apps/server/src/app.js';
 import { getConfig } from '../apps/server/src/config.js';
@@ -44,10 +46,93 @@ describe.skipIf(!connectionFile)(
       for (const child of children) if (child.exitCode === null) child.kill();
       await Promise.all(databases.map((db) => db.close()));
       for (const schema of schemas) {
-        if (!/^qa_[a-f0-9]{32}$/.test(schema)) throw new Error('Unsafe cleanup namespace.');
-        await admin.query(`DROP SCHEMA "${schema}" CASCADE`);
+        await dropFixtureSchema(admin, schema);
       }
       await admin?.end();
+    });
+    it('serializes schema cleanup and actual migration catalog reads on one fence', async () => {
+      const cleanupSchema = `qa_${randomUUID().replaceAll('-', '')}`;
+      const migrationSchema = `qa_${randomUUID().replaceAll('-', '')}`;
+      await admin.query(`CREATE SCHEMA "${cleanupSchema}"`);
+      schemas.push(cleanupSchema);
+      await admin.query(`CREATE TABLE "${cleanupSchema}".resources (
+        kind TEXT CONSTRAINT resources_kind_check CHECK (kind IN ('profile'))
+      )`);
+      await admin.query(`CREATE SCHEMA "${migrationSchema}"`);
+      schemas.push(migrationSchema);
+      const cleanupName = `cleanup_${cleanupSchema}`;
+      const migrationName = `migration_${migrationSchema}`;
+      const cleanupPool = new pg.Pool({
+        connectionString: privateConnection.url,
+        application_name: cleanupName,
+        max: 1,
+      });
+      const migrationUrl = new URL(privateConnection.url);
+      migrationUrl.searchParams.set('options', `-c search_path=${migrationSchema}`);
+      migrationUrl.searchParams.set('application_name', migrationName);
+      const db = new Database({
+        url: migrationUrl.toString(),
+        key: privateConnection.key,
+        production: true,
+      });
+      databases.push(db);
+      const blocker = await admin.connect();
+      let cleanup: Promise<void> | undefined;
+      let migration: Promise<Database> | undefined;
+      let cleanupFinished = false;
+      let transactionOpen = false;
+      try {
+        await blocker.query('BEGIN');
+        transactionOpen = true;
+        await blocker.query(MIGRATION_LOCK_SQL);
+        cleanup = dropFixtureSchema(cleanupPool, cleanupSchema).then(() => {
+          cleanupFinished = true;
+          schemas.splice(schemas.indexOf(cleanupSchema), 1);
+        });
+        migration = db.open();
+        // Attach handlers immediately so a deliberately broken fence reports a
+        // test failure rather than an unhandled rejection during the barrier.
+        void cleanup.catch(() => undefined);
+        void migration.catch(() => undefined);
+        await vi.waitFor(
+          async () => {
+            const waiting = await admin.query(
+              `SELECT application_name FROM pg_stat_activity
+             WHERE application_name=ANY($1::text[])
+               AND wait_event_type='Lock' AND wait_event='advisory'`,
+              [[cleanupName, migrationName]],
+            );
+            expect(waiting.rows.map((row) => row.application_name).sort()).toEqual(
+              [cleanupName, migrationName].sort(),
+            );
+          },
+          { timeout: 7000, interval: 20 },
+        );
+        expect(cleanupFinished).toBe(false);
+        const catalog = await admin.query(
+          `SELECT pg_get_constraintdef(c.oid) AS definition
+           FROM pg_constraint c JOIN pg_namespace n ON n.oid=c.connamespace
+           WHERE n.nspname=$1 AND c.conname='resources_kind_check'`,
+          [cleanupSchema],
+        );
+        expect(catalog.rows).toHaveLength(1);
+        expect(catalog.rows[0].definition).toContain('profile');
+        await blocker.query('COMMIT');
+        transactionOpen = false;
+        await Promise.all([cleanup, migration]);
+        expect(cleanupFinished).toBe(true);
+        expect(
+          (await admin.query('SELECT to_regnamespace($1) AS namespace', [cleanupSchema])).rows,
+        ).toEqual([{ namespace: null }]);
+        expect(await db.query('SELECT name FROM schema_migrations')).toEqual(
+          expect.arrayContaining([{ name: '002_voice_sessions.sql' }]),
+        );
+      } finally {
+        if (transactionOpen) await blocker.query('ROLLBACK');
+        blocker.release();
+        await Promise.allSettled([cleanup, migration]);
+        await cleanupPool.end();
+      }
     });
     async function fixture() {
       const schema = `qa_${randomUUID().replace(/-/g, '')}`;
