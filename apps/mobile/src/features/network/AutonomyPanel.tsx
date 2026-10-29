@@ -13,6 +13,7 @@ import {
   Card,
   CheckboxControl,
   Disclosure,
+  FeatureHeader,
   Field,
   Notice,
   SwitchControl,
@@ -225,19 +226,14 @@ function AutonomyContent({ ownerId }: { ownerId: string }) {
   };
   return (
     <View testID="network-autonomy" style={{ gap: 24 }}>
-      <View style={{ gap: 8 }}>
-        <Text style={styles.label}>AUTONOMY</Text>
-        <Text accessibilityRole="header" style={styles.title}>
-          Your rules, explicitly.
-        </Text>
-        <Text style={styles.subtitle}>
-          Choose who your representative can work with, what it may share and when it may agree.
-        </Text>
-      </View>
+      <FeatureHeader
+        icon="options-outline"
+        title="Delegation"
+        detail="Choose people, topics and limits."
+      />
       <Notice>
-        Autonomy starts off. Connecting a member does not enable it. These controls authorize only
-        internal klnk coordination; external calls, messages and calendar services remain
-        unavailable.
+        Autonomy starts off. A connection grants no authority. Your rules cover internal klnk
+        coordination only; external calls, messages and calendar services stay unavailable.
       </Notice>
       {saved ? (
         <Card>
@@ -494,8 +490,8 @@ function AutonomyContent({ ownerId }: { ownerId: string }) {
                 Memory and expiry
               </Text>
               <Text style={styles.small}>
-                Only checked, unexpired memories explicitly scoped to members are offered here.
-                Selection is additional permission; it does not broaden their member scope.
+                Choose confirmed, unexpired memories already shared with members. Selection does not
+                broaden their member scope.
               </Text>
               {memories
                 .filter(

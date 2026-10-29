@@ -4,7 +4,7 @@ import type { z } from 'zod';
 import type { AccountStatus, AccountRequestResultSchema } from '@personal-agent/domain';
 import { api } from '../../api';
 import { AppText } from '../../components/primitives';
-import { Button, Card, Disclosure, Field, Notice } from '../../ui';
+import { Button, Card, Disclosure, FeatureHeader, Field, Notice } from '../../ui';
 import { usePanelTask } from './panel-hooks';
 
 type AccountRequest = z.infer<typeof AccountRequestResultSchema>;
@@ -41,10 +41,11 @@ function AccountContent({ onSignOut, onDeleted }: Props) {
   };
   return (
     <Card>
-      <AppText role="title" accessibilityRole="header">
-        Your account
-      </AppText>
-      <AppText>Manage your sign-in, recovery and personal data.</AppText>
+      <FeatureHeader
+        icon="person-circle-outline"
+        title="Your account"
+        detail="Sign-in, recovery and personal data."
+      />
       {status ? (
         <View style={{ gap: 16 }}>
           <AppText>{status.email}</AppText>

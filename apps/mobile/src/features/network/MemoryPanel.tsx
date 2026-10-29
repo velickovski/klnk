@@ -9,6 +9,7 @@ import {
   CheckboxControl,
   Choice,
   Empty,
+  FeatureHeader,
   Field,
   Notice,
   useUI,
@@ -132,19 +133,14 @@ function MemoryContent({ ownerId }: { ownerId: string }) {
       windowSize={5}
       ListHeaderComponent={
         <View style={{ gap: 24 }}>
-          <View style={{ gap: 8 }}>
-            <Text style={styles.label}>MEMORY</Text>
-            <Text accessibilityRole="header" style={styles.title}>
-              Context with boundaries.
-            </Text>
-            <Text style={styles.subtitle}>
-              Add only what you choose. Private is the default; no other-app history is imported.
-            </Text>
-          </View>
+          <FeatureHeader
+            icon="layers-outline"
+            title="Your memory."
+            detail="Keep what matters. Private by default."
+          />
           <Notice>
-            These memories belong to your internal agent. Only confirmed, unexpired items with
-            explicit member scope may be disclosed under your delegation settings. A memory never
-            grants authority by itself.
+            Sharing needs a confirmed, unexpired memory, selected members and a permitted rule.
+            Memory never authorizes action. No other-app history is imported.
           </Notice>
           {task.error || memoryQuery.error || peopleQuery.error ? (
             <Notice tone="error">{task.error || memoryQuery.error || peopleQuery.error}</Notice>
@@ -152,6 +148,7 @@ function MemoryContent({ ownerId }: { ownerId: string }) {
           {task.notice ? <Notice>{task.notice}</Notice> : null}
           <Button
             label={task.busy ? 'Updating Memory' : 'Refresh Memory'}
+            icon="refresh-outline"
             secondary
             loading={task.busy}
             onPress={() => void refresh()}
@@ -247,7 +244,12 @@ function MemoryContent({ ownerId }: { ownerId: string }) {
                 Source: owner entered{editing ? ` · revision ${editing.version}` : ''}. Saving never
                 promotes this into permission to act.
               </Text>
-              <Button label="Save network memory" onPress={save} loading={task.busy} />
+              <Button
+                label="Save network memory"
+                icon="checkmark-outline"
+                onPress={save}
+                loading={task.busy}
+              />
               <Button
                 label="Discard memory draft"
                 secondary
@@ -258,6 +260,7 @@ function MemoryContent({ ownerId }: { ownerId: string }) {
           ) : (
             <Button
               label="Add network memory"
+              icon="add-outline"
               disabled={!loaded || task.busy}
               onPress={() => edit()}
             />
@@ -273,7 +276,7 @@ function MemoryContent({ ownerId }: { ownerId: string }) {
               <Empty
                 icon="layers-outline"
                 title="Your context starts with you"
-                detail="No network memory has been added. Existing telephone-contact memories are kept separately."
+                detail="Add something you want your agent to remember. Earlier contact memories stay separate."
               />
             </Card>
           ) : null}
@@ -309,6 +312,7 @@ function MemoryContent({ ownerId }: { ownerId: string }) {
           </Text>
           <Button
             label={`Edit memory: ${memory.topic}`}
+            icon="create-outline"
             secondary
             disabled={task.busy || showEditor}
             onPress={() => edit(memory)}
@@ -336,6 +340,7 @@ function MemoryContent({ ownerId }: { ownerId: string }) {
           ) : (
             <Button
               label={`Delete memory: ${memory.topic}`}
+              icon="trash-outline"
               secondary
               danger
               disabled={task.busy}

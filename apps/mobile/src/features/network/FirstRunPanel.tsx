@@ -2,7 +2,7 @@ import React from 'react';
 import { View } from 'react-native';
 import { AppText as Text } from '../../components/primitives';
 import type { NetworkAvailability, NetworkConnection } from '@personal-agent/domain';
-import { Button, Card, useUI } from '../../ui';
+import { Button, Disclosure, useUI } from '../../ui';
 import { useNetworkQuery, useSessionState } from './data-provider';
 
 /** Subsequent-screen guidance only. No grant, tool or meeting is enabled here. */
@@ -29,32 +29,44 @@ export function FirstRunPanel({
       Date.parse(calendar.data.availability.confirmedThrough) > Date.now();
   if (dismissed || (connected && availability)) return null;
   return (
-    <Card>
-      <Text accessibilityRole="header" style={styles.h2}>
-        Make klnk yours
-      </Text>
-      <Text style={styles.text}>
-        Connect a person, then choose how much your agent may arrange.
-      </Text>
-      <View style={{ gap: 12 }}>
+    <Disclosure
+      title="Make klnk yours"
+      icon="sparkles-outline"
+      detail="People, availability & rules"
+      preserveContent
+    >
+      <View style={{ gap: 16 }}>
+        <View style={{ gap: 12 }}>
+          <Button
+            label={connected ? 'Review your connected people' : '1. Connect your first person'}
+            secondary
+            icon="person-add-outline"
+            onPress={onPeople}
+          />
+          <Button
+            label="2. Review busy times in your calendar"
+            icon="calendar-outline"
+            secondary
+            onPress={onCalendar}
+          />
+          <Button
+            label="3. Optional: choose delegation rules"
+            icon="options-outline"
+            secondary
+            onPress={onSettings}
+          />
+        </View>
+        <Text style={styles.small}>
+          Exact messages work between accepted members. Automatic answers and meetings need scoped
+          delegation. Voice needs separate permission.
+        </Text>
         <Button
-          label={connected ? 'Review your connected people' : '1. Connect your first person'}
+          label="Keep meetings under my review for now"
           secondary
-          onPress={onPeople}
+          compact
+          onPress={() => setDismissed(true)}
         />
-        <Button label="2. Review busy times in your calendar" secondary onPress={onCalendar} />
-        <Button label="3. Optional: choose delegation rules" secondary onPress={onSettings} />
       </View>
-      <Text style={styles.small}>
-        Accepted members can exchange exact messages. Automatic answers and meetings remain off
-        until you explicitly set their scope. Voice permissions require a separate choice.
-      </Text>
-      <Button
-        label="Keep meetings under my review for now"
-        secondary
-        compact
-        onPress={() => setDismissed(true)}
-      />
-    </Card>
+    </Disclosure>
   );
 }

@@ -13,6 +13,9 @@ import {
   type PressableProps,
 } from 'react-native';
 import { AppScreen } from '../../components/primitives';
+import { StatusBar } from 'expo-status-bar';
+import { brand, radii, spacing, typeRoles } from '../../design/tokens';
+import { ThemeProvider } from '../../design/ThemeProvider';
 import {
   createNavigatorFactory,
   NavigationContainer,
@@ -32,7 +35,17 @@ import {
   type TabNavigationState,
   type TabRouterOptions,
 } from '@react-navigation/native';
-import { a11yState, Button, Card, Disclosure, IconButton, Notice, useUI } from '../../ui';
+import {
+  a11yState,
+  Button,
+  Card,
+  Disclosure,
+  Icon,
+  IconButton,
+  Notice,
+  useUI,
+  type IconName,
+} from '../../ui';
 import type { NetworkConversation } from '@personal-agent/domain';
 import { InboxPanel } from './InboxPanel';
 import { PeoplePanel } from './PeoplePanel';
@@ -54,6 +67,13 @@ export type NetworkRoutes = {
   Settings: undefined;
 };
 type Panel = keyof NetworkRoutes;
+const panelIcons: Record<Panel, IconName> = {
+  Inbox: 'chatbubbles-outline',
+  Calendar: 'calendar-outline',
+  People: 'people-outline',
+  Memory: 'layers-outline',
+  Settings: 'options-outline',
+};
 type WorkspaceProps = {
   ownerId: string;
   onVoiceHome: () => void;
@@ -150,6 +170,7 @@ function WorkspaceNavigator(props: NavigatorProps) {
   return render(
     <AppScreen
       scroll={false}
+      safeAreaColor={brand.navy}
       style={{
         flex: 1,
         width: '100%',
@@ -158,62 +179,88 @@ function WorkspaceNavigator(props: NavigatorProps) {
         backgroundColor: colors.paper,
       }}
     >
-      <View
-        style={{
-          padding: 16,
-          gap: 16,
-          flexDirection: 'row',
-          alignItems: 'center',
-          borderBottomWidth: 1,
-          borderColor: colors.line,
-        }}
-      >
-        <IconButton name="arrow-back" label="Back to voice home" onPress={onVoiceHome} />
-        <View style={{ flex: 1 }}>
-          <Text style={styles.small}>klnk · Your agent network</Text>
+      <StatusBar style="light" />
+      <ThemeProvider colorScheme="dark">
+        <View
+          style={{
+            paddingHorizontal: spacing.lg,
+            paddingTop: spacing.md,
+            paddingBottom: spacing.xl,
+            gap: spacing.sm,
+            backgroundColor: brand.navy,
+          }}
+        >
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: spacing.md,
+            }}
+          >
+            <IconButton name="arrow-back" label="Back to voice home" onPress={onVoiceHome} />
+            <Text style={{ ...typeRoles.action, color: brand.onNavyMuted, letterSpacing: -0.4 }}>
+              klnk
+            </Text>
+          </View>
           <Text
             ref={title}
             accessibilityRole="header"
             nativeID={`network-heading-${name}`}
             {...(Platform.OS === 'web' ? { tabIndex: -1 } : {})}
-            style={styles.h2}
+            style={{ ...typeRoles.title, color: brand.cream, letterSpacing: -0.8 }}
           >
             {name}
           </Text>
         </View>
-      </View>
-      <View
-        key={selected.key}
-        nativeID={`network-screen-${name.toLowerCase()}`}
-        testID={`network-screen-${name.toLowerCase()}`}
-        style={{ flex: 1 }}
-        {...(Platform.OS === 'web'
-          ? { role: 'tabpanel', 'aria-labelledby': `network-tab-${name}` }
-          : {})}
-      >
-        {name === 'Settings' ? (
-          <ScrollView
-            style={{ flex: 1 }}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.page}
-          >
-            {descriptors[selected.key].render()}
-          </ScrollView>
-        ) : (
-          descriptors[selected.key].render()
-        )}
+      </ThemeProvider>
+      <View style={{ flex: 1, backgroundColor: brand.navy }}>
+        <View
+          key={selected.key}
+          nativeID={`network-screen-${name.toLowerCase()}`}
+          testID={`network-screen-${name.toLowerCase()}`}
+          style={{
+            flex: 1,
+            backgroundColor: colors.paper,
+            borderTopLeftRadius: radii.sheet,
+            borderTopRightRadius: radii.control,
+            overflow: 'hidden',
+          }}
+          {...(Platform.OS === 'web'
+            ? { role: 'tabpanel', 'aria-labelledby': `network-tab-${name}` }
+            : {})}
+        >
+          {name === 'Settings' ? (
+            <ScrollView
+              style={{ flex: 1 }}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.page}
+            >
+              {descriptors[selected.key].render()}
+            </ScrollView>
+          ) : (
+            descriptors[selected.key].render()
+          )}
+        </View>
       </View>
       <ScrollView
         ref={navigationStrip}
         horizontal
         showsHorizontalScrollIndicator
         testID="network-navigation"
-        style={{ flexGrow: 0, flexShrink: 0, borderTopWidth: 1, borderColor: colors.line }}
+        style={{ flexGrow: 0, flexShrink: 0, backgroundColor: colors.white }}
         keyboardShouldPersistTaps="handled"
       >
         <View
           accessibilityRole="tablist"
-          style={{ flexDirection: 'row', padding: 8, gap: 6, alignItems: 'center' }}
+          style={{
+            flexDirection: 'row',
+            padding: 8,
+            gap: 4,
+            alignItems: 'center',
+            flexGrow: 1,
+            justifyContent: 'space-around',
+          }}
         >
           {state.routes.map((route, index) => (
             <Tab
@@ -265,7 +312,7 @@ function Tab({
   const minimum =
     Platform.OS === 'web'
       ? ('max-content' as unknown as number)
-      : Math.min(dimensions.width - 48, 84 * Math.max(1, dimensions.fontScale));
+      : Math.min(dimensions.width - 48, 64 * Math.max(1, dimensions.fontScale));
   return (
     <Pressable
       nativeID={`network-tab-${name}`}
@@ -297,17 +344,17 @@ function Tab({
         flexGrow: 0,
         flexShrink: 0,
         minWidth: minimum,
-        minHeight: 48,
-        paddingHorizontal: 12,
-        paddingVertical: 12,
-        borderRadius: 16,
-        backgroundColor: selected ? colors.action : pressed ? colors.lightGreen : colors.paper,
+        minHeight: 64,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        borderRadius: radii.group,
+        backgroundColor: selected ? colors.action : pressed ? colors.lightGreen : colors.white,
         borderWidth: 1,
-        borderColor: selected ? colors.ink : colors.paper,
+        borderColor: selected ? colors.ink : colors.white,
         justifyContent: 'center',
         alignItems: 'center',
-        flexDirection: 'row',
-        gap: 8,
+        flexDirection: 'column',
+        gap: 4,
         ...(Platform.OS === 'web' && focused
           ? {
               outlineColor: semantic.focus,
@@ -318,9 +365,11 @@ function Tab({
           : {}),
       })}
     >
+      <Icon name={panelIcons[name]} color={selected ? colors.onAction : colors.ink} size={22} />
       <Text
         style={[
           styles.text,
+          typeRoles.caption,
           {
             fontWeight: selected ? '600' : '400',
             color: selected ? colors.onAction : colors.ink,
@@ -393,13 +442,41 @@ function SettingsScreen() {
     { styles } = useUI();
   return (
     <View style={{ gap: 24 }}>
-      <AutonomyPanel ownerId={ownerId} />
-      <VoiceAccessPanel ownerId={ownerId} />
-      <PreferencesPanel ownerId={ownerId} />
-      {accountPanel}
+      <Disclosure
+        title="Delegation"
+        icon="options-outline"
+        detail="Limits & approvals"
+        preserveContent
+      >
+        <AutonomyPanel ownerId={ownerId} />
+      </Disclosure>
+      <Disclosure
+        title="Voice permissions"
+        icon="mic-outline"
+        detail="What your voice agent can do"
+        preserveContent
+      >
+        <VoiceAccessPanel ownerId={ownerId} />
+      </Disclosure>
+      <Disclosure
+        title="Preferences"
+        icon="notifications-outline"
+        detail="Privacy & reminders"
+        preserveContent
+      >
+        <PreferencesPanel ownerId={ownerId} />
+      </Disclosure>
+      <Disclosure
+        title="Account"
+        icon="person-circle-outline"
+        detail="Sign-in & personal data"
+        preserveContent
+      >
+        {accountPanel}
+      </Disclosure>
       <Card>
         <Text accessibilityRole="header" style={styles.h2}>
-          Privacy & account
+          About your data
         </Text>
         <Disclosure title="How this works">
           <Notice>

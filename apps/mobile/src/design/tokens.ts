@@ -9,7 +9,10 @@ export const brand = {
   coral: '#FF899A',
   coralPressed: '#FFC2CC',
   edge: '#717B9E',
+  artworkSurface: '#252B4D',
 } as const;
+/** Short, finite motion; decorative entrance never indicates microphone activity. */
+export const motion = { entranceMs: 280, pressMs: 120 } as const;
 export const spacing = {
   xs: 4,
   sm: 8,
@@ -32,7 +35,7 @@ export const typeRoles = {
   caption: { fontSize: 13, lineHeight: 18, fontWeight: '500' },
 } as const;
 const light = {
-  background: '#F5F6FA',
+  background: brand.lavender as string,
   surface: '#FFFFFF',
   surfaceRaised: '#E9EDF5',
   text: '#151924',

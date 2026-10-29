@@ -7,7 +7,7 @@ import {
   type NetworkPolicy,
 } from '@personal-agent/domain';
 import { api } from '../../api';
-import { Badge, Button, Card, Notice, useUI } from '../../ui';
+import { Badge, Button, Card, FeatureHeader, Notice, useUI } from '../../ui';
 import type { ToolAccess } from '../settings/tool-access';
 import { usePanelTask } from './panel-hooks';
 import { useNetworkQuery, useSessionState } from './data-provider';
@@ -87,16 +87,14 @@ function VoiceAccessContent({ ownerId }: { ownerId: string }) {
   return (
     <Card>
       <View testID="network-voice-access" style={{ gap: 16 }}>
-        <Text accessibilityRole="header" style={styles.h2}>
-          Connect voice to your agent network.
-        </Text>
-        <Text style={styles.text}>
-          Explicitly allow your owner voice conversation to find accepted members, submit your exact
-          scoped internal request and read its current result.
-        </Text>
+        <FeatureHeader
+          icon="mic-outline"
+          title="Voice permissions"
+          detail="Find members. Send scoped requests. Read results."
+        />
         <Text style={styles.small}>
-          This uses the existing OpenAI browser voice conversation. It does not enable external
-          calls, messaging or calendar services. Native Live voice remains unavailable.
+          OpenAI browser voice only. No external calls, messages or calendar services. Native Live
+          is unavailable.
         </Text>
         {access ? (
           <>
@@ -112,8 +110,8 @@ function VoiceAccessContent({ ownerId }: { ownerId: string }) {
             </Text>
             {!ownPolicyActive ? (
               <Notice>
-                Save an enabled, unexpired delegation above, then refresh these voice permissions to
-                update this status. A voice permission alone never enables network authority.
+                Save an enabled, unexpired delegation, then refresh. Voice permission alone grants
+                no network authority.
               </Notice>
             ) : null}
             {Platform.OS !== 'web' ? (
@@ -123,9 +121,8 @@ function VoiceAccessContent({ ownerId }: { ownerId: string }) {
               </Notice>
             ) : null}
             <Text style={styles.small}>
-              The three permissions are: accepted member lookup, internal request submission and
-              internal status readback. Existing separately enabled legacy voice permissions are
-              preserved; this control changes only internal network access.
+              Allows accepted-member lookup, internal request submission and status readback.
+              Separately enabled legacy voice permissions stay unchanged.
             </Text>
             {activeNames.length ? (
               <Button
@@ -139,6 +136,7 @@ function VoiceAccessContent({ ownerId }: { ownerId: string }) {
             {!enabled ? (
               <Button
                 label="Allow these three internal voice permissions"
+                icon="mic-outline"
                 disabled={
                   task.busy ||
                   uncertain ||

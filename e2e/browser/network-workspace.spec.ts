@@ -26,7 +26,9 @@ test('M3 default Call entry, keyed sharing, real history and stable virtualized-
 }) => {
   await page.setViewportSize({ width: 320, height: 740 });
   const account = await registerNetwork(page, 'Fictional default owner', 'call');
-  await expect(page.getByRole('heading', { name: 'Make klnk yours', exact: true })).toBeVisible();
+  const setup = page.getByRole('button', { name: 'Make klnk yours', exact: true });
+  await expect(setup).toBeVisible();
+  await expect(setup).toHaveAttribute('aria-expanded', 'false');
   await page.getByRole('tab', { name: 'Inbox', exact: true }).focus();
   await page.keyboard.press('ArrowRight');
   await expect(page.getByRole('tab', { name: 'Calendar', exact: true })).toBeFocused();

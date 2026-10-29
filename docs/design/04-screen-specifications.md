@@ -6,9 +6,13 @@ This is the user's selected opening experience. Render the navy/lavender curved 
 
 The default subsequent workspace is the internal member network described below. S01–S09 retain historical telephone-screen specifications for flagged compatibility code; they must not govern new network UI.
 
+The current Expo S00 composition uses “Your day. One conversation.” above the original sculpture, followed by noninteractive Meetings / Memory / Answers cues and the sole coral Call klnk capsule. At large text sizes, whole feature labels wrap into additional rows; the page scrolls rather than clipping the action. Keep the short OpenAI/microphone disclosure. Hide the feature introduction during conversation/recovery and preserve actual status, errors, uncertain-closure blocking and relevant controls. Motion and the implemented dependency choice are recorded in [03](03-design-system.md) and [D24–D25](08-sources-and-decisions.md).
+
 ## Current network workspace
 
 The five destinations are Inbox, Calendar, People, Memory and Settings, with React Navigation URLs/deep links and lazy active-panel mounting. A session-scoped cache/draft store preserves safe edits between destinations, clears them on account/origin change, refreshes on foreground and invalidates queries after mutations. Each list owns its scroll container; collection screens use virtualized FlatList rows. The one-button opening has no navigation bar.
+
+All five share the navy header, full-width screen title, pale/semantic content, rounded groups and icon-labeled tab strip. Optional first-run setup is a compact Make klnk yours disclosure, so the agent request feature appears earlier in Inbox. Calendar's Availability & busy time disclosure keeps its editor mounted after first opening. People leads with copy/share and connection actions; raw link/code remain selectable in Your connection details. Settings starts with four feature rows (Delegation, Voice permissions, Preferences, Account) rather than every form expanded. Collapsing a feature group retains its mounted inputs and receipt state. Privacy/authority notices remain with the controls they explain, and actual request review/results are preserved.
 
 Inbox contains the optional typed owner instruction, scoped request composer, linked notices and current conversation rows. Question detail offers an actual human answer; meeting detail supports a new time/counterproposal and current canonical approvals. Details use the shared modal with explicit Close, Escape dismissal on web and return to the originating row. Errors preserve drafts and ambiguous writes reconcile their original request identity.
 

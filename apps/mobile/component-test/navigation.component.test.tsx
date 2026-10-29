@@ -31,12 +31,17 @@ describe('actual lazy network navigation', () => {
     expect(mockedApi.mock.calls.some((call) => call[0] === '/network/memories')).toBe(false);
     expect(mockedApi.mock.calls.some((call) => call[0] === '/network/policy')).toBe(false);
     await fireEvent.press(screen.getByRole('tab', { name: 'Settings' }));
+    expect(mockedApi.mock.calls.some((call) => call[0] === '/network/policy')).toBe(false);
+    await fireEvent.press(screen.getByRole('button', { name: 'Delegation' }));
     await screen.findByText('Autonomy off');
+    expect(mockedApi.mock.calls.filter((call) => call[0] === '/network/policy')).toHaveLength(1);
+    // Opening permissions deliberately refreshes current eligibility after the rules were read.
+    await fireEvent.press(screen.getByRole('button', { name: 'Voice permissions' }));
     expect(screen.queryByText('No internal requests yet')).not.toBeOnTheScreen();
     expect(mockedApi.mock.calls.filter((call) => call[0] === '/network/connections')).toHaveLength(
       1,
     );
-    expect(mockedApi.mock.calls.filter((call) => call[0] === '/network/policy')).toHaveLength(1);
+    expect(mockedApi.mock.calls.filter((call) => call[0] === '/network/policy')).toHaveLength(2);
   });
   it('keeps an unsaved form when navigating away and returning through the real router', async () => {
     await render(workspace());
@@ -59,10 +64,12 @@ describe('actual lazy network navigation', () => {
   it('offers progressive setup on Inbox without enabling saved delegation', async () => {
     await render(workspace());
     await screen.findByText('Make klnk yours');
+    await fireEvent.press(screen.getByRole('button', { name: 'Make klnk yours' }));
     await fireEvent.press(screen.getByRole('button', { name: '1. Connect your first person' }));
     await screen.findByText('No connections yet');
     expect(mockedApi.mock.calls.some((call) => call[1] && call[1] !== 'GET')).toBe(false);
     await fireEvent.press(screen.getByRole('tab', { name: 'Inbox' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Make klnk yours' }));
     await fireEvent.press(
       screen.getByRole('button', { name: 'Keep meetings under my review for now' }),
     );

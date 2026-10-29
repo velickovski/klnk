@@ -19,7 +19,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useDesign } from '../design/ThemeProvider';
-import { radii, typeRoles } from '../design/tokens';
+import { motion, radii, typeRoles } from '../design/tokens';
+import Animated, { cubicBezier, useReducedMotion } from 'react-native-reanimated';
 import { Icon, IconName } from './Icon';
 
 export function AppText({
@@ -34,19 +35,21 @@ export function AppScreen({
   children,
   scroll = true,
   style,
+  safeAreaColor,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
   style?: StyleProp<ViewStyle>;
+  safeAreaColor?: string;
 }) {
   const { colors, styles } = useDesign();
   return (
     <SafeAreaView
-      style={{ flex: 1, backgroundColor: colors.paper }}
+      style={{ flex: 1, backgroundColor: safeAreaColor ?? colors.paper }}
       edges={['top', 'left', 'right', 'bottom']}
     >
       <KeyboardAvoidingView
-        style={{ flex: 1 }}
+        style={{ flex: 1, backgroundColor: colors.paper }}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {scroll ? (
@@ -72,6 +75,7 @@ export function ActionButton({
   disabled = false,
   loading = false,
   compact = false,
+  prominent = false,
 }: {
   label: string;
   onPress: () => void;
@@ -81,10 +85,14 @@ export function ActionButton({
   disabled?: boolean;
   loading?: boolean;
   compact?: boolean;
+  prominent?: boolean;
 }) {
-  const { semantic, styles } = useDesign(),
-    [focused, setFocused] = useState(false);
+  const { semantic, styles, reducedMotion } = useDesign(),
+    systemReducedMotion = useReducedMotion(),
+    [focused, setFocused] = useState(false),
+    [pressed, setPressed] = useState(false);
   const inactive = disabled || loading;
+  const feedback = prominent || (!secondary && !danger);
   const tint = inactive
     ? semantic.textSecondary
     : danger
@@ -92,17 +100,21 @@ export function ActionButton({
       : secondary
         ? semantic.accent
         : semantic.onAction;
-  return (
+  const button = (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={label}
       {...a11yState({ disabled: inactive, busy: loading })}
       disabled={inactive}
       onPress={onPress}
+      onPressIn={feedback ? () => setPressed(true) : undefined}
+      onPressOut={feedback ? () => setPressed(false) : undefined}
+      pressRetentionOffset={16}
       onFocus={() => setFocused(true)}
       onBlur={() => setFocused(false)}
       style={({ pressed }) => [
         styles.button,
+        prominent ? { minHeight: 64, borderRadius: radii.capsule, paddingVertical: 18 } : null,
         {
           backgroundColor: inactive
             ? semantic.surfaceRaised
@@ -137,6 +149,24 @@ export function ActionButton({
         {label}
       </Text>
     </Pressable>
+  );
+  if (!feedback) return button;
+  const reduce = reducedMotion || systemReducedMotion;
+  return (
+    <Animated.View
+      style={
+        reduce
+          ? undefined
+          : {
+              transform: [{ scale: pressed && !inactive ? 0.97 : 1 }],
+              transitionProperty: 'transform',
+              transitionDuration: motion.pressMs,
+              transitionTimingFunction: cubicBezier(0.23, 1, 0.32, 1),
+            }
+      }
+    >
+      {button}
+    </Animated.View>
   );
 }
 export function IconButton({
@@ -310,13 +340,21 @@ export function Disclosure({
   title,
   children,
   initiallyOpen = false,
+  icon,
+  detail,
+  preserveContent = false,
 }: {
   title: string;
   children: React.ReactNode;
   initiallyOpen?: boolean;
+  icon?: IconName;
+  detail?: string;
+  preserveContent?: boolean;
 }) {
-  const { colors } = useDesign(),
+  const { colors, semantic } = useDesign(),
     [open, setOpen] = useState(initiallyOpen),
+    [visited, setVisited] = useState(initiallyOpen),
+    [focused, setFocused] = useState(false),
     id = useId();
   return (
     <View style={{ gap: 12 }}>
@@ -325,26 +363,59 @@ export function Disclosure({
         accessibilityLabel={title}
         {...a11yState({ expanded: open })}
         {...(Platform.OS === 'web' ? { 'aria-controls': id } : {})}
-        onPress={() => setOpen(!open)}
+        onPress={() => {
+          setVisited(true);
+          setOpen(!open);
+        }}
+        onFocus={() => setFocused(true)}
+        onBlur={() => setFocused(false)}
         style={({ pressed }) => ({
-          minHeight: 48,
+          minHeight: icon ? 72 : 52,
           paddingHorizontal: 16,
           paddingVertical: 12,
           borderRadius: radii.control,
+          borderCurve: 'continuous',
           borderWidth: 1,
           borderColor: colors.line,
           backgroundColor: pressed ? colors.lightGreen : colors.white,
           flexDirection: 'row',
+          flexWrap: 'wrap',
           alignItems: 'center',
           gap: 12,
+          ...(Platform.OS === 'web' && focused
+            ? {
+                outlineColor: semantic.focus,
+                outlineWidth: 3,
+                outlineStyle: 'solid' as const,
+                outlineOffset: 3,
+              }
+            : {}),
         })}
       >
-        <AppText role="action" style={{ flex: 1 }}>
-          {title}
-        </AppText>
-        <Icon name={open ? 'chevron-up' : 'chevron-down'} size={20} />
+        {icon ? <Icon name={icon} color={semantic.accent} size={24} /> : null}
+        <View
+          style={{
+            flex: 1,
+            gap: 4,
+            ...(Platform.OS === 'web' ? { minWidth: 'min-content' as unknown as number } : {}),
+          }}
+        >
+          <AppText role="action">{title}</AppText>
+          {detail ? (
+            <AppText role="supporting" style={{ color: semantic.textSecondary }}>
+              {detail}
+            </AppText>
+          ) : null}
+        </View>
+        <View style={{ marginLeft: 'auto' }}>
+          <Icon name={open ? 'chevron-up' : 'chevron-down'} size={20} />
+        </View>
       </Pressable>
-      {open ? <View nativeID={id}>{children}</View> : null}
+      {open || (preserveContent && visited) ? (
+        <View nativeID={id} style={open ? undefined : { display: 'none' }}>
+          {children}
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -365,7 +436,8 @@ export function DetailSheet({
   returnFocusRef?: React.RefObject<React.ElementRef<typeof View> | null>;
   returnFocusId?: string;
 }) {
-  const { colors, styles, reducedTransparency } = useDesign(),
+  const { colors, styles, reducedTransparency, reducedMotion } = useDesign(),
+    startupReducedMotion = useReducedMotion(),
     closeRef = useRef<React.ElementRef<typeof View>>(null),
     onCloseRef = useRef(onClose);
   onCloseRef.current = onClose;
@@ -412,7 +484,7 @@ export function DetailSheet({
   return (
     <Modal
       visible={visible}
-      animationType="none"
+      animationType={reducedMotion || startupReducedMotion ? 'none' : 'fade'}
       presentationStyle={reducedTransparency ? 'fullScreen' : 'pageSheet'}
       onRequestClose={onClose}
       onDismiss={() => {
@@ -448,8 +520,8 @@ export function DetailSheet({
               gap: 12,
               flexDirection: 'row',
               alignItems: 'center',
-              borderBottomWidth: 1,
-              borderColor: colors.line,
+              borderBottomLeftRadius: radii.sheet,
+              backgroundColor: colors.white,
             }}
           >
             <AppText role="section" accessibilityRole="header" style={{ flex: 1 }}>

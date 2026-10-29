@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View } from 'react-native';
 import { AppText as Text } from '../../components/primitives';
 import type { OwnerIntentResult } from '@personal-agent/domain';
-import { Badge, Button, Card, Disclosure, Field, Notice, useUI } from '../../ui';
+import { Badge, Button, Card, Disclosure, FeatureHeader, Field, Notice, useUI } from '../../ui';
 import { useNetworkClient, useNetworkQuery, useSessionRef, useSessionState } from './data-provider';
 import { formatDateTime } from './format';
 import { usePanelTask } from './panel-hooks';
@@ -84,13 +84,11 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
   };
   return (
     <Card>
-      <Text accessibilityRole="header" style={styles.h2}>
-        Ask your personal agent.
-      </Text>
-      <Text style={styles.text}>
-        Speak from voice home, or type here. Your agent works with accepted members inside klnk,
-        under your saved permissions.
-      </Text>
+      <FeatureHeader
+        icon="chatbubble-ellipses-outline"
+        title="Ask your agent"
+        detail="Make a plan with accepted klnk members."
+      />
       <Field
         label="Instruction to your agent"
         value={text}
@@ -98,12 +96,13 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
         multiline
         maxLength={1500}
         editable={!pending.current}
-        placeholder="Arrange thirty minutes with Jordan Lee next week after 2 pm to discuss the launch."
-        hint="Use the exact accepted member name. Routine meetings can proceed under your saved autonomy; other prepared terms need review."
+        placeholder="Arrange a meeting with Jordan Lee next week."
+        hint="Use the exact member name. Saved delegation covers routine meetings; other terms need review."
       />
       {!pending.current ? (
         <Button
           label="Send to my agent"
+          icon="arrow-up-outline"
           disabled={!text.trim()}
           loading={task.busy}
           onPress={send}
@@ -230,9 +229,8 @@ export function OwnerIntentPanel({ ownerId }: { ownerId: string }) {
         <Notice tone="error">{task.error || receiptQuery.error}</Notice>
       ) : null}
       <Text style={styles.small}>
-        For natural-language planning, OpenAI receives this instruction, your limited delegation
-        settings and accepted member identifiers. It receives no other member’s private rules,
-        memory or schedule.
+        OpenAI receives your instruction, limited delegation settings and accepted member IDs. Other
+        members’ private rules, memory and schedules aren’t included.
       </Text>
     </Card>
   );

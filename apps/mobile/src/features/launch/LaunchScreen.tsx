@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 import {
-  Image,
   FlatList,
   Platform,
   ScrollView,
@@ -11,11 +10,18 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
-import { ActionButton, AppText } from '../../components';
-import { brand, typeRoles } from '../../design/tokens';
+import { ActionButton, AppText, Icon, type IconName } from '../../components';
+import { brand, radii, spacing, typeRoles } from '../../design/tokens';
 import { ThemeProvider } from '../../design/ThemeProvider';
 import type { LiveTurn, LiveConversation } from '../live/types';
 import { useDesign } from '../../design/ThemeProvider';
+import { LaunchArtwork } from './launch-artwork';
+
+const features: { label: string; icon: IconName }[] = [
+  { label: 'Meetings', icon: 'calendar-outline' },
+  { label: 'Memory', icon: 'layers-outline' },
+  { label: 'Answers', icon: 'chatbubbles-outline' },
+];
 
 /** Only an explicit owner gesture starts capture. Telephone actions are a separate workspace. */
 export function LaunchScreen({
@@ -32,7 +38,7 @@ export function LaunchScreen({
   const { reducedMotion } = useDesign();
   const captionsRef = useRef<FlatList<LiveTurn>>(null);
   const [attempted, setAttempted] = useState(live.state !== 'idle'),
-    { width, height } = useWindowDimensions(),
+    { width, height, fontScale } = useWindowDimensions(),
     [availableHeight, setAvailableHeight] = useState(height);
   const active =
     live.state === 'connecting' || live.state === 'connected' || live.state === 'ending';
@@ -49,7 +55,8 @@ export function LaunchScreen({
     if (onCall) onCall();
     else void live.start();
   };
-  const artSize = Math.min(240, width - 80, Math.max(140, availableHeight * 0.24));
+  const opening = live.state === 'idle' && !live.error && !live.closureUnconfirmed && !canExplore;
+  const artSize = Math.min(260, width - 64, Math.max(120, availableHeight * 0.28));
   return (
     <View style={s.stage}>
       <StatusBar style="light" />
@@ -66,55 +73,61 @@ export function LaunchScreen({
           <View style={s.presence}>
             <View style={s.brandRow}>
               <Text style={s.wordmark}>klnk</Text>
-              <Text style={s.eyebrow}>Personal voice agent</Text>
+              <View style={s.brandMark}>
+                <Icon name="sparkles-outline" color={brand.coral} size={22} />
+              </View>
             </View>
             <Text accessibilityRole="header" style={s.headline}>
-              A voice in{'\n'}your corner.
+              Your day.{'\n'}One conversation.
             </Text>
-            <View
-              pointerEvents="none"
-              accessibilityElementsHidden
-              importantForAccessibility="no-hide-descendants"
-              style={s.artArea}
-            >
-              <View style={s.orbit} />
-              <Image
-                source={require('../../../assets/klnk-presence.png')}
-                resizeMode="contain"
-                accessible={false}
-                style={{ width: artSize, height: artSize }}
-              />
-            </View>
-            <Text accessibilityLiveRegion="polite" style={s.status}>
-              {recordedAvailable && live.state === 'idle'
-                ? 'Voice turns, at your pace.'
-                : live.statusText}
-            </Text>
+            <LaunchArtwork size={artSize} resting={opening} />
+            {!opening ? (
+              <Text accessibilityLiveRegion="polite" style={s.status}>
+                {recordedAvailable && live.state === 'idle'
+                  ? 'Voice turns, at your pace.'
+                  : live.statusText}
+              </Text>
+            ) : null}
           </View>
           <ThemeProvider colorScheme="light">
-            <View style={s.conversation}>
-              <Text accessibilityRole="header" style={s.panelTitle}>
-                {live.closureUnconfirmed
-                  ? 'Check the earlier session.'
-                  : live.state === 'connected'
-                    ? 'I’m here.'
-                    : live.state === 'ended'
-                      ? 'Until next time.'
-                      : live.state === 'error'
-                        ? 'Let’s reconnect.'
-                        : 'Just say the word.'}
-              </Text>
-              <Text style={s.body}>
-                {live.closureUnconfirmed
-                  ? 'An earlier session has no confirmed closure. Open your workspace for typed access; resolve that session before starting another.'
-                  : live.state === 'connected'
-                    ? 'Speak naturally. klnk will reply out loud.'
-                    : live.state === 'ended'
-                      ? 'Your microphone is off. You can talk again whenever you’re ready.'
-                      : !live.supported && !recordedAvailable
-                        ? 'Live voice is not available here. Open your workspace to continue.'
-                        : 'Talk with your personal agent, and hear a reply. No typing needed.'}
-              </Text>
+            <View style={[s.conversation, opening && s.opening]}>
+              {opening ? (
+                <View style={s.features}>
+                  {features.map(({ label, icon }) => (
+                    <View key={label} style={[s.feature, { minWidth: 72 * fontScale }]}>
+                      <View style={s.featureIcon}>
+                        <Icon name={icon} color={brand.ink} size={24} />
+                      </View>
+                      <Text style={s.featureLabel}>{label}</Text>
+                    </View>
+                  ))}
+                </View>
+              ) : (
+                <>
+                  <Text accessibilityRole="header" style={s.panelTitle}>
+                    {live.closureUnconfirmed
+                      ? 'Check the earlier session.'
+                      : live.state === 'connected'
+                        ? 'I’m here.'
+                        : live.state === 'ended'
+                          ? 'Until next time.'
+                          : live.state === 'error'
+                            ? 'Let’s reconnect.'
+                            : 'Let’s talk.'}
+                  </Text>
+                  <Text style={s.body}>
+                    {live.closureUnconfirmed
+                      ? 'An earlier session has no confirmed closure. Open your workspace for typed access; resolve that session before starting another.'
+                      : live.state === 'connected'
+                        ? 'Speak naturally. klnk will reply out loud.'
+                        : live.state === 'ended'
+                          ? 'Your microphone is off. You can talk again whenever you’re ready.'
+                          : !live.supported && !recordedAvailable
+                            ? 'Live voice is not available here. Open your workspace to continue.'
+                            : 'Speak naturally. Hear a reply.'}
+                  </Text>
+                </>
+              )}
               {live.error ? (
                 <View accessibilityRole="alert" style={s.error}>
                   <Text style={s.errorText}>{live.error}</Text>
@@ -186,6 +199,7 @@ export function LaunchScreen({
                 <ActionButton
                   label="Call klnk"
                   icon="call-outline"
+                  prominent
                   loading={live.state === 'checking'}
                   onPress={call}
                 />
@@ -233,7 +247,7 @@ export function LaunchScreen({
                     : live.state === 'ended'
                       ? 'AI conversation ended · No telephone call was placed.'
                       : Platform.OS === 'web'
-                        ? 'Up to five minutes per conversation. Audio is sent to OpenAI. Your microphone starts after you call.'
+                        ? '5 min · Voice with OpenAI\nMicrophone starts when you call.'
                         : recordedAvailable
                           ? 'Up to five minutes of recorded turns. OpenAI transcribes; this device speaks the reply.'
                           : 'Native live audio requires a compatible transport.'}
@@ -249,7 +263,11 @@ const s = StyleSheet.create({
   stage: { flex: 1, backgroundColor: brand.navy, alignItems: 'center' },
   screen: { flex: 1, width: '100%', maxWidth: 560, backgroundColor: brand.navy },
   scroll: { flexGrow: 1 },
-  presence: { paddingHorizontal: 24, paddingTop: 20, paddingBottom: 20, overflow: 'hidden' },
+  presence: {
+    paddingHorizontal: spacing.screen,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.md,
+  },
   brandRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -264,33 +282,36 @@ const s = StyleSheet.create({
     letterSpacing: -1,
     color: brand.cream,
   },
-  eyebrow: { ...typeRoles.caption, color: brand.onNavyMuted },
-  headline: { ...typeRoles.hero, color: brand.cream, marginTop: 24, letterSpacing: -0.8 },
-  artArea: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: 4,
-    marginBottom: 4,
-    overflow: 'hidden',
-    borderRadius: 32,
-  },
-  orbit: {
-    position: 'absolute',
-    width: 260,
-    height: 72,
-    borderRadius: 130,
-    backgroundColor: '#252B4D',
-    transform: [{ rotate: '-18deg' }],
-  },
+  brandMark: { padding: spacing.sm },
+  headline: { ...typeRoles.hero, color: brand.cream, marginTop: spacing.xl, letterSpacing: -0.8 },
   status: { ...typeRoles.supporting, color: brand.onNavyMuted, textAlign: 'center', marginTop: 8 },
   conversation: {
     flexGrow: 1,
     backgroundColor: brand.lavender,
     borderTopLeftRadius: 64,
-    paddingHorizontal: 24,
-    paddingTop: 32,
-    paddingBottom: 28,
-    gap: 20,
+    borderTopRightRadius: radii.sheet,
+    borderCurve: 'continuous',
+    paddingHorizontal: spacing.screen,
+    paddingVertical: spacing.screen,
+    gap: spacing.xl,
+  },
+  opening: { justifyContent: 'center', gap: spacing.screen },
+  features: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
+  feature: { flexGrow: 1, flexShrink: 0, alignItems: 'center', gap: spacing.sm },
+  featureIcon: {
+    width: 48,
+    height: 48,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: brand.cream,
+    borderRadius: radii.control,
+    borderCurve: 'continuous',
+  },
+  featureLabel: {
+    ...typeRoles.supporting,
+    color: brand.ink,
+    textAlign: 'center',
+    alignSelf: 'stretch',
   },
   panelTitle: { ...typeRoles.title, color: brand.ink, letterSpacing: -0.5 },
   body: { ...typeRoles.body, color: brand.muted },

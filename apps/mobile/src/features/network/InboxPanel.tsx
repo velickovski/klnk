@@ -10,6 +10,7 @@ import {
   DetailSheet,
   Disclosure,
   Empty,
+  FeatureHeader,
   Field,
   Notice,
   useUI,
@@ -291,18 +292,14 @@ function InboxContent({
       ListHeaderComponent={
         <View style={{ gap: 24 }}>
           {header}
-          <View style={{ gap: 8 }}>
-            <Text style={styles.label}>INBOX</Text>
-            <Text accessibilityRole="header" style={styles.title}>
-              Your agent, in the loop.
-            </Text>
-            <Text style={styles.subtitle}>
-              Read the result first. Make a decision when your representative needs your authority.
-            </Text>
-          </View>
+          <FeatureHeader
+            icon="file-tray-outline"
+            title="Your requests"
+            detail="Messages, questions and meeting plans."
+          />
           <Text style={styles.small}>
-            Internal klnk delivery. Only the internal calendar is checked. Owner voice uses OpenAI
-            cloud processing; requests here do not call or message anyone outside klnk.
+            Internal klnk delivery and calendar only. Voice uses OpenAI cloud processing; no
+            external calls or messages.
           </Text>
           {task.error || inboxQuery.error || peopleQuery.error ? (
             <Notice tone="error">{task.error || inboxQuery.error || peopleQuery.error}</Notice>
@@ -311,11 +308,13 @@ function InboxContent({
           <Button
             label={task.busy ? 'Updating Inbox' : 'Refresh Inbox'}
             secondary
+            icon="refresh-outline"
             loading={task.busy}
             onPress={() => void refresh()}
           />
           <Button
             label={compose ? 'Keep draft and return to Inbox' : 'Write an internal request'}
+            icon={compose ? 'arrow-back-outline' : 'add-outline'}
             disabled={task.busy || !inbox}
             onPress={() => {
               setCompose(!compose);
@@ -324,12 +323,11 @@ function InboxContent({
           />
           {compose ? (
             <Card>
-              <Text accessibilityRole="header" style={styles.h2}>
-                Delegate a specific request.
-              </Text>
-              <Text style={styles.small}>
-                Choose the person and the exact purpose. Typed input is always available here.
-              </Text>
+              <FeatureHeader
+                icon="create-outline"
+                title="New request"
+                detail="Choose a person and exact purpose."
+              />
               {!accepted.length ? (
                 <Notice>
                   Accept a member connection in People before sending. Your draft stays here while
@@ -733,7 +731,7 @@ function InboxContent({
               title={filter === 'all' ? 'No internal requests yet' : 'Nothing in this filter'}
               detail={
                 filter === 'all'
-                  ? 'Write a request to an accepted member, or return after their agent contacts yours.'
+                  ? 'Send a request to an accepted member.'
                   : 'Try All requests to inspect recorded conversations.'
               }
             />

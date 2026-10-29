@@ -14,6 +14,10 @@ const fallback = {
   highContrast: false,
 };
 const DesignContext = createContext(fallback);
+const webPreference = (query: string) =>
+  Platform.OS === 'web' && typeof window !== 'undefined' && typeof window.matchMedia === 'function'
+    ? window.matchMedia(query).matches
+    : false;
 /** A fixed artwork surface can opt into its matching foreground palette. */
 export function ThemeProvider({
   children,
@@ -25,10 +29,36 @@ export function ThemeProvider({
   const systemScheme = useColorScheme();
   const scheme: 'light' | 'dark' = colorScheme ?? (systemScheme === 'dark' ? 'dark' : 'light'),
     { width } = useWindowDimensions();
-  const [reducedMotion, setReducedMotion] = useState(false),
-    [reducedTransparency, setReducedTransparency] = useState(false),
-    [highContrast, setHighContrast] = useState(false);
+  const [reducedMotion, setReducedMotion] = useState(() =>
+      webPreference('(prefers-reduced-motion: reduce)'),
+    ),
+    [reducedTransparency, setReducedTransparency] = useState(() =>
+      webPreference('(prefers-reduced-transparency: reduce)'),
+    ),
+    [highContrast, setHighContrast] = useState(() => webPreference('(prefers-contrast: more)'));
   useEffect(() => {
+    if (
+      Platform.OS === 'web' &&
+      typeof window !== 'undefined' &&
+      typeof window.matchMedia === 'function'
+    ) {
+      // RN Web keys AccessibilityInfo listeners by a callback's string form.
+      // Nested theme providers can therefore remove another provider's listener.
+      // Own each browser subscription and its exact cleanup independently.
+      const preferences = [
+        ['(prefers-reduced-motion: reduce)', setReducedMotion],
+        ['(prefers-reduced-transparency: reduce)', setReducedTransparency],
+        ['(prefers-contrast: more)', setHighContrast],
+      ] as const;
+      const cleanups = preferences.map(([query, set]) => {
+        const media = window.matchMedia(query);
+        const changed = () => set(media.matches);
+        changed();
+        media.addEventListener('change', changed);
+        return () => media.removeEventListener('change', changed);
+      });
+      return () => cleanups.forEach((cleanup) => cleanup());
+    }
     let alive = true;
     AccessibilityInfo.isReduceMotionEnabled().then(
       (v) => {
@@ -47,18 +77,10 @@ export function ThemeProvider({
         'reduceTransparencyChanged',
         setReducedTransparency,
       );
-    const media =
-      Platform.OS === 'web' && typeof window !== 'undefined'
-        ? window.matchMedia('(prefers-contrast: more)')
-        : undefined;
-    const contrast = () => setHighContrast(media?.matches ?? false);
-    contrast();
-    media?.addEventListener('change', contrast);
     return () => {
       alive = false;
       motion.remove();
       transparency.remove();
-      media?.removeEventListener('change', contrast);
     };
   }, []);
   const value = useMemo(() => {

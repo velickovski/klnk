@@ -1,7 +1,7 @@
 import React from 'react';
 import { View } from 'react-native';
 import { AppText as Text } from '../../components/primitives';
-import { Button, Card, Notice, useUI } from '../../ui';
+import { Button, Card, FeatureHeader, Notice, useUI } from '../../ui';
 import { useNetworkClient, useNetworkQuery } from './data-provider';
 import { formatDateTime } from './format';
 import { usePanelTask } from './panel-hooks';
@@ -26,9 +26,11 @@ export function NotificationsPanel({
       {query.data && !items.length ? <Text style={styles.small}>No unread notices.</Text> : null}
       {items.length ? (
         <>
-          <Text accessibilityRole="header" style={styles.h2}>
-            Notices for you
-          </Text>
+          <FeatureHeader
+            icon="notifications-outline"
+            title="Notices for you"
+            detail="Reading or dismissing never accepts a proposal."
+          />
           {items.map((item) => (
             <Card key={item.id}>
               <Text style={styles.h3}>
@@ -38,12 +40,11 @@ export function NotificationsPanel({
                     ? 'Calendar update'
                     : 'A request has an update'}
               </Text>
-              <Text style={styles.small}>
-                {formatDateTime(item.at)}. Reading a notice never accepts a proposal.
-              </Text>
+              <Text style={styles.small}>{formatDateTime(item.at)}</Text>
               {onConversation ? (
                 <Button
                   label="Open notice conversation"
+                  icon="chatbubble-outline"
                   secondary
                   onPress={() => onConversation(item.conversationId)}
                 />
@@ -70,6 +71,7 @@ export function NotificationsPanel({
       {task.error || query.error ? <Notice tone="error">{task.error || query.error}</Notice> : null}
       <Button
         label="Refresh in-app notices"
+        icon="refresh-outline"
         secondary
         compact
         loading={task.busy}

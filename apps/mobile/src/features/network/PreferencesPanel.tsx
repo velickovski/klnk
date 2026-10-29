@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { Linking, View } from 'react-native';
 import { AppText as Text } from '../../components/primitives';
 import type { NetworkPreferences } from '@personal-agent/domain';
-import { Button, Card, Choice, Notice, useUI } from '../../ui';
+import { Button, Card, Choice, Disclosure, FeatureHeader, Notice, useUI } from '../../ui';
 import { useNetworkClient, useNetworkQuery, useSessionState } from './data-provider';
 import { usePanelTask } from './panel-hooks';
 import { useDeviceReminders } from './device-reminders';
@@ -30,13 +30,10 @@ export function PreferencesPanel({ ownerId }: { ownerId: string }) {
   }, [query.data]);
   return (
     <Card>
-      <Text accessibilityRole="header" style={styles.h2}>
-        Retention & notifications
-      </Text>
+      <FeatureHeader icon="notifications-outline" title="Retention & notifications" />
       <Text style={styles.text}>
-        Completed shared conversations and past meetings use the shorter participant retention
-        setting. The clock starts after the meeting ends or the last terminal update. Future
-        meetings and pending decisions are preserved.
+        Completed records use the shorter participant retention. The clock starts after a meeting
+        ends or its final update. Future meetings and pending decisions stay.
       </Text>
       {draft ? (
         <View style={{ gap: 16 }}>
@@ -63,10 +60,9 @@ export function PreferencesPanel({ ownerId }: { ownerId: string }) {
             onChange={(notificationMode) => setDraft({ ...draft, notificationMode })}
           />
           <Text style={styles.small}>
-            These choices control notices inside klnk. Quiet and Decisions only also suppress
-            on-device meeting reminders. The Inbox stays available. Retention removes server shared
-            records, including the other participant’s copy; it cannot erase information already
-            read or copied.
+            Quiet and Decisions only also suppress device reminders; Inbox stays available.
+            Retention removes both participants’ shared server records, but cannot erase copies
+            already read or saved.
           </Text>
           <Button
             label="Save privacy preferences"
@@ -102,13 +98,10 @@ export function PreferencesPanel({ ownerId }: { ownerId: string }) {
       )}
       {deviceReminders.supported ? (
         <View style={{ gap: 12 }}>
-          <Text accessibilityRole="header" style={styles.h2}>
-            On-device meeting reminders
-          </Text>
+          <FeatureHeader icon="alarm-outline" title="On-device meeting reminders" />
           <Text style={styles.small}>
-            Optional local alerts for upcoming confirmed klnk meetings. Permission is requested only
-            when you enable them. Alerts use generic text, with no private meeting details. This
-            uses this device only; no APNs, SMS or email is registered.
+            Generic alerts for confirmed klnk meetings, without private details. Enable to request
+            this device’s permission. No APNs, SMS or email is registered.
           </Text>
           <Text style={styles.small} accessibilityLiveRegion="polite">
             {!deviceReminders.ready
@@ -121,15 +114,18 @@ export function PreferencesPanel({ ownerId }: { ownerId: string }) {
                     : `${deviceReminders.scheduled} future reminders scheduled on this device.`
                   : 'On-device reminders are off.'}
           </Text>
-          <Text style={styles.small}>
-            Reminders update while klnk is open and when you return. Changes made while it is closed
-            cannot cancel an existing local alert until the next sync. Device settings, Focus and
-            operating-system limits may delay or suppress alerts.
-          </Text>
+          <Disclosure title="Reminder delivery details">
+            <Text style={styles.small}>
+              Reminders sync when klnk is open or you return. Changes made while closed cannot
+              cancel a local alert until the next sync. Device settings, Focus and system limits may
+              delay or suppress alerts.
+            </Text>
+          </Disclosure>
           <Button
             label={
               deviceReminders.enabled ? 'Turn off device reminders' : 'Enable device reminders'
             }
+            icon="alarm-outline"
             loading={deviceReminders.busy}
             disabled={!deviceReminders.ready}
             onPress={() =>
@@ -156,7 +152,7 @@ export function PreferencesPanel({ ownerId }: { ownerId: string }) {
         </View>
       ) : (
         <Text style={styles.small}>
-          On-device reminders are available in the native app. This browser uses in-app notices.
+          Device alerts need the native app. This browser uses in-app notices.
         </Text>
       )}
       {task.error || query.error ? <Notice tone="error">{task.error || query.error}</Notice> : null}

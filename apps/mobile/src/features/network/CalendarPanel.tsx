@@ -9,7 +9,7 @@ import type {
   NetworkAvailability,
 } from '@personal-agent/domain';
 import { getSessionSnapshot, isSessionCurrent } from '../../api';
-import { Badge, Button, Card, Disclosure, Empty, Notice, useUI } from '../../ui';
+import { Badge, Button, Card, Disclosure, Empty, FeatureHeader, Notice, useUI } from '../../ui';
 import { useNetworkClient, useNetworkQuery, useSessionState } from './data-provider';
 import { formatDateTime } from './format';
 import { AvailabilityPanel, BusyBlockRow } from './AvailabilityPanel';
@@ -142,18 +142,14 @@ export function CalendarPanel({
       windowSize={5}
       ListHeaderComponent={
         <View style={{ gap: 24 }}>
-          <View style={{ gap: 8 }}>
-            <Text style={styles.label}>IN-APP AGREEMENTS</Text>
-            <Text accessibilityRole="header" style={styles.title}>
-              Your calendar.
-            </Text>
-            <Text style={styles.subtitle}>
-              Meetings accepted by both representatives, with your own reminders.
-            </Text>
-          </View>
+          <FeatureHeader
+            icon="calendar-outline"
+            title="Your calendar."
+            detail="Agreed meetings. Your reminders."
+          />
           <Notice>
-            This calendar covers klnk meetings only. Reminders appear in the app; a scheduled or due
-            reminder does not confirm that a push notification was delivered.
+            klnk meetings only. Reminders appear in the app; their status does not confirm push
+            delivery.
           </Notice>
           {error || calendarQuery.error ? (
             <Notice tone="error">{error || calendarQuery.error}</Notice>
@@ -163,9 +159,12 @@ export function CalendarPanel({
               {notice}
             </Text>
           ) : null}
-          <AvailabilityPanel ownerId={ownerId} />
+          <Disclosure title="Availability & busy time" preserveContent>
+            <AvailabilityPanel ownerId={ownerId} />
+          </Disclosure>
           <Button
             label={working || calendarQuery.loading ? 'Loading calendar' : 'Refresh calendar'}
+            icon="refresh-outline"
             secondary
             loading={working || calendarQuery.loading}
             onPress={() => {
@@ -186,7 +185,7 @@ export function CalendarPanel({
               <Empty
                 icon="calendar-outline"
                 title="No shared meetings yet"
-                detail="A meeting appears after both participants accept the same terms. Your other calendars are not connected here."
+                detail="Both people must accept matching terms. Your other calendars are not connected."
               />
             </Card>
           ) : null}
@@ -197,9 +196,7 @@ export function CalendarPanel({
         if (row.kind === 'reminders-heading')
           return (
             <View style={{ gap: 12 }}>
-              <Text accessibilityRole="header" style={styles.h3}>
-                Your in-app reminders
-              </Text>
+              <FeatureHeader icon="notifications-outline" title="Your in-app reminders" />
               {!data?.reminders.length ? (
                 <Text style={styles.text}>
                   No reminders are scheduled for your shared meetings.

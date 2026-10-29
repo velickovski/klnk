@@ -27,7 +27,7 @@ The following paired themes are the detailed workspace specification. When unify
 
 | Semantic token | Light | Dark | Use |
 | --- | --- | --- | --- |
-| `background` | `#F5F6FA` | `#0E1228` | App canvas |
+| `background` | `#ECEEFC` | `#0E1228` | Pale lavender app canvas / dark system appearance |
 | `surface` | `#FFFFFF` | `#191D3A` | Content groups and sheets |
 | `surfaceRaised` | `#E9EDF5` | `#252B47` | Selected rows, input grouping |
 | `text` | `#151924` | `#FFFDF9` | Primary content |
@@ -85,7 +85,7 @@ Bottom navigation uses actual bottom safe-area inset plus 8 padding, 8 top paddi
 | --- | --- |
 | `AppScreen` | Safe area, reactive background, keyboard-aware content, screen title, one principal scroll container |
 | `AppText` | Semantic type role, scalable text, selectable long evidence, full-opacity labels |
-| `ActionButton` | Primary/secondary/destructive; idle/pressed/focused/disabled/busy; 52 minimum height, 44 compact; multiline labels |
+| `ActionButton` | Primary/secondary/destructive; idle/pressed/focused/disabled/busy; 52 minimum height, 44 compact; optional prominent 64-unit capsule; multiline labels |
 | `IconButton` | 44 minimum target, 22–24 icon, explicit accessible label; no unlabeled decorative action |
 | `TextField` | Persistent label, hint, error association, placeholder token, 52 minimum height; multiline auto growth |
 | `InputModeControl` | Visible Talk and Type choices; selected semantics; preserves drafts and avoids incidental capture |
@@ -101,9 +101,15 @@ Bottom navigation uses actual bottom safe-area inset plus 8 padding, 8 top paddi
 
 Long forms use section headings and disclosures, not a card around every field. Authorization-critical information must remain visible in the review even if optional composer settings were collapsed.
 
+The current workspace uses navy headers with full-width 28-unit titles below the back/brand row, opaque lavender/light or semantic dark content, and icon-labeled bottom tabs. Cards use continuous rounded corners and no decorative outer border; fields/actions keep their strong control boundaries. `FeatureHeader` shares decorative icon, scalable heading and optional short supporting copy. Settings uses icon-led disclosure rows for Delegation, Voice permissions, Preferences and Account; `preserveContent` lazily mounts once and hides content on subsequent collapse. No hidden field remains in browser keyboard navigation. The web row uses intrinsic minimum text width and wraps its chevron at enlarged sizes rather than fragmenting the category name.
+
 ## Motion and feedback
 
-Tokens: `instant=0ms`, `press=100ms`, `state=180ms`, `sheet=280ms`; easing for web state transitions `cubic-bezier(0.2,0,0,1)`. Use platform-native transitions when available; do not delay actions for animation. Avoid animating layout-heavy properties on every poll.
+Implemented home tokens in `tokens.ts`: `entranceMs=280`, `pressMs=120`, with `cubic-bezier(0.23,1,0.32,1)`. The sculpture enters once with opacity and a 12-unit translation / 0.96→1 scale; the prominent action uses a 1→0.97 press scale. Neither affects capture, dispatch timing or session state. Reanimated CSS uses browser CSS on web and its native runtime on compatible builds; native feel/performance remains unverified. Other workspace transitions should follow platform defaults; suggested state/sheet durations are not evidence of implementation.
+
+Workspace primary actions now share the 120ms press feedback. Secondary/destructive actions retain immediate pressed fills, and peer tab changes have no slide or entrance animation. `DetailSheet` uses the existing React Native Modal fade and its original focus/escape/dismiss lifecycle; startup/reactive Reduced Motion selects `none`. Browser preference subscriptions are owned directly by each ThemeProvider through `matchMedia`, avoiding React Native Web's callback-string listener collision when a nested provider unmounts. Native preferences continue through AccessibilityInfo. No additional dependency was added for this workspace pass.
+
+Reduced Motion checks the startup system preference and reactive design setting. It omits the decorative animation and the action's entire transform/transition style, retaining the same mounted control and keyboard focus. Backgrounding interrupts the artwork without replay on return; unmount removes the AppState listener. At rest it remains still. There are no repeating idle animations, fake waveform, glass dependency or new haptic permission.
 
 At rest the aperture is static. Current `VoiceIO` exposes no amplitude value: show a static listening indicator and textual state. A future true level visualization requires an explicit adapter contract and tests; it is not part of this baseline. Use a standard activity indicator while preparing, without a fabricated completion percentage.
 

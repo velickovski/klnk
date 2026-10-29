@@ -1,0 +1,15 @@
+{
+  "entry": {
+    "name": "REA-CSS-0",
+    "duration": "0.28s",
+    "iterations": "1"
+  },
+  "press": "matrix(0.975529, 0, 0, 0.975529, 0, 0)",
+  "reduced": {
+    "transform": "none",
+    "transition": "all",
+    "artAnimation": "none"
+  },
+  "actions": 1,
+  "capture": 0
+}

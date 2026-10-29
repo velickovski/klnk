@@ -1,5 +1,14 @@
 import { jest } from '@jest/globals';
 
+// UI-thread boundary only. Real CSS motion/reduced-motion is checked in the browser;
+// these rendered component cases assess intent and recovery without native worklets.
+jest.mock('react-native-reanimated', () => ({
+  __esModule: true,
+  default: { View: require('react-native').View },
+  cubicBezier: (...points: number[]) => `cubic-bezier(${points.join(',')})`,
+  useReducedMotion: () => false,
+}));
+
 // Native views use the official Expo/RN preset. HTTP, decorative font glyphs
 // and explicit OS notification boundaries use fictional fixtures.
 jest.mock('../src/api', () => ({

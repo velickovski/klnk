@@ -1,7 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
 import { api, getSessionSnapshot, isSessionCurrent, setSession } from '../../api';
-import { AppScreen, AppText, Button, Card, Disclosure, Field, Notice, useUI } from '../../ui';
+import { AppScreen, AppText, Button, Card, Disclosure, Field, Icon, Notice, useUI } from '../../ui';
+import { brand, radii, spacing } from '../../design/tokens';
 import { ConnectionPanel } from '../../setup';
 
 export type AccountLink = { kind: 'verify' | 'reset' | 'email-change'; token: string };
@@ -128,11 +129,27 @@ export function AuthScreen({
             : 'Welcome to klnk';
   return (
     <AppScreen>
-      <View style={{ flex: 1, gap: 24, justifyContent: 'center' }}>
-        <AppText role="title" accessibilityRole="header">
-          {title}
-        </AppText>
-        <AppText>Your agent talks to their agent.</AppText>
+      <View
+        style={{ flex: 1, gap: spacing.screen, width: '100%', maxWidth: 560, alignSelf: 'center' }}
+      >
+        <View
+          style={{
+            backgroundColor: brand.navy,
+            padding: spacing.screen,
+            borderRadius: radii.sheet,
+            borderCurve: 'continuous',
+            gap: spacing.lg,
+          }}
+        >
+          <Icon name="sparkles-outline" color={brand.coral} size={28} />
+          <AppText
+            role="hero"
+            accessibilityRole="header"
+            style={{ color: brand.cream, letterSpacing: -0.8 }}
+          >
+            {title}
+          </AppText>
+        </View>
         {notice ? <Notice>{notice}</Notice> : null}
         <Card>
           {mode === 'register' ? (
@@ -222,7 +239,12 @@ export function AuthScreen({
             />
           )}
         </Card>
-        <Button label="Back to voice home" secondary onPress={onVoiceHome} />
+        <Button
+          label="Back to voice home"
+          icon="arrow-back-outline"
+          secondary
+          onPress={onVoiceHome}
+        />
         <Disclosure title="Connection settings">
           <ConnectionPanel compact />
         </Disclosure>

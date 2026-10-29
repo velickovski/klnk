@@ -16,7 +16,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page.goto('/?legacy=1');
       await expect(page.getByRole('button', { name: 'Call klnk', exact: true })).toBeVisible();
       await expect(
-        page.getByRole('heading', { name: 'A voice in your corner.', exact: true }),
+        page.getByRole('heading', { name: 'Your day. One conversation.', exact: true }),
       ).toBeInViewport({ ratio: 1 });
       await expectNoHorizontalOverflow(page);
       if (width === 390 && process.env.KLNK_E2E_SCREENSHOTS === 'true')
@@ -159,8 +159,7 @@ test('A11Y-02 combined text spacing and 200 percent text retain the opening acti
   await page.getByRole('button', { name: 'Call klnk', exact: true }).waitFor();
   // RN Web resolves text in px, so root font-size alone would not test text enlargement.
   await enlargeTextAndSpacing(page, [
-    'Talk with your personal agent, and hear a reply. No typing needed.',
-    'Up to five minutes per conversation. Audio is sent to OpenAI. Your microphone starts after you call.',
+    '5 min · Voice with OpenAI\nMicrophone starts when you call.',
   ]);
   const call = page.getByRole('button', { name: 'Call klnk', exact: true });
   await call.scrollIntoViewIfNeeded();

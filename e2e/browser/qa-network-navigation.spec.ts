@@ -405,6 +405,7 @@ test('independent unsaved controls expose checked markup and real tab keyboard n
   }
   await page.getByRole('tab', { name: 'Settings', exact: true }).click();
   const toggle = page.getByRole('switch', { name: 'Enable background delegation', exact: true });
+  await page.getByRole('button', { name: 'Delegation', exact: true }).click();
   await expect(toggle).not.toBeChecked();
   await toggle.click();
   await expect(toggle).toBeChecked();

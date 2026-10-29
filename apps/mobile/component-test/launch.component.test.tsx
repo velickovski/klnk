@@ -35,3 +35,29 @@ it('offers typed workspace recovery immediately when neither voice transport is 
   await fireEvent.press(screen.getByRole('button', { name: 'Open workspace' }));
   expect(open).toHaveBeenCalledTimes(1);
 });
+
+it('keeps uncertain closure visible and blocks another start', async () => {
+  const live = { ...voice(), state: 'error' as const, closureUnconfirmed: true };
+  await render(<LaunchScreen live={live} onWorkspace={jest.fn()} />);
+  expect(screen.queryByRole('button', { name: 'Call klnk' })).not.toBeOnTheScreen();
+  expect(screen.getByText(/Server session closure is still unconfirmed/)).toBeOnTheScreen();
+  expect(screen.getByRole('button', { name: 'Open workspace' })).toBeOnTheScreen();
+  await fireEvent.press(screen.getByRole('button', { name: 'Retry ending session' }));
+  expect(live.end).toHaveBeenCalledTimes(1);
+  expect(live.start).not.toHaveBeenCalled();
+});
+
+it('shows actual conversation controls and blocked-playback recovery without feature marketing', async () => {
+  const live = { ...voice(), state: 'connected' as const, supported: true, audioBlocked: true };
+  await render(<LaunchScreen live={live} onWorkspace={jest.fn()} />);
+  expect(screen.queryByText('Meetings')).not.toBeOnTheScreen();
+  expect(screen.queryByRole('button', { name: 'Call klnk' })).not.toBeOnTheScreen();
+  await fireEvent.press(screen.getByRole('button', { name: 'Enable spoken audio' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Unmute' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'Captions' }));
+  await fireEvent.press(screen.getByRole('button', { name: 'End call' }));
+  expect(live.enableAudio).toHaveBeenCalledTimes(1);
+  expect(live.toggleMute).toHaveBeenCalledTimes(1);
+  expect(live.toggleCaptions).toHaveBeenCalledTimes(1);
+  expect(live.end).toHaveBeenCalledTimes(1);
+});

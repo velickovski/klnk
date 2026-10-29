@@ -31,7 +31,7 @@ Done when the screen looks correct at 320/390/430 widths, real conversation is v
 
 Create `src/design/tokens.ts` and `ThemeProvider.tsx`. Replace module-mutated `colors`/`styles` gradually with reactive values. Build `AppScreen`, `AppText`, `ActionButton`, `TextField`, `Notice`, `StatusLabel`, `Disclosure` and `DetailSheet` in `src/components/`. Keep temporary compatibility exports in `ui.tsx` while migrating.
 
-Use actual safe-area insets. Apply current appearance and accessibility settings reactively. Begin with opaque surfaces; native glass is optional after compatibility/device verification. Do not add a visual dependency for an effect that CSS or existing RN primitives already provide.
+Use actual safe-area insets. Apply current appearance and accessibility settings reactively. Begin with opaque surfaces; native glass is optional after compatibility/device verification. Prefer existing primitives and avoid unrelated effect packages. The 29 October user-requested Expo animation-skill pass makes a scoped exception: Expo-matched Reanimated 4.7.1 / Worklets 0.13.0 provide one shared web/native motion implementation for the home artwork and prominent action. Compatibility was checked against SDK 58's bundled module map, installed peer ranges and official Expo documentation. The web bundle cost and untested native behavior are recorded in [10](10-validation.md); no further animation/material dependency is implied.
 
 Done when fields, buttons, errors and sheets render in both themes and at large type with consistent semantics and contrast. Do not migrate every feature in the same edit.
 
@@ -56,6 +56,8 @@ Resolve the existing recorder's timing issue as a bounded behavior change with d
 Windows can verify web rendering and JavaScript exports. Native iOS compilation, microphone routing, VoiceOver and system material behavior require an actual compatible iPhone build. Do not claim those from a browser screenshot.
 
 ## Implementation checkpoint — 2026-10-27
+
+29 October workspace follow-through: Stage D's current network destinations and account entry now share the refined home design through semantic tokens, FeatureHeader, capsule primary controls, grouped Settings, preserved disclosure content and brief sheet/press feedback. Review terms, error recovery and capability gates remain in their existing feature/controller code. Direct browser media-query ownership fixes Reduced Motion after nested-theme navigation. [Current evidence](10-validation.md) records the fresh export, independent all-panel walkthrough and exact checks; native acceptance remains open. The historical checkpoint below is retained as history.
 
 - Stage A: recovery, owner-bound closure readback, acknowledged mute, startup uncertainty blocking and browser lifecycle regressions implemented. The key is configured. A real standalone browser/broker/WebRTC run with fictional synthetic input passed audio, captions, mute/unmute and closure; see [production evidence](../production/05-evidence.md). Human interruption quality, physical microphone permissions/routing and native verification remain open.
 - Stage B: reactive semantic tokens, shared components, opaque themes, safe-area shell and one-action Expo opening implemented. Browser inspection and color-pair tests do not establish native accessibility.

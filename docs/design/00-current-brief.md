@@ -8,6 +8,8 @@ Product update, 27 October 2026: the [internal agent network](../agent-network/0
 
 The opening screen contains **one visible interactive control: Call klnk**. No bottom tabs, scenario selector, onboarding form, mode switch or settings button competes with it. A large pale surface meets a deep navy surface with sweeping asymmetric corners, taking direction from the user's mobile-app reference. Coral identifies the call action. An original generated sculpture supplies the hero image; it does not pretend to be a live audio meter.
 
+Expo home refresh, 29 October 2026: the short headline is **“Your day. One conversation.”** Repeated invitation paragraphs give way to three static feature cues: **Meetings, Memory, Answers**. These are descriptions, not navigation or proof that an integration is enabled. The 64-unit coral call capsule remains the sole opening action. A finite artwork entrance and subtle press feedback respect Reduced Motion; the idle artwork does not loop. The standalone `/demo` retains its earlier presentation.
+
 The button connects the user to a real AI voice conversation. Once the call starts, relevant controls such as End call, microphone mute and captions appear. This keeps the opening effortless while preserving control during the conversation. Microphone permission is requested on user intent. If capture is unavailable, offer the separate existing text workspace. The Live transport does not implement typed input; do not invent a protocol event to imply it does.
 
 The demonstration is available at `/demo`, served by the local API, and in the Expo web opening screen at port 8081. Both use the documented browser WebRTC transport through the authenticated server broker. It is suitable for recording from a desktop browser at a mobile viewport. It is not yet a native iOS WebRTC implementation. The redesigned Expo screens remain the advanced workspace; they do not appear on the one-button demo home.
@@ -21,6 +23,8 @@ The demo does not telephone third parties or connect to the existing mission eng
 ## What remains in the handoff
 
 People, Memory, requests, authorization and Settings are preserved in the advanced Expo workspace and now use reactive shared theme components. Documents 01–05 retain their interaction specifications. After a voice attempt, Open workspace provides access; the standalone demo's recovery link opens that subsequent screen directly. Local inspection can also use `?preview=iphone&workspace=1`. This does not add an action to the default opening screen. See [actual validation evidence](10-validation.md) for implemented behavior and remaining device/live-audio checks.
+
+Workspace follow-through, 29 October 2026: sign-in, Inbox, Calendar, People, Memory, Settings and detail sheets use the same system type, navy headers, pale canvas, coral capsule actions and opaque rounded groups. Short icon-led feature introductions replace repeated paragraphs. Optional setup, connection values, availability editing and Settings details are disclosed on intent; review terms, sharing boundaries, real errors and uncertainty stay explicit. Settings groups preserve mounted content after opening, so collapse/reopen does not discard drafts. Tabs remain immediate; primary buttons have brief press feedback and detail sheets fade unless Reduced Motion is enabled.
 
 ## Asset and access rules
 

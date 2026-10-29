@@ -2,7 +2,18 @@ import React, { useEffect } from 'react';
 import { FlatList, Platform, Share, View } from 'react-native';
 import { AppText as Text } from '../../components/primitives';
 import { NetworkIdentitySchema, type NetworkConnection } from '@personal-agent/domain';
-import { Badge, Button, Card, Empty, Field, Notice, useUI } from '../../ui';
+import {
+  Avatar,
+  Badge,
+  Button,
+  Card,
+  Disclosure,
+  Empty,
+  FeatureHeader,
+  Field,
+  Notice,
+  useUI,
+} from '../../ui';
 import { useNetworkClient, useNetworkQuery, useSessionState } from './data-provider';
 import { usePanelTask } from './panel-hooks';
 import { peerName } from './panel-state';
@@ -149,37 +160,41 @@ function PeopleContent({
       windowSize={5}
       ListHeaderComponent={
         <View style={{ gap: 24 }}>
-          <View style={{ gap: 8 }}>
-            <Text style={styles.label}>PEOPLE</Text>
-            <Text accessibilityRole="header" style={styles.title}>
-              A connection you choose.
-            </Text>
-            <Text style={styles.subtitle}>
-              Connect two klnk members. Each person keeps their own agent and authority.
-            </Text>
-          </View>
+          <FeatureHeader
+            icon="people-outline"
+            title="Your people."
+            detail="Connect with another klnk member."
+          />
           {identity ? (
             <Card>
-              <Text style={styles.h3}>Invite someone to connect</Text>
-              <Text selectable style={styles.text}>
-                {shareUrl}
-              </Text>
+              <FeatureHeader
+                icon="link-outline"
+                title="Invite someone to connect"
+                detail="Share a link. They choose to accept."
+              />
               <Button
                 label={Platform.OS === 'web' ? 'Copy connection link' : 'Share connection link'}
-                secondary
+                icon="link-outline"
                 onPress={share}
               />
-              <Text accessibilityRole="header" style={styles.h3}>
-                Your member code
-              </Text>
-              <Text selectable style={styles.text}>
-                {identity.member.memberCode}
-              </Text>
-              <Text style={styles.small}>
-                Share this code yourself with someone you trust. klnk does not contact anyone
-                outside this app.
-              </Text>
               <Badge text="Internal delivery only" tone="accent" />
+              <Disclosure title="Your connection details">
+                <View style={{ gap: 12 }}>
+                  <Text selectable style={styles.text}>
+                    {shareUrl}
+                  </Text>
+                  <Text accessibilityRole="header" style={styles.h3}>
+                    Your member code
+                  </Text>
+                  <Text selectable style={styles.text}>
+                    {identity.member.memberCode}
+                  </Text>
+                  <Text style={styles.small}>
+                    Share only with someone you trust. klnk does not contact anyone outside this
+                    app.
+                  </Text>
+                </View>
+              </Disclosure>
             </Card>
           ) : null}
           <Card>
@@ -193,10 +208,11 @@ function PeopleContent({
               editable={!task.busy}
               autoCapitalize="none"
               autoCorrect={false}
-              hint="Ask the other member for their klnk code. No phone number or email is needed."
+              hint="Use their klnk code. No phone number or email needed."
             />
             <Button
               label="Request connection"
+              icon="person-add-outline"
               onPress={() => invite()}
               loading={task.busy}
               disabled={!loaded}
@@ -210,6 +226,7 @@ function PeopleContent({
           {task.notice ? <Notice>{task.notice}</Notice> : null}
           <Button
             label={task.busy ? 'Updating People' : 'Refresh People'}
+            icon="refresh-outline"
             secondary
             onPress={() => void refresh()}
             loading={task.busy}
@@ -225,7 +242,7 @@ function PeopleContent({
               <Empty
                 icon="people-outline"
                 title="No connections yet"
-                detail="An accepted connection is needed to delegate an internal request. No sample people have been added."
+                detail="Connect with someone to send an in-app request. Both members choose to accept."
               />
             </Card>
           ) : null}
@@ -238,9 +255,12 @@ function PeopleContent({
           muted = connection.mutedBy.includes(ownerId);
         return (
           <Card key={connection.id}>
-            <Text accessibilityRole="header" style={styles.h2}>
-              {name}
-            </Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Avatar name={name} />
+              <Text accessibilityRole="header" style={[styles.h2, { flex: 1 }]}>
+                {name}
+              </Text>
+            </View>
             <Badge
               text={
                 connection.status === 'pending'
@@ -257,7 +277,6 @@ function PeopleContent({
               }
               tone={connection.status === 'accepted' ? 'success' : 'neutral'}
             />
-            <Text style={styles.small}>Connection revision {connection.version}</Text>
             {connection.status === 'blocked' &&
             (!connection.blockedBy || connection.blockedBy.includes(ownerId)) ? (
               <Button
@@ -324,7 +343,7 @@ function PeopleContent({
                   Their agent may {allowed ? '' : 'not '}send inbound requests to yours.
                 </Text>
                 <Text style={styles.small}>
-                  Allowing inbound requests does not approve a meeting or enable autonomy.
+                  Inbound access does not approve meetings or enable autonomy.
                 </Text>
                 <Button
                   label={`${allowed ? 'Deny' : 'Allow'} inbound requests from ${name}`}

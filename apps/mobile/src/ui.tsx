@@ -17,6 +17,7 @@ export {
   ErrorState,
 } from './components/choices';
 export { Icon, IconName } from './components/Icon';
+export { FeatureHeader } from './components/FeatureHeader';
 export {
   ActionButton as Button,
   AppText,

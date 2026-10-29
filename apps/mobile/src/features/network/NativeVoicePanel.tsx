@@ -3,7 +3,7 @@ import { AppState, Platform, Text, View } from 'react-native';
 import * as Speech from 'expo-speech';
 import { randomUUID } from 'expo-crypto';
 import type { NetworkVoiceTurnInput, NetworkVoiceTurnResult } from '@personal-agent/domain';
-import { Button, Card, Disclosure, Notice, useUI } from '../../ui';
+import { Button, Card, Disclosure, FeatureHeader, Notice, useUI } from '../../ui';
 import { useVoiceIO } from '../../voice-io';
 import type { VoiceInput, VoiceIO } from '../../voice-types';
 import { ApiError, getSessionSnapshot } from '../../api';
@@ -356,12 +356,11 @@ export function NativeVoicePanel({
   ]);
   return (
     <Card>
-      <Text accessibilityRole="header" style={styles.h2}>
-        Talk to klnk
-      </Text>
-      <Text style={styles.text}>
-        Speak your instruction. klnk reads back the actual request and result.
-      </Text>
+      <FeatureHeader
+        icon="mic-outline"
+        title="Talk to klnk"
+        detail="Speak. Review the readback. Hear the result."
+      />
       <Text accessibilityLiveRegion="polite" style={styles.small}>
         {busy
           ? 'Your recording is processing.'
@@ -383,18 +382,21 @@ export function NativeVoicePanel({
       <View style={{ gap: 12 }}>
         <Button
           label="End call"
+          icon="call-outline"
           onPress={() => {
             void end().catch(() => setError('Could not finish microphone cleanup.'));
           }}
         />
         <Button
           label={muted ? 'Unmute microphone' : 'Mute microphone'}
+          icon={muted ? 'mic-off-outline' : 'mic-outline'}
           secondary
           onPress={toggleMute}
           disabled={busy}
         />
         <Button
           label={captions ? 'Hide captions' : 'Show captions'}
+          icon="chatbox-outline"
           secondary
           onPress={() => setCaptions(!captions)}
         />

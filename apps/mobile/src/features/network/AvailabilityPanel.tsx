@@ -6,7 +6,7 @@ import {
   type NetworkAvailability,
   type NetworkBusy,
 } from '@personal-agent/domain';
-import { Badge, Button, Card, Disclosure, Field, Notice, useUI } from '../../ui';
+import { Badge, Button, Card, Disclosure, FeatureHeader, Field, Notice, useUI } from '../../ui';
 import { DateTimeField } from './DateTimeField';
 import { TimezoneField } from './TimezoneField';
 import { deviceTimezone, formatDateTime } from './format';
@@ -74,12 +74,11 @@ export function AvailabilityPanel({ ownerId }: { ownerId: string }) {
   return (
     <View style={{ gap: 16 }}>
       <Card>
-        <Text accessibilityRole="header" style={styles.h2}>
-          Your real availability
-        </Text>
-        <Text style={styles.text}>
-          Add other commitments here before allowing automatic meeting acceptance.
-        </Text>
+        <FeatureHeader
+          icon="time-outline"
+          title="Your availability"
+          detail="Add busy time before enabling automatic acceptance."
+        />
         <Badge
           text={
             availability && Date.parse(availability.confirmedThrough) > Date.now()
@@ -90,14 +89,15 @@ export function AvailabilityPanel({ ownerId }: { ownerId: string }) {
         />
         <Disclosure title="How manual availability works">
           <Text style={styles.small}>
-            klnk checks shared meetings and your private busy blocks. Your other calendars are not
-            connected. Confirming means you are maintaining these commitments; it does not turn on
-            delegation. Automatic acceptance still requires your saved rules and a current source
-            covering the entire meeting.
+            klnk checks shared meetings and private busy blocks, not your other calendars.
+            Confirmation means you maintain these commitments. It does not enable delegation.
+            Automatic acceptance still needs your saved rules and a current source covering the full
+            meeting.
           </Text>
         </Disclosure>
         <Button
           label="Confirm my manual calendar for 7 days"
+          icon="checkmark-circle-outline"
           secondary
           disabled={!query.data}
           loading={task.busy}
@@ -117,6 +117,7 @@ export function AvailabilityPanel({ ownerId }: { ownerId: string }) {
         />
         <Button
           label={editing ? 'Keep busy draft and close editor' : 'Add a private busy block'}
+          icon={editing ? 'chevron-up-outline' : 'add-outline'}
           secondary
           disabled={task.busy || !query.data}
           onPress={() => setEditing(!editing)}
@@ -124,9 +125,7 @@ export function AvailabilityPanel({ ownerId }: { ownerId: string }) {
       </Card>
       {editing ? (
         <Card>
-          <Text accessibilityRole="header" style={styles.h3}>
-            A private commitment
-          </Text>
+          <FeatureHeader icon="lock-closed-outline" title="A private commitment" />
           <Field
             label="Busy block label"
             value={draft.label}
@@ -156,6 +155,7 @@ export function AvailabilityPanel({ ownerId }: { ownerId: string }) {
           />
           <Button
             label={uncertain ? 'Check and retry this same busy block' : 'Save private busy block'}
+            icon="checkmark-outline"
             loading={task.busy}
             onPress={save}
           />
